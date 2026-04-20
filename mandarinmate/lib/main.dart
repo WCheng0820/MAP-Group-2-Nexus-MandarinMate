@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:mandarinmate/utils/app_theme.dart';
@@ -11,21 +10,9 @@ import 'package:mandarinmate/screens/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Load environment variables from .env
-  await dotenv.load();
-  
-  // Initialize Firebase with error handling
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-  } catch (e) {
-    // Firebase already initialized, ignore
-    if (!e.toString().contains('duplicate-app')) {
-      rethrow;
-    }
-  }
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
 }
 
