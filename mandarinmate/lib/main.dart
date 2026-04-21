@@ -20,7 +20,7 @@ void main() async {
   } catch (e) {
     // If Android native already initialized it, just ignore the error and move on!
     print("Firebase auto-initialized successfully.");
-  }
+  }//test
 
   runApp(const MyApp());
 }
