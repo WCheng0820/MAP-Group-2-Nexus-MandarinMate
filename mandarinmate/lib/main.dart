@@ -10,9 +10,18 @@ import 'package:mandarinmate/screens/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+
+  try {
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    }
+  } catch (e) {
+    // If Android native already initialized it, just ignore the error and move on!
+    print("Firebase auto-initialized successfully.");
+  }
+
   runApp(const MyApp());
 }
 
