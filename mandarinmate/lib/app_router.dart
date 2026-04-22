@@ -56,22 +56,36 @@ GoRouter buildAppRouter(AuthBloc authBloc) {
         return '/auth';
       }
 
-      if (authState is AuthAuthenticated && isProtectedRoute) {
-        if (authState.profile.role == UserRole.student && location != '/main') {
-          return '/main';
+      // --- THE FIX IS HERE ---
+      if (authState is AuthAuthenticated) {
+        final role = authState.profile.role;
+
+        // 1. If they are already logged in but sitting on the Login/Register screen,
+        // immediately redirect them to their specific dashboard.
+        if (isAuthRoute) {
+          if (role == UserRole.student) return '/main';
+          if (role == UserRole.tutor) return '/tutor-dashboard';
+          if (role == UserRole.admin) return '/admin-dashboard';
         }
-        if (authState.profile.role == UserRole.tutor &&
-            location != '/tutor-dashboard') {
-          return '/tutor-dashboard';
-        }
-        if (authState.profile.role == UserRole.admin &&
-            location != '/admin-dashboard') {
-          return '/admin-dashboard';
+
+        // 2. If they are trying to access the WRONG dashboard for their role,
+        // redirect them to the correct one.
+        if (isProtectedRoute) {
+          if (role == UserRole.student && location != '/main') {
+            return '/main';
+          }
+          if (role == UserRole.tutor && location != '/tutor-dashboard') {
+            return '/tutor-dashboard';
+          }
+          if (role == UserRole.admin && location != '/admin-dashboard') {
+            return '/admin-dashboard';
+          }
         }
       }
 
       return null;
-    },
+    }, // End of redirect
+
     routes: [
       GoRoute(
         path: '/splash',
