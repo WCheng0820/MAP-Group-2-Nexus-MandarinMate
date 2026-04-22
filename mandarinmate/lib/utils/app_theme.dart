@@ -7,9 +7,13 @@ class AppColors {
   static const Color primaryDark = Color(0xFFC62828);
 
   // Secondary colors
-  static const Color secondaryColor = Color(0xFF1976D2); // Blue (for Mandarin Mate "Mate" text)
+  static const Color secondaryColor = Color(
+    0xFF1976D2,
+  ); // Blue (for Mandarin Mate "Mate" text)
   static const Color secondaryLight = Color(0xFFBBDEFB);
-  static const Color accentColor = Color(0xFFFFA500); // Gold/Orange (for Mandarin text)
+  static const Color accentColor = Color(
+    0xFFFFA500,
+  ); // Gold/Orange (for Mandarin text)
 
   // Neutral colors
   static const Color backgroundColor = Color(0xFFFAFAFA);

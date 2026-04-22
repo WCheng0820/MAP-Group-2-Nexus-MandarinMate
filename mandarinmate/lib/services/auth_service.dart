@@ -1,10 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:mandarinmate/models/user_model.dart';
 
 class AuthService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   // Get current user
   User? get currentUser => _firebaseAuth.currentUser;
@@ -18,11 +20,12 @@ class AuthService {
     required String password,
   }) async {
     try {
-      UserCredential userCredential =
-          await _firebaseAuth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      // Menambahkan .trim() untuk menghindari spasi tak sengaja
+      UserCredential userCredential = await _firebaseAuth
+          .createUserWithEmailAndPassword(
+            email: email.trim(),
+            password: password,
+          );
       return userCredential;
     } on FirebaseAuthException catch (e) {
       throw _getAuthError(e);
@@ -35,14 +38,30 @@ class AuthService {
     required String password,
   }) async {
     try {
-      UserCredential userCredential =
-          await _firebaseAuth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      UserCredential userCredential = await _firebaseAuth
+          .signInWithEmailAndPassword(email: email.trim(), password: password);
       return userCredential;
     } on FirebaseAuthException catch (e) {
       throw _getAuthError(e);
+    }
+  }
+
+  Future<UserCredential> signInWithGoogle() async {
+    try {
+      final googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        throw 'Google sign-in cancelled.';
+      }
+      final googleAuth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      return await _firebaseAuth.signInWithCredential(credential);
+    } on FirebaseAuthException catch (e) {
+      throw _getAuthError(e);
+    } catch (e) {
+      throw e.toString();
     }
   }
 
@@ -58,7 +77,7 @@ class AuthService {
     try {
       final userProfile = UserProfile(
         uid: uid,
-        email: email,
+        email: email.trim(),
         username: username,
         firstName: firstName,
         lastName: lastName,
@@ -104,7 +123,7 @@ class AuthService {
     try {
       final query = await _firestore
           .collection('users')
-          .where('username', isEqualTo: username.toLowerCase())
+          .where('username', isEqualTo: username.toLowerCase().trim())
           .limit(1)
           .get();
       return query.docs.isNotEmpty;
@@ -113,16 +132,23 @@ class AuthService {
     }
   }
 
-  // Check if email is registered (for UTM email validation)
+  // ============================================================
+  // BAGIAN YANG DIPERBAIKI: Validasi Email UTM
+  // ============================================================
   Future<bool> isUTMEmail(String email) {
-    // Check if email ends with UTM domain
-    return Future.value(email.toLowerCase().endsWith('@student.utm.my') ||
-        email.toLowerCase().endsWith('@utm.my'));
+    final lowerEmail = email.toLowerCase().trim();
+    return Future.value(
+      lowerEmail.endsWith(
+            '@graduate.utm.my',
+          ) || // Mengganti @student menjadi @graduate
+          lowerEmail.endsWith('@utm.my'),
+    );
   }
 
   // Logout
   Future<void> logout() async {
     try {
+      await _googleSignIn.signOut();
       await _firebaseAuth.signOut();
     } catch (e) {
       throw 'Failed to logout: $e';
@@ -132,9 +158,7 @@ class AuthService {
   // Delete user account
   Future<void> deleteAccount(String uid) async {
     try {
-      // Delete user from Firestore
       await _firestore.collection('users').doc(uid).delete();
-      // Delete Firebase Auth user
       await currentUser?.delete();
     } catch (e) {
       throw 'Failed to delete account: $e';
@@ -144,13 +168,13 @@ class AuthService {
   // Send password reset email
   Future<void> sendPasswordResetEmail(String email) async {
     try {
-      await _firebaseAuth.sendPasswordResetEmail(email: email);
+      await _firebaseAuth.sendPasswordResetEmail(email: email.trim());
     } on FirebaseAuthException catch (e) {
       throw _getAuthError(e);
     }
   }
 
-  // Helper method to get user-friendly error messages
+  // Helper method
   String _getAuthError(FirebaseAuthException e) {
     switch (e.code) {
       case 'user-not-found':

@@ -51,7 +51,7 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBjTpnMxYIT-z850Z2ecOggoZuSUkyu2ow',
+    apiKey: 'AIzaSyDsZm5XYYMgmDQG0rFO1JLH8ubwK0pI3M4',
     appId: '1:253053635674:android:944bb7b4ba0df1f0af5c63',
     messagingSenderId: '253053635674',
     projectId: 'mandarinmate-utm',
@@ -64,7 +64,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '253053635674',
     projectId: 'mandarinmate-utm',
     storageBucket: 'mandarinmate-utm.firebasestorage.app',
-    iosClientId: '253053635674-egafsn0s38fsose01hjls7o914cf7d95.apps.googleusercontent.com',
+    iosClientId:
+        '253053635674-egafsn0s38fsose01hjls7o914cf7d95.apps.googleusercontent.com',
     iosBundleId: 'com.example.mandarinmate',
   );
 
@@ -74,7 +75,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '253053635674',
     projectId: 'mandarinmate-utm',
     storageBucket: 'mandarinmate-utm.firebasestorage.app',
-    iosClientId: '253053635674-egafsn0s38fsose01hjls7o914cf7d95.apps.googleusercontent.com',
+    iosClientId:
+        '253053635674-egafsn0s38fsose01hjls7o914cf7d95.apps.googleusercontent.com',
     iosBundleId: 'com.example.mandarinmate',
   );
 
