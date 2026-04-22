@@ -1,28 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mandarinmate/models/user_model.dart';
-import 'package:mandarinmate/services/auth_service.dart';
 import 'package:mandarinmate/utils/app_theme.dart';
 import 'package:mandarinmate/widgets/custom_widgets.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
   final Map<String, dynamic>? userData;
 
-  const RoleSelectionScreen({Key? key, this.userData}) : super(key: key);
+  const RoleSelectionScreen({super.key, this.userData});
 
   @override
   State<RoleSelectionScreen> createState() => _RoleSelectionScreenState();
 }
 
 class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
-  final AuthService _authService = AuthService();
   UserRole? _selectedRole;
   bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
-    final arguments = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    final uid = arguments?['uid'] ?? '';
-    final userData = arguments ?? {};
+    final userData = widget.userData ?? {};
+    final uid = userData['uid'] ?? '';
 
     return Scaffold(
       appBar: AppBar(
@@ -46,70 +44,64 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                 ),
                 const SizedBox(height: AppDimensions.xxl * 2),
 
-                  // Student Role Card
-                  RoleCard(
-                    title: 'Student',
-                    description: 'Learn Mandarin through interactive lessons and daily challenges',
-                    icon: Icons.school_outlined,
-                    isSelected: _selectedRole == UserRole.student,
-                    color: AppColors.studentColor,
-                    onTap: () {
-                      setState(() => _selectedRole = UserRole.student);
-                    },
-                  ),
-                  const SizedBox(height: AppDimensions.lg),
-
-                  // Tutor Role Card
-                  RoleCard(
-                    title: 'Tutor',
-                    description: 'Teach Mandarin and guide students in their learning journey',
-                    icon: Icons.person_outline,
-                    isSelected: _selectedRole == UserRole.tutor,
-                    color: AppColors.tutorColor,
-                    onTap: () {
-                      setState(() => _selectedRole = UserRole.tutor);
-                    },
-                  ),
-                  const SizedBox(height: AppDimensions.lg),
-
-                  // Admin Role Card
-                  RoleCard(
-                    title: 'Admin',
-                    description: 'Manage the platform and oversee community activities',
-                    icon: Icons.admin_panel_settings_outlined,
-                    isSelected: _selectedRole == UserRole.admin,
-                    color: AppColors.adminColor,
-                    onTap: () {
-                      setState(() => _selectedRole = UserRole.admin);
-                    },
-                  ),
-                  const SizedBox(height: AppDimensions.xxl * 2),
-
-                  // Next button
-                  CustomButton(
-                    label: 'Continue',
-                    isLoading: _isLoading,
-                    onPressed: _selectedRole != null
-                        ? () => _continueToProfileSetup(uid, userData)
-                        : () {},
-                  ),
-                  const SizedBox(height: AppDimensions.lg),
-
-                  // Skip button (for testing)
-                  CustomButton(
-                    label: 'Go Back',
-                    isOutlined: true,
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  const SizedBox(height: AppDimensions.xl),
-                ],
-              ),
+                RoleCard(
+                  title: 'Student',
+                  description:
+                      'Learn Mandarin through interactive lessons and daily challenges',
+                  icon: Icons.school_outlined,
+                  isSelected: _selectedRole == UserRole.student,
+                  color: AppColors.studentColor,
+                  onTap: () {
+                    setState(() => _selectedRole = UserRole.student);
+                  },
+                ),
+                const SizedBox(height: AppDimensions.lg),
+                RoleCard(
+                  title: 'Tutor',
+                  description:
+                      'Teach Mandarin and guide students in their learning journey',
+                  icon: Icons.person_outline,
+                  isSelected: _selectedRole == UserRole.tutor,
+                  color: AppColors.tutorColor,
+                  onTap: () {
+                    setState(() => _selectedRole = UserRole.tutor);
+                  },
+                ),
+                const SizedBox(height: AppDimensions.lg),
+                RoleCard(
+                  title: 'Admin',
+                  description:
+                      'Manage the platform and oversee community activities',
+                  icon: Icons.admin_panel_settings_outlined,
+                  isSelected: _selectedRole == UserRole.admin,
+                  color: AppColors.adminColor,
+                  onTap: () {
+                    setState(() => _selectedRole = UserRole.admin);
+                  },
+                ),
+                const SizedBox(height: AppDimensions.xxl * 2),
+                CustomButton(
+                  label: 'Continue',
+                  isLoading: _isLoading,
+                  onPressed: _selectedRole != null
+                      ? () => _continueToProfileSetup(uid, userData)
+                      : () {},
+                ),
+                const SizedBox(height: AppDimensions.lg),
+                CustomButton(
+                  label: 'Go Back',
+                  isOutlined: true,
+                  onPressed: () => context.go('/auth'),
+                ),
+                const SizedBox(height: AppDimensions.xl),
+              ],
             ),
-            if (_isLoading)
-              LoadingOverlay(
-                isLoading: _isLoading,
-                message: 'Setting up your profile...',
-              ),
+          ),
+          if (_isLoading)
+            LoadingOverlay(
+              isLoading: _isLoading,
+              message: 'Setting up your profile...',
+            ),
         ],
       ),
     );
@@ -126,10 +118,9 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
     try {
       // Navigate to profile setup screen
       if (mounted) {
-        Navigator.pushNamed(
-          context,
+        context.push(
           '/profile-setup',
-          arguments: {
+          extra: {
             'uid': uid,
             'role': _selectedRole!.toString().split('.').last,
             'email': userData['email'],

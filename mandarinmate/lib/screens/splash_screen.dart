@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mandarinmate/services/auth_service.dart';
 import 'package:mandarinmate/utils/app_theme.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({Key? key}) : super(key: key);
+  const SplashScreen({super.key});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -12,10 +12,10 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
+  final AuthService _authService = AuthService();
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
-  final AuthService _authService = AuthService();
 
   @override
   void initState() {
@@ -44,18 +44,11 @@ class _SplashScreenState extends State<SplashScreen>
   Future<void> _navigateAfterDelay() async {
     await Future.delayed(const Duration(seconds: 3));
 
-    if (!mounted) return;
-
-    // Check if user is logged in
-    final User? currentUser = _authService.currentUser;
-
-    if (currentUser != null) {
-      // User is logged in, go to home
-      Navigator.pushReplacementNamed(context, '/home');
-    } else {
-      // No user, show auth screen
-      Navigator.pushReplacementNamed(context, '/auth');
+    if (_authService.currentUser != null) {
+      await _authService.logout();
     }
+    if (!mounted) return;
+    context.go('/auth');
   }
 
   @override
@@ -146,20 +139,14 @@ class Circle extends StatelessWidget {
   final Color color;
   final double size;
 
-  const Circle({
-    required this.color,
-    required this.size,
-  });
+  const Circle({super.key, required this.color, required this.size});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: color,
-      ),
+      decoration: BoxDecoration(shape: BoxShape.circle, color: color),
     );
   }
 }

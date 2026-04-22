@@ -14,7 +14,7 @@ class CustomTextField extends StatefulWidget {
   final int minLines;
 
   const CustomTextField({
-    Key? key,
+    super.key,
     required this.label,
     required this.hint,
     required this.controller,
@@ -25,7 +25,7 @@ class CustomTextField extends StatefulWidget {
     this.prefixIcon,
     this.maxLines = 1,
     this.minLines = 1,
-  }) : super(key: key);
+  });
 
   @override
   State<CustomTextField> createState() => _CustomTextFieldState();
@@ -45,10 +45,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          widget.label,
-          style: AppTextStyles.labelLarge,
-        ),
+        Text(widget.label, style: AppTextStyles.labelLarge),
         const SizedBox(height: AppDimensions.sm),
         TextFormField(
           controller: widget.controller,
@@ -91,7 +88,7 @@ class CustomButton extends StatelessWidget {
   final Color? textColor;
 
   const CustomButton({
-    Key? key,
+    super.key,
     required this.label,
     required this.onPressed,
     this.isLoading = false,
@@ -100,7 +97,7 @@ class CustomButton extends StatelessWidget {
     this.height = AppDimensions.buttonHeight,
     this.backgroundColor,
     this.textColor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -126,9 +123,7 @@ class CustomButton extends StatelessWidget {
         onPressed: isLoading ? null : onPressed,
         style: OutlinedButton.styleFrom(
           minimumSize: Size(width ?? double.infinity, height),
-          side: BorderSide(
-            color: backgroundColor ?? AppColors.primaryColor,
-          ),
+          side: BorderSide(color: backgroundColor ?? AppColors.primaryColor),
         ),
         child: child,
       );
@@ -154,14 +149,14 @@ class RoleCard extends StatelessWidget {
   final Color color;
 
   const RoleCard({
-    Key? key,
+    super.key,
     required this.title,
     required this.description,
     required this.icon,
     required this.isSelected,
     required this.onTap,
     required this.color,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -175,7 +170,9 @@ class RoleCard extends StatelessWidget {
             color: isSelected ? color : AppColors.dividerColor,
             width: isSelected ? 2 : 1,
           ),
-          color: isSelected ? color.withOpacity(0.1) : AppColors.surfaceColor,
+          color: isSelected
+              ? color.withValues(alpha: 0.1)
+              : AppColors.surfaceColor,
         ),
         child: Column(
           children: [
@@ -183,13 +180,9 @@ class RoleCard extends StatelessWidget {
               padding: const EdgeInsets.all(AppDimensions.lg),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: color.withOpacity(0.2),
+                color: color.withValues(alpha: 0.2),
               ),
-              child: Icon(
-                icon,
-                size: AppDimensions.iconLarge,
-                color: color,
-              ),
+              child: Icon(icon, size: AppDimensions.iconLarge, color: color),
             ),
             const SizedBox(height: AppDimensions.lg),
             Text(
@@ -224,17 +217,17 @@ class LoadingOverlay extends StatelessWidget {
   final String message;
 
   const LoadingOverlay({
-    Key? key,
+    super.key,
     required this.isLoading,
     this.message = 'Loading...',
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     if (!isLoading) return const SizedBox.shrink();
 
     return Container(
-      color: Colors.black.withOpacity(0.3),
+      color: Colors.black.withValues(alpha: 0.3),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -288,11 +281,7 @@ class AuthHeader extends StatelessWidget {
   final String title;
   final String subtitle;
 
-  const AuthHeader({
-    Key? key,
-    required this.title,
-    required this.subtitle,
-  }) : super(key: key);
+  const AuthHeader({super.key, required this.title, required this.subtitle});
 
   @override
   Widget build(BuildContext context) {

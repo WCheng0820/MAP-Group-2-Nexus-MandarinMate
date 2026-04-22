@@ -20,7 +20,7 @@
       ],
       "api_key": [
         {
-          "current_key": "YOUR_API_KEY_HERE"
+          "current_key": "AIzaSyDsZm5XYYMgmDQG0rFO1JLH8ubwK0pI3M4"
         }
       ],
       "services": {
@@ -29,13 +29,6 @@
             {
               "client_id": "253053635674-mgkppm7lrlpkq7ibegfjo1kc793qi9jh.apps.googleusercontent.com",
               "client_type": 3
-            },
-            {
-              "client_id": "253053635674-egafsn0s38fsose01hjls7o914cf7d95.apps.googleusercontent.com",
-              "client_type": 2,
-              "ios_info": {
-                "bundle_id": "com.example.mandarinmate"
-              }
             }
           ]
         }
