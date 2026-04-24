@@ -1169,6 +1169,23 @@ class _ProfileTab extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   _HeroBadgeDark(label: '$xp XP earned'),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: () => _logout(context),
+                    icon: const Icon(Icons.logout_rounded),
+                    label: const Text('Logout'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _StudentColors.red,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -1176,6 +1193,12 @@ class _ProfileTab extends StatelessWidget {
         },
       ),
     );
+  }
+
+  Future<void> _logout(BuildContext context) async {
+    await FirebaseAuth.instance.signOut();
+    if (!context.mounted) return;
+    Navigator.pushReplacementNamed(context, '/auth');
   }
 }
 
