@@ -16,11 +16,11 @@ class TutorStudentsPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: _green,
         foregroundColor: Colors.white,
-        title: const Text('Senarai Pelajar'),
+        title: const Text('Students'),
       ),
       body: user == null
           ? const Center(
-              child: Text('Sila log masuk semula untuk melihat pelajar.'),
+              child: Text('Please log in again to view students.'),
             )
           : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               stream: FirebaseFirestore.instance
@@ -34,13 +34,13 @@ class TutorStudentsPage extends StatelessWidget {
 
                 if (snapshot.hasError) {
                   return const Center(
-                    child: Text('Ralat semasa memuatkan pelajar.'),
+                    child: Text('Error loading students.'),
                   );
                 }
 
                 final docs = snapshot.data?.docs ?? [];
                 if (docs.isEmpty) {
-                  return const Center(child: Text('Tiada pelajar ditemui.'));
+                  return const Center(child: Text('No students found.'));
                 }
 
                 return ListView.separated(
@@ -92,7 +92,7 @@ class TutorStudentsPage extends StatelessWidget {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        name.isEmpty ? 'Tanpa Nama' : name,
+                                        name.isEmpty ? 'No Name' : name,
                                         style: const TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.w700,
@@ -125,7 +125,7 @@ class TutorStudentsPage extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 const Text(
-                                  'Kemajuan ke level seterusnya',
+                                  'Progress to next level',
                                   style: TextStyle(fontWeight: FontWeight.w600),
                                 ),
                                 Text(

@@ -93,7 +93,7 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                       return _TutorHero(
                         title: 'Tutor Dashboard',
                         headline: 'Manage Mandarin Lessons',
-                        subtitle: '$studentCount pelajar aktif',
+                        subtitle: '$studentCount active students',
                         actionLabel: 'Tambah Lesson',
                         onAction: () {
                           Navigator.push(
@@ -129,8 +129,8 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                     children: [
                       _TutorActionTile(
                         icon: Icons.menu_book_rounded,
-                        title: 'Urus Lesson',
-                        subtitle: 'Tambah, edit dan padam unit',
+                        title: 'Manage Lessons',
+                        subtitle: 'Add, edit, and delete units',
                         color: _TutorColors.green,
                         onTap: () {
                           Navigator.push(
@@ -143,8 +143,8 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                       ),
                       _TutorActionTile(
                         icon: Icons.people_alt_rounded,
-                        title: 'Senarai Pelajar',
-                        subtitle: 'Lihat profil dan kemajuan',
+                        title: 'Student List',
+                        subtitle: 'View profiles and progress',
                         color: _TutorColors.teal,
                         onTap: () {
                           Navigator.push(
@@ -157,8 +157,8 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                       ),
                       _TutorActionTile(
                         icon: Icons.campaign_rounded,
-                        title: 'Pengumuman',
-                        subtitle: 'Hantar notis kepada pelajar',
+                        title: 'Announcements',
+                        subtitle: 'Send updates to students',
                         color: _TutorColors.orange,
                         onTap: () {
                           Navigator.push(
@@ -172,12 +172,12 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                       _TutorActionTile(
                         icon: Icons.chat_bubble_rounded,
                         title: 'Chat',
-                        subtitle: 'Modul chat belum tersedia',
+                        subtitle: 'Chat module coming soon',
                         color: _TutorColors.blue,
                         onTap: () {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Modul chat akan datang.'),
+                              content: Text('Chat module is coming soon.'),
                             ),
                           );
                         },
@@ -218,7 +218,7 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
         return;
       case 4:
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Modul chat akan datang.')),
+          const SnackBar(content: Text('Chat module is coming soon.')),
         );
         return;
     }
@@ -260,7 +260,7 @@ class _TutorHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Hai, $name',
+                'Hi, $name',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
