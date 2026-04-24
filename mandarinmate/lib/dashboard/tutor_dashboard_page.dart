@@ -8,18 +8,52 @@ import 'package:mandarinmate/features/tutor/presentation/pages/tutor_announcemen
 import 'package:mandarinmate/features/tutor/presentation/pages/tutor_lessons_page.dart';
 import 'package:mandarinmate/features/tutor/presentation/pages/tutor_students_page.dart';
 
-class TutorDashboardPage extends StatelessWidget {
+class TutorDashboardPage extends StatefulWidget {
   const TutorDashboardPage({super.key});
 
-  static const Color _green = Color(0xFF0F6E56);
+  @override
+  State<TutorDashboardPage> createState() => _TutorDashboardPageState();
+}
+
+class _TutorDashboardPageState extends State<TutorDashboardPage> {
+  int _currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6FBF8),
-      body: SafeArea(
+      backgroundColor: _TutorColors.paper,
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        selectedItemColor: _TutorColors.green,
+        unselectedItemColor: _TutorColors.muted,
+        type: BottomNavigationBarType.fixed,
+        onTap: (index) => _onNavTapped(context, index),
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_rounded),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.menu_book_rounded),
+            label: 'Lessons',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.people_alt_rounded),
+            label: 'Students',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.campaign_rounded),
+            label: 'Announcements',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.chat_bubble_rounded),
+            label: 'Chat',
+          ),
+        ],
+      ),
+      body: _TutorPageFrame(
         child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
           stream: user == null
               ? null
@@ -29,228 +63,436 @@ class TutorDashboardPage extends StatelessWidget {
                     .snapshots(),
           builder: (context, snapshot) {
             final data = snapshot.data?.data() ?? <String, dynamic>{};
-            final name = (data['name'] ?? '').toString().isEmpty
-                ? 'Tutor'
-                : (data['name'] ?? '').toString();
+            final name = _displayName(data);
 
-            return CustomScrollView(
-              slivers: [
-                SliverAppBar(
-                  expandedHeight: 170,
-                  pinned: true,
-                  backgroundColor: _green,
-                  actions: [
-                    IconButton(
-                      icon: const Icon(Icons.logout, color: Colors.white),
-                      onPressed: () {
-                        context.read<AuthBloc>().add(AuthLogoutRequested());
-                        Navigator.pushAndRemoveUntil(
-                          context,
-                          MaterialPageRoute(builder: (_) => const LoginPage()),
-                          (_) => false,
-                        );
-                      },
-                    ),
-                  ],
-                  flexibleSpace: FlexibleSpaceBar(
-                    background: Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Color(0xFF0F6E56), Color(0xFF0A5745)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 72, 20, 20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            const Text(
-                              'Tutor Dashboard',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 13,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              'Selamat datang, $name',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 24,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                            StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                              stream: FirebaseFirestore.instance
-                                  .collection('users')
-                                  .where('role', isEqualTo: 'student')
-                                  .snapshots(),
-                              builder: (context, studentSnapshot) {
-                                final studentCount =
-                                    studentSnapshot.data?.docs.length ?? 0;
-                                return Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 14,
-                                    vertical: 10,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.14),
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(
-                                        Icons.groups_rounded,
-                                        color: Colors.white,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        '$studentCount pelajar aktif',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+            return SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 18, 16, 22),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _TutorHeader(
+                    name: name,
+                    onLogout: () {
+                      context.read<AuthBloc>().add(AuthLogoutRequested());
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (_) => const LoginPage()),
+                        (_) => false,
+                      );
+                    },
                   ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: GridView.count(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 14,
-                      mainAxisSpacing: 14,
-                      childAspectRatio: 1.08,
-                      children: [
-                        _DashboardCard(
-                          icon: Icons.menu_book_rounded,
-                          title: 'Urus Lesson',
-                          subtitle: 'Tambah, edit dan padam unit',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const TutorLessonsPage(),
-                              ),
-                            );
-                          },
-                        ),
-                        _DashboardCard(
-                          icon: Icons.people_alt_rounded,
-                          title: 'Senarai Pelajar',
-                          subtitle: 'Lihat profil dan kemajuan',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const TutorStudentsPage(),
-                              ),
-                            );
-                          },
-                        ),
-                        _DashboardCard(
-                          icon: Icons.campaign_rounded,
-                          title: 'Pengumuman',
-                          subtitle: 'Hantar notis kepada pelajar',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const TutorAnnouncementPage(),
-                              ),
-                            );
-                          },
-                        ),
-                        _DashboardCard(
-                          icon: Icons.chat_bubble_rounded,
-                          title: 'Chat',
-                          subtitle: 'Modul chat belum tersedia',
-                          onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Modul chat akan datang.'),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
+                  const SizedBox(height: 14),
+                  StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                    stream: FirebaseFirestore.instance
+                        .collection('users')
+                        .where('role', isEqualTo: 'student')
+                        .snapshots(),
+                    builder: (context, studentSnapshot) {
+                      final studentCount =
+                          studentSnapshot.data?.docs.length ?? 0;
+                      return _TutorHero(
+                        title: 'Tutor Dashboard',
+                        headline: 'Manage Mandarin Lessons',
+                        subtitle: '$studentCount pelajar aktif',
+                        actionLabel: 'Tambah Lesson',
+                        onAction: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const TutorLessonsPage(),
+                            ),
+                          );
+                        },
+                      );
+                    },
                   ),
-                ),
-              ],
+                  const SizedBox(height: 18),
+                  _SectionHeader(
+                    title: 'Quick actions',
+                    onViewAll: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const TutorLessonsPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  GridView.count(
+                    crossAxisCount: 2,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                    childAspectRatio: 1.18,
+                    children: [
+                      _TutorActionTile(
+                        icon: Icons.menu_book_rounded,
+                        title: 'Urus Lesson',
+                        subtitle: 'Tambah, edit dan padam unit',
+                        color: _TutorColors.green,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const TutorLessonsPage(),
+                            ),
+                          );
+                        },
+                      ),
+                      _TutorActionTile(
+                        icon: Icons.people_alt_rounded,
+                        title: 'Senarai Pelajar',
+                        subtitle: 'Lihat profil dan kemajuan',
+                        color: _TutorColors.teal,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const TutorStudentsPage(),
+                            ),
+                          );
+                        },
+                      ),
+                      _TutorActionTile(
+                        icon: Icons.campaign_rounded,
+                        title: 'Pengumuman',
+                        subtitle: 'Hantar notis kepada pelajar',
+                        color: _TutorColors.orange,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const TutorAnnouncementPage(),
+                            ),
+                          );
+                        },
+                      ),
+                      _TutorActionTile(
+                        icon: Icons.chat_bubble_rounded,
+                        title: 'Chat',
+                        subtitle: 'Modul chat belum tersedia',
+                        color: _TutorColors.blue,
+                        onTap: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Modul chat akan datang.'),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             );
           },
         ),
       ),
     );
   }
+
+  void _onNavTapped(BuildContext context, int index) {
+    setState(() => _currentIndex = index);
+    switch (index) {
+      case 0:
+        return;
+      case 1:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const TutorLessonsPage()),
+        );
+        return;
+      case 2:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const TutorStudentsPage()),
+        );
+        return;
+      case 3:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const TutorAnnouncementPage()),
+        );
+        return;
+      case 4:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Modul chat akan datang.')),
+        );
+        return;
+    }
+  }
 }
 
-class _DashboardCard extends StatelessWidget {
-  const _DashboardCard({
+class _TutorPageFrame extends StatelessWidget {
+  const _TutorPageFrame({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [_TutorColors.paper, Color(0xFFEFF8F4)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      ),
+      child: SafeArea(child: child),
+    );
+  }
+}
+
+class _TutorHeader extends StatelessWidget {
+  const _TutorHeader({required this.name, required this.onLogout});
+
+  final String name;
+  final VoidCallback onLogout;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Hai, $name',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: _TutorColors.deep,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 3),
+              const Text(
+                'Ready to guide your students?',
+                style: TextStyle(
+                  color: _TutorColors.muted,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+        InkWell(
+          borderRadius: BorderRadius.circular(999),
+          onTap: onLogout,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: const Color(0xFFDFF2E9)),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.logout_rounded, color: _TutorColors.green, size: 18),
+                SizedBox(width: 6),
+                Text(
+                  'Logout',
+                  style: TextStyle(
+                    color: _TutorColors.deep,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TutorHero extends StatelessWidget {
+  const _TutorHero({
+    required this.title,
+    required this.headline,
+    required this.subtitle,
+    required this.actionLabel,
+    required this.onAction,
+  });
+
+  final String title;
+  final String headline;
+  final String subtitle;
+  final String actionLabel;
+  final VoidCallback onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [_TutorColors.green, _TutorColors.teal],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x300F6E56),
+            blurRadius: 20,
+            offset: Offset(0, 12),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: Color(0xFFDDF5EC),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const _HeroBadge(label: 'Tutor'),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            headline,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 26,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            subtitle,
+            style: const TextStyle(
+              color: Color(0xFFE6FBF4),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 14),
+          FilledButton(
+            onPressed: onAction,
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: _TutorColors.green,
+              visualDensity: VisualDensity.compact,
+              textStyle: const TextStyle(fontWeight: FontWeight.w900),
+            ),
+            child: Text(actionLabel),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeroBadge extends StatelessWidget {
+  const _HeroBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.22),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
+class _TutorActionTile extends StatelessWidget {
+  const _TutorActionTile({
     required this.icon,
     required this.title,
     required this.subtitle,
+    required this.color,
     required this.onTap,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
+  final Color color;
   final VoidCallback onTap;
-
-  static const Color _green = Color(0xFF0F6E56);
 
   @override
   Widget build(BuildContext context) {
     return Material(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(20),
       child: InkWell(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(18),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFDDF2E8)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x0D111827),
+                blurRadius: 12,
+                offset: Offset(0, 7),
+              ),
+            ],
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 50,
-                height: 50,
+                width: 42,
+                height: 42,
                 decoration: BoxDecoration(
-                  color: _green.withValues(alpha: 0.10),
+                  color: color.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(icon, color: _green, size: 28),
+                child: Icon(icon, color: color, size: 24),
               ),
               const Spacer(),
               Text(
                 title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
+                  color: _TutorColors.deep,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 14,
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 3),
               Text(
                 subtitle,
-                style: TextStyle(color: Colors.grey.shade600, height: 1.35),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: _TutorColors.muted,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),
@@ -258,4 +500,52 @@ class _DashboardCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.title, required this.onViewAll});
+
+  final String title;
+  final VoidCallback onViewAll;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(
+              color: _TutorColors.deep,
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+        TextButton(onPressed: onViewAll, child: const Text('View all')),
+      ],
+    );
+  }
+}
+
+class _TutorColors {
+  static const green = Color(0xFF0F6E56);
+  static const teal = Color(0xFF0A5745);
+  static const orange = Color(0xFFF59E0B);
+  static const blue = Color(0xFF2F80ED);
+  static const deep = Color(0xFF1C2433);
+  static const muted = Color(0xFF6B7280);
+  static const paper = Color(0xFFF7FBF9);
+}
+
+String _displayName(Map<String, dynamic> data) {
+  final name = (data['name'] ?? '').toString().trim();
+  if (name.isNotEmpty) return name;
+
+  final firstName = (data['firstName'] ?? '').toString().trim();
+  final lastName = (data['lastName'] ?? '').toString().trim();
+  final fullName = '$firstName $lastName'.trim();
+  if (fullName.isNotEmpty) return fullName;
+
+  return 'Tutor';
 }
