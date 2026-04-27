@@ -20,6 +20,9 @@ class _AuthScreenState extends State<AuthScreen> {
   final _loginEmailController = TextEditingController();
   final _loginPasswordController = TextEditingController();
 
+  // Registration State
+  String _selectedRole = 'Student';
+  
   // Register controllers
   final _regFirstNameController = TextEditingController();
   final _regLastNameController = TextEditingController();
@@ -45,6 +48,51 @@ class _AuthScreenState extends State<AuthScreen> {
     super.dispose();
   }
 
+  void _showVerificationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Email Verification Required'),
+        content: const Text(
+          'Please verify your email to continue. Check your inbox for the verification link.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSuccessDialog(
+    BuildContext context,
+    String title,
+    String message,
+    String type,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              if (type == 'registration') {
+                setState(() => _isLoginTab = true);
+              }
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _login() {
     if (!_loginFormKey.currentState!.validate()) return;
 
@@ -64,11 +112,20 @@ class _AuthScreenState extends State<AuthScreen> {
       return;
     }
 
+    final fullName = _regFirstNameController.text.trim();
+    final nameParts = fullName.split(' ');
+    final firstName = nameParts.first;
+    final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+
     // Send the Register Event to the BLoC
     context.read<AuthBloc>().add(
       AuthRegisterRequested(
         email: _regEmailController.text.trim(),
         password: _regPasswordController.text,
+        firstName: firstName,
+        lastName: lastName,
+        username: _regUsernameController.text.trim(),
+        role: _selectedRole,
       ),
     );
   }
@@ -95,30 +152,32 @@ class _AuthScreenState extends State<AuthScreen> {
     return BlocConsumer<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthError) {
-          // Show error messages from the BLoC
-          ErrorSnackBar.show(context, state.message);
+          if (state.message == 'EMAIL_UNVERIFIED') {
+            _showVerificationDialog(context);
+          } else if (state.message == 'REGISTRATION_SUCCESS') {
+            _showSuccessDialog(context, 'Account Created!', 'Your account has been created successfully.\nPlease check your email to verify the account.', 'registration');
+          } else {
+            ErrorSnackBar.show(context, state.message);
+          }
         } else if (state is AuthProfileIncomplete) {
-          // If they registered but haven't picked a role, send them to setup
-          // We pass their details using GoRouter's 'extra' property
-          context.push(
-            '/role-selection',
-            extra: {
-              'uid': state.user.uid,
-              'email': _regEmailController.text,
-              'username': _regUsernameController.text,
-              'firstName': _regFirstNameController.text,
-              'lastName': _regLastNameController.text,
-            },
+          // If a user somehow has no profile, log them out and show error.
+          context.read<AuthBloc>().add(AuthLogoutRequested());
+          ErrorSnackBar.show(context, 'Account profile is incomplete. Please contact support or register again.');
+        } else if (state is AuthAuthenticated) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Login successful'),
+              backgroundColor: AppColors.successColor,
+            ),
           );
         }
-        // Note: We don't need to listen for AuthAuthenticated!
-        // GoRouter's redirect logic handles sending them to the right dashboard.
       },
       builder: (context, state) {
         // Automatically show loading spinner if the BLoC is working
         final bool isLoading = state is AuthLoading;
 
         return Scaffold(
+          backgroundColor: AppColors.backgroundColor,
           body: Stack(
             children: [
               SingleChildScrollView(
@@ -126,11 +185,13 @@ class _AuthScreenState extends State<AuthScreen> {
                   children: [
                     // Red Header - Full Width
                     Container(
-                      color: AppColors.primaryColor,
+                        decoration: const BoxDecoration(
+                          gradient: AppColors.primaryGradient,
+                        ),
                       width: double.infinity,
                       padding: const EdgeInsets.only(
-                        top: AppDimensions.xxl,
-                        bottom: AppDimensions.lg,
+                        top: AppDimensions.xxl * 2,
+                        bottom: AppDimensions.xl * 3,
                         left: AppDimensions.xl,
                         right: AppDimensions.xl,
                       ),
@@ -139,8 +200,8 @@ class _AuthScreenState extends State<AuthScreen> {
                           // Logo
                           Image.asset(
                             'assets/images/MandarinMate_logo.png',
-                            width: 60,
-                            height: 60,
+                            width: 80,
+                            height: 80,
                             fit: BoxFit.contain,
                           ),
                           const SizedBox(height: AppDimensions.sm),
@@ -153,88 +214,114 @@ class _AuthScreenState extends State<AuthScreen> {
                                   style: AppTextStyles.headlineMedium.copyWith(
                                     color: AppColors.textLight,
                                     fontWeight: FontWeight.bold,
+                                    fontSize: 24,
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                          const SizedBox(height: AppDimensions.sm),
+                          const SizedBox(height: AppDimensions.xs),
                           Text(
                             'Welcome back! 欢迎回来',
                             style: AppTextStyles.bodyMedium.copyWith(
-                              color: AppColors.textLight,
+                              color: AppColors.textLight.withValues(alpha: 0.9),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    // Tab Navigation
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppDimensions.lg,
-                        vertical: AppDimensions.md,
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () => setState(() => _isLoginTab = true),
-                              child: Column(
+                    
+                    // Card Container for Tabs and Form
+                    Transform.translate(
+                      offset: const Offset(0, -32), // overlap the header slightly
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: AppDimensions.lg),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceColor,
+                          borderRadius: BorderRadius.circular(AppDimensions.radiusXL),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.shadowColor,
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            // Tab Navigation
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppDimensions.lg,
+                                vertical: AppDimensions.md,
+                              ),
+                              child: Row(
                                 children: [
-                                  Text(
-                                    'Log In',
-                                    style: AppTextStyles.headlineSmall.copyWith(
-                                      color: _isLoginTab
-                                          ? AppColors.primaryColor
-                                          : AppColors.textTertiary,
+                                  Expanded(
+                                    child: GestureDetector(
+                                      onTap: () => setState(() => _isLoginTab = true),
+                                      child: Column(
+                                        children: [
+                                          Text(
+                                            'Log In',
+                                            style: AppTextStyles.headlineSmall.copyWith(
+                                              color: _isLoginTab
+                                                  ? AppColors.primaryColor
+                                                  : AppColors.textTertiary,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                          if (_isLoginTab)
+                                            Container(
+                                              height: 3,
+                                              margin: const EdgeInsets.only(
+                                                top: AppDimensions.sm,
+                                              ),
+                                              color: AppColors.primaryColor,
+                                            ),
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                  if (_isLoginTab)
-                                    Container(
-                                      height: 3,
-                                      margin: const EdgeInsets.only(
-                                        top: AppDimensions.sm,
+                                  Expanded(
+                                    child: GestureDetector(
+                                      onTap: () => setState(() => _isLoginTab = false),
+                                      child: Column(
+                                        children: [
+                                          Text(
+                                            'Sign Up',
+                                            style: AppTextStyles.headlineSmall.copyWith(
+                                              color: !_isLoginTab
+                                                  ? AppColors.primaryColor
+                                                  : AppColors.textTertiary,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                          if (!_isLoginTab)
+                                            Container(
+                                              height: 3,
+                                              margin: const EdgeInsets.only(
+                                                top: AppDimensions.sm,
+                                              ),
+                                              color: AppColors.primaryColor,
+                                            ),
+                                        ],
                                       ),
-                                      color: AppColors.primaryColor,
                                     ),
+                                  ),
                                 ],
                               ),
                             ),
-                          ),
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () => setState(() => _isLoginTab = false),
-                              child: Column(
-                                children: [
-                                  Text(
-                                    'Sign Up',
-                                    style: AppTextStyles.headlineSmall.copyWith(
-                                      color: !_isLoginTab
-                                          ? AppColors.primaryColor
-                                          : AppColors.textTertiary,
-                                    ),
-                                  ),
-                                  if (!_isLoginTab)
-                                    Container(
-                                      height: 3,
-                                      margin: const EdgeInsets.only(
-                                        top: AppDimensions.sm,
-                                      ),
-                                      color: AppColors.primaryColor,
-                                    ),
-                                ],
-                              ),
+                            // Form Area
+                            Padding(
+                              padding: const EdgeInsets.all(AppDimensions.xl),
+                              child: _isLoginTab
+                                  ? _buildLoginForm(isLoading)
+                                  : _buildRegisterForm(isLoading),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                    // Form Area
-                    Padding(
-                      padding: const EdgeInsets.all(AppDimensions.lg),
-                      child: _isLoginTab
-                          ? _buildLoginForm(isLoading)
-                          : _buildRegisterForm(isLoading),
                     ),
                   ],
                 ),
@@ -306,7 +393,7 @@ class _AuthScreenState extends State<AuthScreen> {
               child: Text(
                 'Forgot Password?',
                 style: AppTextStyles.labelMedium.copyWith(
-                  color: AppColors.primaryColor,
+                  color: const Color(0xFF6C3BFF),
                 ),
               ),
             ),
@@ -355,7 +442,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     TextSpan(
                       text: 'Sign Up',
                       style: AppTextStyles.bodyMedium.copyWith(
-                        color: AppColors.primaryColor,
+                        color: const Color(0xFF6C3BFF),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -378,7 +465,7 @@ class _AuthScreenState extends State<AuthScreen> {
           // Full Name
           CustomTextField(
             label: 'Full Name',
-            hint: 'e.g. Ahmad Zulkifli',
+            hint: 'e.g. Ahmad Zulkifli (Space for Last Name)',
             controller: _regFirstNameController,
             prefixIcon: const Icon(Icons.person_outlined),
             validator: (value) {
@@ -406,15 +493,20 @@ class _AuthScreenState extends State<AuthScreen> {
                   borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
                 ),
                 child: DropdownButton<String>(
-                  value: 'Student',
+                  value: _selectedRole,
                   isExpanded: true,
                   underline: const SizedBox.shrink(),
                   items: const [
                     DropdownMenuItem(value: 'Student', child: Text('Student')),
                     DropdownMenuItem(value: 'Tutor', child: Text('Tutor')),
-                    DropdownMenuItem(value: 'Admin', child: Text('Admin')),
                   ],
-                  onChanged: (value) {},
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() {
+                        _selectedRole = value;
+                      });
+                    }
+                  },
                 ),
               ),
             ],
@@ -502,7 +594,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 onChanged: (value) {
                   setState(() => _agreedToTerms = value ?? false);
                 },
-                activeColor: AppColors.primaryColor,
+                activeColor: const Color(0xFF6C3BFF),
               ),
               Expanded(
                 child: RichText(
@@ -515,7 +607,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       TextSpan(
                         text: 'Terms & Conditions',
                         style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.primaryColor,
+                          color: const Color(0xFF6C3BFF),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -569,7 +661,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     TextSpan(
                       text: 'Log In',
                       style: AppTextStyles.bodyMedium.copyWith(
-                        color: AppColors.primaryColor,
+                        color: const Color(0xFF6C3BFF),
                         fontWeight: FontWeight.w600,
                       ),
                     ),

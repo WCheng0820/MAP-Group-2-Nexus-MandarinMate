@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mandarinmate/utils/app_theme.dart';
+import 'package:mandarinmate/widgets/custom_widgets.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -30,8 +32,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Email reset telah dihantar! Semak inbox anda.'),
-          backgroundColor: Colors.green,
+          content: Text('Password reset email sent! Please check your inbox.'),
+          backgroundColor: AppColors.successColor,
         ),
       );
       context.go('/login');
@@ -39,8 +41,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(e.message ?? 'Gagal menghantar email reset.'),
-          backgroundColor: Colors.red,
+          content: Text(e.message ?? 'Failed to send reset email.'),
+          backgroundColor: AppColors.errorColor,
         ),
       );
     } finally {
@@ -53,36 +55,71 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Lupa Kata Laluan')),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Masukkan email UTM anda.\nKami akan hantar link reset kata laluan.',
-              style: TextStyle(fontSize: 15, color: Color(0xFF757575)),
+      backgroundColor: AppColors.backgroundColor,
+      appBar: AppBar(
+        title: const Text('Forgot Password'),
+        backgroundColor: AppColors.primaryColor,
+        elevation: 0,
+      ),
+      body: Stack(
+        children: [
+          Container(
+            height: 100,
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: AppColors.primaryGradient,
             ),
-            const SizedBox(height: 24),
-            TextFormField(
-              controller: _emailCtrl,
-              keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
-                labelText: 'Email UTM',
-                prefixIcon: Icon(Icons.email_outlined),
+          ),
+          SingleChildScrollView(
+            child: Container(
+              margin: const EdgeInsets.only(
+                top: 40,
+                left: AppDimensions.lg,
+                right: AppDimensions.lg,
+              ),
+              padding: const EdgeInsets.all(AppDimensions.xl),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceColor,
+                borderRadius: BorderRadius.circular(AppDimensions.radiusXL),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.shadowColor,
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Reset your password',
+                    style: AppTextStyles.headlineMedium,
+                  ),
+                  const SizedBox(height: AppDimensions.sm),
+                  const Text(
+                    'Enter your registered email and we will send you a reset link.',
+                    style: TextStyle(fontSize: 15, color: AppColors.textSecondary),
+                  ),
+                  const SizedBox(height: AppDimensions.xl),
+                  CustomTextField(
+                    label: 'Email',
+                    hint: 'student@utm.my',
+                    controller: _emailCtrl,
+                    keyboardType: TextInputType.emailAddress,
+                    prefixIcon: const Icon(Icons.email_outlined),
+                  ),
+                  const SizedBox(height: AppDimensions.xxl),
+                  CustomButton(
+                    onPressed: _sendReset,
+                    isLoading: _isLoading,
+                    label: 'Send Reset Link',
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 24),
-            _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: Color(0xFFD32F2F)),
-                  )
-                : ElevatedButton(
-                    onPressed: _sendReset,
-                    child: const Text('Hantar Email Reset'),
-                  ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

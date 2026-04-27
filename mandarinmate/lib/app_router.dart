@@ -39,7 +39,8 @@ GoRouter buildAppRouter(AuthBloc authBloc) {
       final isAuthRoute =
           location == '/auth' ||
           location == '/login' ||
-          location == '/forgot-password';
+          location == '/forgot-password' ||
+          location == '/';
       final isProtectedRoute =
           location == '/main' ||
           location == '/home' ||

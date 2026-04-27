@@ -133,16 +133,44 @@ class AuthService {
   }
 
   // ============================================================
-  // BAGIAN YANG DIPERBAIKI: Validasi Email UTM
+  // Validasi Email yang Diizinkan dan Email Verification
   // ============================================================
   Future<bool> isUTMEmail(String email) {
     final lowerEmail = email.toLowerCase().trim();
     return Future.value(
-      lowerEmail.endsWith(
-            '@graduate.utm.my',
-          ) || // Mengganti @student menjadi @graduate
-          lowerEmail.endsWith('@utm.my'),
+      lowerEmail.endsWith('@graduate.utm.my') ||
+      lowerEmail.endsWith('@utm.my') ||
+      lowerEmail.endsWith('@gmail.com') ||
+      lowerEmail.endsWith('@student.utm.my') ||
+      lowerEmail.endsWith('@tutor.utm.my') ||
+      lowerEmail.endsWith('@admin.utm.my')
     );
+  }
+
+  bool requiresEmailVerification(String email) {
+    final lowerEmail = email.toLowerCase().trim();
+    if (lowerEmail.endsWith('@student.utm.my') || 
+        lowerEmail.endsWith('@tutor.utm.my') || 
+        lowerEmail.endsWith('@admin.utm.my')) {
+      return false;
+    }
+    return true;
+  }
+
+  Future<bool> isEmailVerified() async {
+    final user = currentUser;
+    if (user != null) {
+      await user.reload(); // Reload to get the latest verification status
+      return user.emailVerified;
+    }
+    return false;
+  }
+
+  Future<void> sendEmailVerification() async {
+    final user = currentUser;
+    if (user != null && !user.emailVerified) {
+      await user.sendEmailVerification();
+    }
   }
 
   // Logout

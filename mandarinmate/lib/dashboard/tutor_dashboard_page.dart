@@ -74,6 +74,12 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                     name: name,
                     onLogout: () {
                       context.read<AuthBloc>().add(AuthLogoutRequested());
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Logout successful'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
                       Navigator.pushAndRemoveUntil(
                         context,
                         MaterialPageRoute(builder: (_) => const LoginPage()),

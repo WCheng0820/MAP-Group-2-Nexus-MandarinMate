@@ -37,11 +37,22 @@ class AuthLoginRequested extends AuthEvent {
 class AuthRegisterRequested extends AuthEvent {
   final String email;
   final String password;
+  final String firstName;
+  final String lastName;
+  final String username;
+  final String role;
 
-  const AuthRegisterRequested({required this.email, required this.password});
+  const AuthRegisterRequested({
+    required this.email,
+    required this.password,
+    required this.firstName,
+    this.lastName = '',
+    required this.username,
+    required this.role,
+  });
 
   @override
-  List<Object?> get props => [email];
+  List<Object?> get props => [email, username, role];
 }
 
 class AuthForgotPasswordRequested extends AuthEvent {
@@ -104,6 +115,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthService _authService;
   StreamSubscription<User?>? _authSubscription;
 
+  bool _isRegistering = false;
+
   AuthBloc({required AuthService authService})
       : _authService = authService,
         super(AuthInitial()) {
@@ -130,9 +143,21 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       AuthUserChanged event,
       Emitter<AuthState> emit,
       ) async {
+    // If we are in the middle of a registration process, don't react to auth changes
+    if (_isRegistering) {
+      return;
+    }
+
     final user = event.user;
     if (user == null) {
       emit(AuthUnauthenticated());
+      return;
+    }
+
+    // Prevent proceeding if email requires verification but is not verified
+    final requiresVerification = _authService.requiresEmailVerification(user.email ?? '');
+    if (requiresVerification && !user.emailVerified) {
+      // We let the _onLoginRequested or _onRegisterRequested emit the respective state.
       return;
     }
 
@@ -162,7 +187,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       if (!isUTMEmail) {
         emit(
           const AuthError(
-            'Please use your UTM email (@student.utm.my or @utm.my)',
+            'Please use student(@graduate.utm.my/student.utm.my), staff(@utm.my), admin(@admin.utm.my), tutor(@tutor.utm.my) or public(@gmail.com) email',
           ),
         );
         return;
@@ -174,7 +199,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         password: event.password,
       );
       print("⏱️ Step 2: Firebase Auth Finished!"); // <--- ADDED PRINT
-
+      
+      final requiresVerification = _authService.requiresEmailVerification(event.email);
+      if (requiresVerification) {
+        final isVerified = await _authService.isEmailVerified();
+        if (!isVerified) {
+          await _authService.logout(); // Logout unverified user immediately
+          emit(const AuthError('EMAIL_UNVERIFIED'));
+          return;
+        }
+      }
+      
+      // Allow it to naturally flow to AuthUserChanged or emit success if needed.
     } catch (e) {
       emit(AuthError(e.toString()));
     }
@@ -186,13 +222,54 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       ) async {
     emit(AuthLoading());
     try {
-      await _authService.register(
+      final isUTMEmail = await _authService.isUTMEmail(event.email);
+      if (!isUTMEmail) {
+        emit(
+          const AuthError(
+            'Please use student(@graduate.utm.my/student.utm.my), staff(@utm.my), admin(@admin.utm.my), tutor(@tutor.utm.my) or public(@gmail.com) email',
+          ),
+        );
+        return;
+      }
+
+      _isRegistering = true; // Prevent automatic login routing
+
+      final userCredential = await _authService.register(
         email: event.email.trim(),
         password: event.password,
       );
+
+      final uid = userCredential.user?.uid;
+      if (uid != null) {
+        final parsedRole = event.role == 'Tutor' ? UserRole.tutor : UserRole.student;
+        await _authService.createUserProfile(
+          uid: uid,
+          email: event.email.trim(),
+          username: event.username.trim(),
+          firstName: event.firstName.trim(),
+          lastName: event.lastName.trim(),
+          role: parsedRole,
+        );
+      }
+
+      final requiresVerification = _authService.requiresEmailVerification(event.email);
+      if (requiresVerification) {
+        await _authService.sendEmailVerification();
+      }
+
+      // Immediately log out after registration to force them to log in themselves
+      await _authService.logout();
+
+      _isRegistering = false; // Disable flag BEFORE emitting success so it doesn't get squashed
+      add(const AuthUserChanged(null)); // Ensures future states are recognized properly
+
+      emit(const AuthError('REGISTRATION_SUCCESS'));
+
     } catch (e) {
+      _isRegistering = false;
+      add(const AuthUserChanged(null));
       emit(AuthError(e.toString()));
-    }
+    } 
   }
 
   Future<void> _onForgotPasswordRequested(

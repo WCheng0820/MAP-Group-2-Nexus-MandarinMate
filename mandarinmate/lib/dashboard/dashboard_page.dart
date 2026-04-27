@@ -41,6 +41,12 @@ class DashboardPage extends StatelessWidget {
                       icon: const Icon(Icons.logout, color: Colors.white),
                       onPressed: () {
                         context.read<AuthBloc>().add(AuthLogoutRequested());
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Logout successful'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
                         Navigator.pushAndRemoveUntil(
                           context,
                           MaterialPageRoute(builder: (_) => const LoginPage()),

@@ -71,6 +71,12 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 uid: user.uid,
                 onLogout: () {
                   context.read<AuthBloc>().add(AuthLogoutRequested());
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Logout successful'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
                   context.go('/login');
                 },
               ),

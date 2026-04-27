@@ -147,5 +147,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _logout() async {
     setState(() => _isLoading = true);
     context.read<AuthBloc>().add(AuthLogoutRequested());
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Logout successful'),
+        backgroundColor: Colors.green,
+      ),
+    );
   }
 }
