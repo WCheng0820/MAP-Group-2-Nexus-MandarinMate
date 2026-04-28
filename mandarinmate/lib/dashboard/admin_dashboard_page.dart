@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mandarinmate/auth/presentation/bloc/auth_bloc.dart';
+import 'package:mandarinmate/screens/profile/edit_profile_page.dart'
+    as mandarinmate_edit_profile;
 import 'package:mandarinmate/dashboard/admin_analytics_page.dart';
 import 'package:mandarinmate/dashboard/admin_announcements_page.dart';
 import 'package:mandarinmate/dashboard/admin_lessons_page.dart';
@@ -85,9 +87,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 onManageUsers: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) => const AdminUsersPage(),
-                    ),
+                    MaterialPageRoute(builder: (_) => const AdminUsersPage()),
                   );
                 },
               ),
@@ -97,9 +97,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 onViewAll: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) => const AdminUsersPage(),
-                    ),
+                    MaterialPageRoute(builder: (_) => const AdminUsersPage()),
                   );
                 },
               ),
@@ -181,9 +179,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 onViewAll: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) => const AdminUsersPage(),
-                    ),
+                    MaterialPageRoute(builder: (_) => const AdminUsersPage()),
                   );
                 },
               ),
@@ -301,35 +297,84 @@ class _AdminHeader extends StatelessWidget {
                 ],
               ),
             ),
-            InkWell(
-              borderRadius: BorderRadius.circular(999),
-              onTap: onLogout,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
+            Row(
+              children: [
+                InkWell(
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: const Color(0xFFE6DEFF)),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(
-                      Icons.logout_rounded,
-                      color: _AdminColors.primary,
-                      size: 18,
-                    ),
-                    SizedBox(width: 6),
-                    Text(
-                      'Logout',
-                      style: TextStyle(
-                        color: _AdminColors.deep,
-                        fontWeight: FontWeight.w800,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            const mandarinmate_edit_profile.EditProfilePage(
+                              roleColor: _AdminColors.primary,
+                            ),
                       ),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
                     ),
-                  ],
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: const Color(0xFFE6DEFF)),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(
+                          Icons.edit_rounded,
+                          color: _AdminColors.primary,
+                          size: 18,
+                        ),
+                        SizedBox(width: 6),
+                        Text(
+                          'Edit',
+                          style: TextStyle(
+                            color: _AdminColors.deep,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(width: 8),
+                InkWell(
+                  borderRadius: BorderRadius.circular(999),
+                  onTap: onLogout,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF0F0),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: const Color(0xFFFFD6D6)),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(
+                          Icons.logout_rounded,
+                          color: Color(0xFFD32F2F),
+                          size: 18,
+                        ),
+                        SizedBox(width: 6),
+                        Text(
+                          'Logout',
+                          style: TextStyle(
+                            color: Color(0xFFD32F2F),
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         );
@@ -361,8 +406,9 @@ class _AdminHero extends StatelessWidget {
         int admins = 0;
 
         for (final doc in docs) {
-          final role =
-              (doc.data()['role'] ?? 'student').toString().toLowerCase();
+          final role = (doc.data()['role'] ?? 'student')
+              .toString()
+              .toLowerCase();
           if (role == 'student') students++;
           if (role == 'tutor') tutors++;
           if (role == 'admin') admins++;

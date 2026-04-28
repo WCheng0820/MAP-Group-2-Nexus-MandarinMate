@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mandarinmate/features/lessons/domain/lesson_model.dart';
+import 'package:mandarinmate/screens/profile/edit_profile_page.dart'
+    as mandarinmate_edit_profile;
 import 'package:mandarinmate/flashcards/presentation/pages/flashcard_game_page.dart';
 import 'package:mandarinmate/lessons/presentation/pages/lesson_detail_page.dart';
 import 'package:mandarinmate/lessons/presentation/pages/quiz_page.dart';
@@ -1170,21 +1172,85 @@ class _ProfileTab extends StatelessWidget {
                   const SizedBox(height: 16),
                   _HeroBadgeDark(label: '$xp XP earned'),
                   const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: () => _logout(context),
-                    icon: const Icon(Icons.logout_rounded),
-                    label: const Text('Logout'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _StudentColors.red,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      InkWell(
+                        borderRadius: BorderRadius.circular(999),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  const mandarinmate_edit_profile.EditProfilePage(
+                                    roleColor: _StudentColors.red,
+                                  ),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(color: const Color(0xFFFFDFC2)),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(
+                                Icons.edit_rounded,
+                                color: _StudentColors.orange,
+                                size: 18,
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'Edit Profile',
+                                style: TextStyle(
+                                  color: _StudentColors.deep,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                      const SizedBox(width: 12),
+                      InkWell(
+                        borderRadius: BorderRadius.circular(999),
+                        onTap: () => _logout(context),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF0F0),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(color: const Color(0xFFFFD6D6)),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(
+                                Icons.logout_rounded,
+                                color: Color(0xFFD32F2F),
+                                size: 18,
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'Logout',
+                                style: TextStyle(
+                                  color: Color(0xFFD32F2F),
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ],
               ),

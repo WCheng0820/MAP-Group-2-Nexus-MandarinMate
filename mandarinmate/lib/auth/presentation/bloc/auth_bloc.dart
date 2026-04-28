@@ -118,8 +118,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   bool _isRegistering = false;
 
   AuthBloc({required AuthService authService})
-      : _authService = authService,
-        super(AuthInitial()) {
+    : _authService = authService,
+      super(AuthInitial()) {
     on<AuthAppStarted>(_onAppStarted);
     on<AuthUserChanged>(_onUserChanged);
     on<AuthLoginRequested>(_onLoginRequested);
@@ -130,19 +130,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _onAppStarted(
-      AuthAppStarted event,
-      Emitter<AuthState> emit,
-      ) async {
+    AuthAppStarted event,
+    Emitter<AuthState> emit,
+  ) async {
     _authSubscription ??= _authService.authStateChanges.listen(
-          (user) => add(AuthUserChanged(user)),
+      (user) => add(AuthUserChanged(user)),
     );
     add(AuthUserChanged(_authService.currentUser));
   }
 
   Future<void> _onUserChanged(
-      AuthUserChanged event,
-      Emitter<AuthState> emit,
-      ) async {
+    AuthUserChanged event,
+    Emitter<AuthState> emit,
+  ) async {
     // If we are in the middle of a registration process, don't react to auth changes
     if (_isRegistering) {
       return;
@@ -155,7 +155,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
 
     // Prevent proceeding if email requires verification but is not verified
-    final requiresVerification = _authService.requiresEmailVerification(user.email ?? '');
+    final requiresVerification = _authService.requiresEmailVerification(
+      user.email ?? '',
+    );
     if (requiresVerification && !user.emailVerified) {
       // We let the _onLoginRequested or _onRegisterRequested emit the respective state.
       return;
@@ -165,7 +167,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       print("⏱️ Step 3: Fetching Firestore Profile..."); // <--- ADDED PRINT
       final profile = await _authService.getUserProfile(user.uid);
-      print("⏱️ Step 4: Firestore Profile Fetched! Routing..."); // <--- ADDED PRINT
+      print(
+        "⏱️ Step 4: Firestore Profile Fetched! Routing...",
+      ); // <--- ADDED PRINT
 
       if (profile == null) {
         emit(AuthProfileIncomplete(user));
@@ -178,16 +182,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _onLoginRequested(
-      AuthLoginRequested event,
-      Emitter<AuthState> emit,
-      ) async {
+    AuthLoginRequested event,
+    Emitter<AuthState> emit,
+  ) async {
     emit(AuthLoading());
     try {
       final isUTMEmail = await _authService.isUTMEmail(event.email);
       if (!isUTMEmail) {
         emit(
           const AuthError(
-            'Please use student(@graduate.utm.my/student.utm.my), staff(@utm.my), admin(@admin.utm.my), tutor(@tutor.utm.my) or public(@gmail.com) email',
+            'Please use student(@graduate.utm.my), staff(@utm.my), or public(@gmail.com) email',
           ),
         );
         return;
@@ -199,8 +203,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         password: event.password,
       );
       print("⏱️ Step 2: Firebase Auth Finished!"); // <--- ADDED PRINT
-      
-      final requiresVerification = _authService.requiresEmailVerification(event.email);
+
+      final requiresVerification = _authService.requiresEmailVerification(
+        event.email,
+      );
       if (requiresVerification) {
         final isVerified = await _authService.isEmailVerified();
         if (!isVerified) {
@@ -209,7 +215,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           return;
         }
       }
-      
+
       // Allow it to naturally flow to AuthUserChanged or emit success if needed.
     } catch (e) {
       emit(AuthError(e.toString()));
@@ -217,16 +223,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _onRegisterRequested(
-      AuthRegisterRequested event,
-      Emitter<AuthState> emit,
-      ) async {
+    AuthRegisterRequested event,
+    Emitter<AuthState> emit,
+  ) async {
     emit(AuthLoading());
     try {
       final isUTMEmail = await _authService.isUTMEmail(event.email);
       if (!isUTMEmail) {
         emit(
           const AuthError(
-            'Please use student(@graduate.utm.my/student.utm.my), staff(@utm.my), admin(@admin.utm.my), tutor(@tutor.utm.my) or public(@gmail.com) email',
+            'Please use student(@graduate.utm.my), staff(@utm.my), or public(@gmail.com) email',
           ),
         );
         return;
@@ -241,7 +247,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       final uid = userCredential.user?.uid;
       if (uid != null) {
-        final parsedRole = event.role == 'Tutor' ? UserRole.tutor : UserRole.student;
+        final parsedRole = event.role == 'Tutor'
+            ? UserRole.tutor
+            : UserRole.student;
         await _authService.createUserProfile(
           uid: uid,
           email: event.email.trim(),
@@ -252,7 +260,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         );
       }
 
-      final requiresVerification = _authService.requiresEmailVerification(event.email);
+      final requiresVerification = _authService.requiresEmailVerification(
+        event.email,
+      );
       if (requiresVerification) {
         await _authService.sendEmailVerification();
       }
@@ -260,22 +270,24 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       // Immediately log out after registration to force them to log in themselves
       await _authService.logout();
 
-      _isRegistering = false; // Disable flag BEFORE emitting success so it doesn't get squashed
-      add(const AuthUserChanged(null)); // Ensures future states are recognized properly
+      _isRegistering =
+          false; // Disable flag BEFORE emitting success so it doesn't get squashed
+      add(
+        const AuthUserChanged(null),
+      ); // Ensures future states are recognized properly
 
       emit(const AuthError('REGISTRATION_SUCCESS'));
-
     } catch (e) {
       _isRegistering = false;
       add(const AuthUserChanged(null));
       emit(AuthError(e.toString()));
-    } 
+    }
   }
 
   Future<void> _onForgotPasswordRequested(
-      AuthForgotPasswordRequested event,
-      Emitter<AuthState> emit,
-      ) async {
+    AuthForgotPasswordRequested event,
+    Emitter<AuthState> emit,
+  ) async {
     emit(AuthLoading());
     try {
       await _authService.sendPasswordResetEmail(event.email.trim());
@@ -297,9 +309,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _onGoogleSignInRequested(
-      AuthGoogleSignInRequested event,
-      Emitter<AuthState> emit,
-      ) async {
+    AuthGoogleSignInRequested event,
+    Emitter<AuthState> emit,
+  ) async {
     emit(AuthLoading());
     try {
       await _authService.signInWithGoogle();
@@ -309,9 +321,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _onLogoutRequested(
-      AuthLogoutRequested event,
-      Emitter<AuthState> emit,
-      ) async {
+    AuthLogoutRequested event,
+    Emitter<AuthState> emit,
+  ) async {
     emit(AuthLoading());
     try {
       await _authService.logout();

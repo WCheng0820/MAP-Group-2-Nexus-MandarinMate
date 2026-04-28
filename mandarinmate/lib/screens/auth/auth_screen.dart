@@ -22,7 +22,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
   // Registration State
   String _selectedRole = 'Student';
-  
+
   // Register controllers
   final _regFirstNameController = TextEditingController();
   final _regLastNameController = TextEditingController();
@@ -155,14 +155,22 @@ class _AuthScreenState extends State<AuthScreen> {
           if (state.message == 'EMAIL_UNVERIFIED') {
             _showVerificationDialog(context);
           } else if (state.message == 'REGISTRATION_SUCCESS') {
-            _showSuccessDialog(context, 'Account Created!', 'Your account has been created successfully.\nPlease check your email to verify the account.', 'registration');
+            _showSuccessDialog(
+              context,
+              'Account Created!',
+              'Your account has been created successfully.\nPlease check your email to verify the account.',
+              'registration',
+            );
           } else {
             ErrorSnackBar.show(context, state.message);
           }
         } else if (state is AuthProfileIncomplete) {
           // If a user somehow has no profile, log them out and show error.
           context.read<AuthBloc>().add(AuthLogoutRequested());
-          ErrorSnackBar.show(context, 'Account profile is incomplete. Please contact support or register again.');
+          ErrorSnackBar.show(
+            context,
+            'Account profile is incomplete. Please contact support or register again.',
+          );
         } else if (state is AuthAuthenticated) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -185,9 +193,9 @@ class _AuthScreenState extends State<AuthScreen> {
                   children: [
                     // Red Header - Full Width
                     Container(
-                        decoration: const BoxDecoration(
-                          gradient: AppColors.primaryGradient,
-                        ),
+                      decoration: const BoxDecoration(
+                        gradient: AppColors.primaryGradient,
+                      ),
                       width: double.infinity,
                       padding: const EdgeInsets.only(
                         top: AppDimensions.xxl * 2,
@@ -230,15 +238,22 @@ class _AuthScreenState extends State<AuthScreen> {
                         ],
                       ),
                     ),
-                    
+
                     // Card Container for Tabs and Form
                     Transform.translate(
-                      offset: const Offset(0, -32), // overlap the header slightly
+                      offset: const Offset(
+                        0,
+                        -32,
+                      ), // overlap the header slightly
                       child: Container(
-                        margin: const EdgeInsets.symmetric(horizontal: AppDimensions.lg),
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: AppDimensions.lg,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.surfaceColor,
-                          borderRadius: BorderRadius.circular(AppDimensions.radiusXL),
+                          borderRadius: BorderRadius.circular(
+                            AppDimensions.radiusXL,
+                          ),
                           boxShadow: [
                             BoxShadow(
                               color: AppColors.shadowColor,
@@ -259,16 +274,18 @@ class _AuthScreenState extends State<AuthScreen> {
                                 children: [
                                   Expanded(
                                     child: GestureDetector(
-                                      onTap: () => setState(() => _isLoginTab = true),
+                                      onTap: () =>
+                                          setState(() => _isLoginTab = true),
                                       child: Column(
                                         children: [
                                           Text(
                                             'Log In',
-                                            style: AppTextStyles.headlineSmall.copyWith(
-                                              color: _isLoginTab
-                                                  ? AppColors.primaryColor
-                                                  : AppColors.textTertiary,
-                                            ),
+                                            style: AppTextStyles.headlineSmall
+                                                .copyWith(
+                                                  color: _isLoginTab
+                                                      ? AppColors.primaryColor
+                                                      : AppColors.textTertiary,
+                                                ),
                                             textAlign: TextAlign.center,
                                           ),
                                           if (_isLoginTab)
@@ -285,16 +302,18 @@ class _AuthScreenState extends State<AuthScreen> {
                                   ),
                                   Expanded(
                                     child: GestureDetector(
-                                      onTap: () => setState(() => _isLoginTab = false),
+                                      onTap: () =>
+                                          setState(() => _isLoginTab = false),
                                       child: Column(
                                         children: [
                                           Text(
                                             'Sign Up',
-                                            style: AppTextStyles.headlineSmall.copyWith(
-                                              color: !_isLoginTab
-                                                  ? AppColors.primaryColor
-                                                  : AppColors.textTertiary,
-                                            ),
+                                            style: AppTextStyles.headlineSmall
+                                                .copyWith(
+                                                  color: !_isLoginTab
+                                                      ? AppColors.primaryColor
+                                                      : AppColors.textTertiary,
+                                                ),
                                             textAlign: TextAlign.center,
                                           ),
                                           if (!_isLoginTab)
@@ -329,7 +348,9 @@ class _AuthScreenState extends State<AuthScreen> {
               if (isLoading)
                 LoadingOverlay(
                   isLoading: isLoading,
-                  message: _isLoginTab ? 'Logging in...' : 'Creating account...',
+                  message: _isLoginTab
+                      ? 'Logging in...'
+                      : 'Creating account...',
                 ),
             ],
           ),
@@ -413,11 +434,10 @@ class _AuthScreenState extends State<AuthScreen> {
             children: [
               Expanded(child: Divider(color: AppColors.dividerColor)),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppDimensions.md),
-                child: Text(
-                  'or continue with',
-                  style: AppTextStyles.bodySmall,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimensions.md,
                 ),
+                child: Text('or continue with', style: AppTextStyles.bodySmall),
               ),
               Expanded(child: Divider(color: AppColors.dividerColor)),
             ],
@@ -481,16 +501,17 @@ class _AuthScreenState extends State<AuthScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Role',
-                style: AppTextStyles.labelLarge,
-              ),
+              Text('Role', style: AppTextStyles.labelLarge),
               const SizedBox(height: AppDimensions.sm),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppDimensions.md),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimensions.md,
+                ),
                 decoration: BoxDecoration(
                   border: Border.all(color: AppColors.dividerColor),
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+                  borderRadius: BorderRadius.circular(
+                    AppDimensions.radiusMedium,
+                  ),
                 ),
                 child: DropdownButton<String>(
                   value: _selectedRole,
@@ -632,11 +653,10 @@ class _AuthScreenState extends State<AuthScreen> {
             children: [
               Expanded(child: Divider(color: AppColors.dividerColor)),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppDimensions.md),
-                child: Text(
-                  'or continue with',
-                  style: AppTextStyles.bodySmall,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimensions.md,
                 ),
+                child: Text('or continue with', style: AppTextStyles.bodySmall),
               ),
               Expanded(child: Divider(color: AppColors.dividerColor)),
             ],
@@ -698,10 +718,7 @@ class _AuthScreenState extends State<AuthScreen> {
             ),
           ),
           const SizedBox(width: AppDimensions.md),
-          Text(
-            'UTM Google Account',
-            style: AppTextStyles.bodyMedium,
-          ),
+          Text('UTM Google Account', style: AppTextStyles.bodyMedium),
         ],
       ),
     );

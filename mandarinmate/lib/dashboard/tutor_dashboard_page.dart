@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mandarinmate/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:mandarinmate/features/auth/presentation/pages/login_page.dart';
+import 'package:mandarinmate/screens/profile/edit_profile_page.dart'
+    as mandarinmate_edit_profile;
 import 'package:mandarinmate/features/tutor/presentation/pages/tutor_announcement_page.dart';
 import 'package:mandarinmate/features/tutor/presentation/pages/tutor_lessons_page.dart';
 import 'package:mandarinmate/features/tutor/presentation/pages/tutor_students_page.dart';
@@ -287,30 +289,84 @@ class _TutorHeader extends StatelessWidget {
             ],
           ),
         ),
-        InkWell(
-          borderRadius: BorderRadius.circular(999),
-          onTap: onLogout,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.white,
+        Row(
+          children: [
+            InkWell(
               borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: const Color(0xFFDFF2E9)),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.logout_rounded, color: _TutorColors.green, size: 18),
-                SizedBox(width: 6),
-                Text(
-                  'Logout',
-                  style: TextStyle(
-                    color: _TutorColors.deep,
-                    fontWeight: FontWeight.w800,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        const mandarinmate_edit_profile.EditProfilePage(
+                          roleColor: _TutorColors.green,
+                        ),
                   ),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
                 ),
-              ],
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: const Color(0xFFDFF2E9)),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(
+                      Icons.edit_rounded,
+                      color: _TutorColors.green,
+                      size: 18,
+                    ),
+                    SizedBox(width: 6),
+                    Text(
+                      'Edit',
+                      style: TextStyle(
+                        color: _TutorColors.deep,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ),
+            const SizedBox(width: 8),
+            InkWell(
+              borderRadius: BorderRadius.circular(999),
+              onTap: onLogout,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF0F0),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: const Color(0xFFFFD6D6)),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(
+                      Icons.logout_rounded,
+                      color: Color(0xFFD32F2F),
+                      size: 18,
+                    ),
+                    SizedBox(width: 6),
+                    Text(
+                      'Logout',
+                      style: TextStyle(
+                        color: Color(0xFFD32F2F),
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );

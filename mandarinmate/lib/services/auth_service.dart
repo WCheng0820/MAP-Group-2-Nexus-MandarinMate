@@ -139,20 +139,17 @@ class AuthService {
     final lowerEmail = email.toLowerCase().trim();
     return Future.value(
       lowerEmail.endsWith('@graduate.utm.my') ||
-      lowerEmail.endsWith('@utm.my') ||
-      lowerEmail.endsWith('@gmail.com') ||
-      lowerEmail.endsWith('@student.utm.my') ||
-      lowerEmail.endsWith('@tutor.utm.my') ||
-      lowerEmail.endsWith('@admin.utm.my')
+          lowerEmail.endsWith('@utm.my') ||
+          lowerEmail.endsWith('@gmail.com'),
     );
   }
 
   bool requiresEmailVerification(String email) {
     final lowerEmail = email.toLowerCase().trim();
-    if (lowerEmail.endsWith('@student.utm.my') || 
-        lowerEmail.endsWith('@tutor.utm.my') || 
-        lowerEmail.endsWith('@admin.utm.my')) {
-      return false;
+    if (lowerEmail == 'student@utm.my' ||
+        lowerEmail == 'tutor@utm.my' ||
+        lowerEmail == 'admin@utm.my') {
+      return false; // Dummy accounts do not need verification
     }
     return true;
   }

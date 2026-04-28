@@ -24,10 +24,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
         backgroundColor: AppColors.primaryColor,
         elevation: 0,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: _logout,
-          ),
+          IconButton(icon: const Icon(Icons.logout), onPressed: _logout),
         ],
       ),
       body: Stack(
@@ -52,7 +49,9 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   padding: const EdgeInsets.all(AppDimensions.lg),
                   decoration: BoxDecoration(
                     color: AppColors.primaryLight,
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
+                    borderRadius: BorderRadius.circular(
+                      AppDimensions.radiusLarge,
+                    ),
                     border: Border.all(color: AppColors.primaryColor),
                   ),
                   child: Text(
@@ -69,7 +68,9 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(AppDimensions.lg),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusLarge,
+                      ),
                       gradient: AppColors.primaryGradient,
                     ),
                     child: Column(
@@ -83,24 +84,24 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                         ),
                         const SizedBox(height: AppDimensions.md),
                         ...const [
-                          '► Continue Lesson: HSK 1 Vocabulary',
-                          '► Daily Challenge: Practice Tone Pronunciation',
-                          '► Upcoming: Weekend Conversation Club',
-                          '★ 150 Points Earned This Week!',
-                        ]
+                              '► Continue Lesson: HSK 1 Vocabulary',
+                              '► Daily Challenge: Practice Tone Pronunciation',
+                              '► Upcoming: Weekend Conversation Club',
+                              '★ 150 Points Earned This Week!',
+                            ]
                             .map(
                               (feature) => Padding(
-                            padding: const EdgeInsets.only(
-                              bottom: AppDimensions.md,
-                            ),
-                            child: Text(
-                              feature,
-                              style: AppTextStyles.bodyMedium.copyWith(
-                                color: AppColors.textLight,
+                                padding: const EdgeInsets.only(
+                                  bottom: AppDimensions.md,
+                                ),
+                                child: Text(
+                                  feature,
+                                  style: AppTextStyles.bodyMedium.copyWith(
+                                    color: AppColors.textLight,
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
-                        )
+                            )
                             .toList(),
                       ],
                     ),
@@ -118,10 +119,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
             ),
           ),
           if (_isLoading)
-            LoadingOverlay(
-              isLoading: _isLoading,
-              message: 'Logging out...',
-            ),
+            LoadingOverlay(isLoading: _isLoading, message: 'Logging out...'),
         ],
       ),
     );

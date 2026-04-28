@@ -4,6 +4,8 @@ import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mandarinmate/auth/presentation/bloc/auth_bloc.dart';
 import 'package:mandarinmate/models/user_model.dart';
+import 'package:mandarinmate/screens/profile/edit_profile_page.dart'
+    as mandarinmate_edit_profile;
 import 'package:mandarinmate/dashboard/admin_dashboard_page.dart';
 import 'package:mandarinmate/dashboard/tutor_dashboard_page.dart';
 import 'package:mandarinmate/screens/auth/auth_screen.dart';
@@ -59,11 +61,20 @@ GoRouter buildAppRouter(AuthBloc authBloc) {
 
       // --- THE FIX IS HERE ---
       if (authState is AuthAuthenticated) {
-        final role = authState.profile.role;
+        final profile = authState.profile;
+        final role = profile.role;
+
+        // Force profile setup if missing
+        if (!profile.isProfileComplete &&
+            location != '/edit-profile-onboarding') {
+          return '/edit-profile-onboarding';
+        }
 
         // 1. If they are already logged in but sitting on the Login/Register screen,
         // immediately redirect them to their specific dashboard.
-        if (isAuthRoute) {
+        if (isAuthRoute ||
+            (profile.isProfileComplete &&
+                location == '/edit-profile-onboarding')) {
           if (role == UserRole.student) return '/main';
           if (role == UserRole.tutor) return '/tutor-dashboard';
           if (role == UserRole.admin) return '/admin-dashboard';
@@ -71,7 +82,7 @@ GoRouter buildAppRouter(AuthBloc authBloc) {
 
         // 2. If they are trying to access the WRONG dashboard for their role,
         // redirect them to the correct one.
-        if (isProtectedRoute) {
+        if (isProtectedRoute && profile.isProfileComplete) {
           if (role == UserRole.student && location != '/main') {
             return '/main';
           }
@@ -107,6 +118,16 @@ GoRouter buildAppRouter(AuthBloc authBloc) {
       GoRoute(
         path: '/admin-dashboard',
         builder: (context, state) => const AdminDashboardPage(),
+      ),
+      GoRoute(
+        path: '/edit-profile-onboarding',
+        builder: (context, state) =>
+            const mandarinmate_edit_profile.EditProfilePage(
+              roleColor: Color(
+                0xFFD32F2F,
+              ), // Generic red, the page can override it based on the actual profile
+              isFirstTime: true,
+            ),
       ),
       GoRoute(
         path: '/ui-gamified',

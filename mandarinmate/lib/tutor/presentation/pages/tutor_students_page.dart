@@ -19,9 +19,7 @@ class TutorStudentsPage extends StatelessWidget {
         title: const Text('Students'),
       ),
       body: user == null
-          ? const Center(
-              child: Text('Please log in again to view students.'),
-            )
+          ? const Center(child: Text('Please log in again to view students.'))
           : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               stream: FirebaseFirestore.instance
                   .collection('users')
@@ -33,9 +31,7 @@ class TutorStudentsPage extends StatelessWidget {
                 }
 
                 if (snapshot.hasError) {
-                  return const Center(
-                    child: Text('Error loading students.'),
-                  );
+                  return const Center(child: Text('Error loading students.'));
                 }
 
                 final docs = snapshot.data?.docs ?? [];

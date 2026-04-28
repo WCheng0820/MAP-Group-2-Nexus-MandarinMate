@@ -6,6 +6,11 @@ class UserProfile {
   final String username;
   final String firstName;
   final String lastName;
+  final String? age;
+  final String? studentId;
+  final String? faculty;
+  final String? bio;
+  final bool isProfileComplete;
   final UserRole role;
   final String profileImageUrl;
   final int level;
@@ -20,6 +25,11 @@ class UserProfile {
     required this.username,
     required this.firstName,
     required this.lastName,
+    this.age,
+    this.studentId,
+    this.faculty,
+    this.bio,
+    this.isProfileComplete = false,
     required this.role,
     this.profileImageUrl = '',
     this.level = 1,
@@ -37,6 +47,11 @@ class UserProfile {
       'username': username,
       'firstName': firstName,
       'lastName': lastName,
+      if (age != null) 'age': age,
+      if (studentId != null) 'studentId': studentId,
+      if (faculty != null) 'faculty': faculty,
+      if (bio != null) 'bio': bio,
+      'isProfileComplete': isProfileComplete,
       'role': role.toString().split('.').last,
       'profileImageUrl': profileImageUrl,
       'level': level,
@@ -55,6 +70,11 @@ class UserProfile {
       username: map['username'] ?? '',
       firstName: map['firstName'] ?? '',
       lastName: map['lastName'] ?? '',
+      age: map['age'],
+      studentId: map['studentId'],
+      faculty: map['faculty'],
+      bio: map['bio'],
+      isProfileComplete: map['isProfileComplete'] == true,
       role: _roleFromString(map['role'] ?? 'student'),
       profileImageUrl: map['profileImageUrl'] ?? '',
       level: map['level'] ?? 1,
