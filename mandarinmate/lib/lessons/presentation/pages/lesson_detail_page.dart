@@ -3,6 +3,7 @@ import '../../../flashcards/presentation/pages/flashcard_game_page.dart';
 import 'package:mandarinmate/features/lessons/domain/lesson_model.dart';
 import 'package:mandarinmate/features/lessons/presentation/pages/vocab_lesson_page.dart';
 import 'package:mandarinmate/features/lessons/presentation/pages/quiz_page.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class LessonDetailPage extends StatelessWidget {
   final LessonUnit unit;
@@ -77,6 +78,173 @@ class LessonDetailPage extends StatelessWidget {
     );
   }
 
+  Widget _materialCard(BuildContext context, LearningMaterial material) {
+    final color = _materialColor(material.type);
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: color.withAlpha((0.1 * 255).toInt()),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(_materialIcon(material.type), color: color),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      material.title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _materialLabel(material.type),
+                      style: TextStyle(
+                        color: color,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (material.description.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              material.description,
+              style: TextStyle(color: Colors.grey.shade700, height: 1.4),
+            ),
+          ],
+          if (material.fileName.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              material.fileName,
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+          const SizedBox(height: 14),
+          SizedBox(
+            height: 44,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: color,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => _openMaterial(context, material),
+              icon: Icon(_materialActionIcon(material.type)),
+              label: Text(_materialActionLabel(material.type)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  IconData _materialIcon(String type) {
+    switch (type) {
+      case LearningMaterialType.pdf:
+        return Icons.picture_as_pdf_outlined;
+      case LearningMaterialType.video:
+        return Icons.video_library_outlined;
+      case LearningMaterialType.article:
+      default:
+        return Icons.article_outlined;
+    }
+  }
+
+  IconData _materialActionIcon(String type) {
+    switch (type) {
+      case LearningMaterialType.video:
+        return Icons.play_circle_outline;
+      case LearningMaterialType.pdf:
+        return Icons.open_in_new;
+      case LearningMaterialType.article:
+      default:
+        return Icons.menu_book_outlined;
+    }
+  }
+
+  String _materialLabel(String type) {
+    switch (type) {
+      case LearningMaterialType.pdf:
+        return 'PDF Reference';
+      case LearningMaterialType.video:
+        return 'Video Lesson';
+      case LearningMaterialType.article:
+      default:
+        return 'Article';
+    }
+  }
+
+  String _materialActionLabel(String type) {
+    switch (type) {
+      case LearningMaterialType.pdf:
+        return 'Open PDF';
+      case LearningMaterialType.video:
+        return 'Watch Video';
+      case LearningMaterialType.article:
+      default:
+        return 'Read Article';
+    }
+  }
+
+  Color _materialColor(String type) {
+    switch (type) {
+      case LearningMaterialType.pdf:
+        return const Color(0xFFC62828);
+      case LearningMaterialType.video:
+        return const Color(0xFF6A1B9A);
+      case LearningMaterialType.article:
+      default:
+        return const Color(0xFF1565C0);
+    }
+  }
+
+  Future<void> _openMaterial(
+    BuildContext context,
+    LearningMaterial material,
+  ) async {
+    final uri = Uri.tryParse(material.url);
+    if (uri == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('This material link is invalid.')),
+      );
+      return;
+    }
+
+    final launched = await launchUrl(uri);
+    if (!launched && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('This material could not be opened.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final quizQuestions = vocabItems.map((item) {
@@ -143,14 +311,31 @@ class LessonDetailPage extends StatelessWidget {
                       _badge('+${unit.xpReward} XP'),
                       const SizedBox(width: 8),
                       _badge('${unit.totalLessons} lessons'),
+                      if (unit.materials.isNotEmpty) ...[
+                        const SizedBox(width: 8),
+                        _badge('${unit.materials.length} materials'),
+                      ],
                     ],
                   ),
                 ],
               ),
             ),
+            if (unit.materials.isNotEmpty) ...[
+              const SizedBox(height: 20),
+              const Text(
+                'Learning Materials',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              Column(
+                children: unit.materials
+                    .map((material) => _materialCard(context, material))
+                    .toList(),
+              ),
+            ],
             const SizedBox(height: 20),
             const Text(
-              'Pilih Aktiviti',
+              'Choose an Activity',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
@@ -164,7 +349,7 @@ class LessonDetailPage extends StatelessWidget {
               children: [
                 _activityCard(
                   emoji: '📖',
-                  title: 'Kosa Kata',
+                  title: 'Vocabulary',
                   subtitle: 'Learn vocabulary',
 
                   color: const Color(0xFF1565C0),
@@ -197,14 +382,16 @@ class LessonDetailPage extends StatelessWidget {
                 ),
                 _activityCard(
                   emoji: '❓',
-                  title: 'Kuiz',
+                  title: 'Quiz',
                   subtitle: 'Test knowledge',
                   color: const Color(0xFFC62828),
                   onTap: () {
                     if (quizQuestions.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Tiada kosa kata untuk kuiz.'),
+                          content: Text(
+                            'No vocabulary is available for this quiz.',
+                          ),
                         ),
                       );
                       return;
@@ -220,7 +407,7 @@ class LessonDetailPage extends StatelessWidget {
                 ),
                 _activityCard(
                   emoji: '🎤',
-                  title: 'Sebutan',
+                  title: 'Pronunciation',
                   subtitle: 'Practice speaking',
                   color: const Color(0xFF00695C),
                   onTap: () {

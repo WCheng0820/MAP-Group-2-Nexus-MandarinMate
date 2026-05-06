@@ -165,11 +165,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     emit(AuthLoading());
     try {
-      print("⏱️ Step 3: Fetching Firestore Profile..."); // <--- ADDED PRINT
       final profile = await _authService.getUserProfile(user.uid);
-      print(
-        "⏱️ Step 4: Firestore Profile Fetched! Routing...",
-      ); // <--- ADDED PRINT
 
       if (profile == null) {
         emit(AuthProfileIncomplete(user));
@@ -197,12 +193,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         return;
       }
 
-      print("⏱️ Step 1: Starting Firebase Auth Login..."); // <--- ADDED PRINT
       await _authService.login(
         email: event.email.trim(),
         password: event.password,
       );
-      print("⏱️ Step 2: Firebase Auth Finished!"); // <--- ADDED PRINT
 
       final requiresVerification = _authService.requiresEmailVerification(
         event.email,

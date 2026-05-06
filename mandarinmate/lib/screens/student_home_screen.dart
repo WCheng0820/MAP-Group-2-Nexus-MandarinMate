@@ -4,7 +4,7 @@ import 'package:mandarinmate/utils/app_theme.dart';
 import 'package:mandarinmate/widgets/custom_widgets.dart';
 
 class StudentHomeScreen extends StatefulWidget {
-  const StudentHomeScreen({Key? key}) : super(key: key);
+  const StudentHomeScreen({super.key});
 
   @override
   State<StudentHomeScreen> createState() => _StudentHomeScreenState();
@@ -84,25 +84,23 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                         ),
                         const SizedBox(height: AppDimensions.md),
                         ...const [
-                              '► Continue Lesson: HSK 1 Vocabulary',
-                              '► Daily Challenge: Practice Tone Pronunciation',
-                              '► Upcoming: Weekend Conversation Club',
-                              '★ 150 Points Earned This Week!',
-                            ]
-                            .map(
-                              (feature) => Padding(
-                                padding: const EdgeInsets.only(
-                                  bottom: AppDimensions.md,
-                                ),
-                                child: Text(
-                                  feature,
-                                  style: AppTextStyles.bodyMedium.copyWith(
-                                    color: AppColors.textLight,
-                                  ),
-                                ),
+                          '► Continue Lesson: HSK 1 Vocabulary',
+                          '► Daily Challenge: Practice Tone Pronunciation',
+                          '► Upcoming: Weekend Conversation Club',
+                          '★ 150 Points Earned This Week!',
+                        ].map(
+                          (feature) => Padding(
+                            padding: const EdgeInsets.only(
+                              bottom: AppDimensions.md,
+                            ),
+                            child: Text(
+                              feature,
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: AppColors.textLight,
                               ),
-                            )
-                            .toList(),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),

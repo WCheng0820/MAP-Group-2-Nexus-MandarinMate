@@ -1,4 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 enum UserRole { student, tutor, admin }
+
+enum MembershipStatus { pending, approved, rejected }
 
 class UserProfile {
   final String uid;
@@ -12,6 +16,7 @@ class UserProfile {
   final String? bio;
   final bool isProfileComplete;
   final UserRole role;
+  final MembershipStatus membershipStatus;
   final String profileImageUrl;
   final int level;
   final int xpPoints;
@@ -31,6 +36,7 @@ class UserProfile {
     this.bio,
     this.isProfileComplete = false,
     required this.role,
+    this.membershipStatus = MembershipStatus.pending,
     this.profileImageUrl = '',
     this.level = 1,
     this.xpPoints = 0,
@@ -53,6 +59,7 @@ class UserProfile {
       if (bio != null) 'bio': bio,
       'isProfileComplete': isProfileComplete,
       'role': role.toString().split('.').last,
+      'membershipStatus': membershipStatus.toString().split('.').last,
       'profileImageUrl': profileImageUrl,
       'level': level,
       'xpPoints': xpPoints,
@@ -76,16 +83,13 @@ class UserProfile {
       bio: map['bio'],
       isProfileComplete: map['isProfileComplete'] == true,
       role: _roleFromString(map['role'] ?? 'student'),
+      membershipStatus: _membershipStatusFromString(map['membershipStatus']),
       profileImageUrl: map['profileImageUrl'] ?? '',
       level: map['level'] ?? 1,
       xpPoints: map['xpPoints'] ?? 0,
       currentStreak: map['currentStreak'] ?? 0,
-      createdAt: map['createdAt'] != null
-          ? DateTime.parse(map['createdAt'])
-          : DateTime.now(),
-      updatedAt: map['updatedAt'] != null
-          ? DateTime.parse(map['updatedAt'])
-          : DateTime.now(),
+      createdAt: _dateTimeFromValue(map['createdAt']) ?? DateTime.now(),
+      updatedAt: _dateTimeFromValue(map['updatedAt']) ?? DateTime.now(),
     );
   }
 
@@ -100,5 +104,41 @@ class UserProfile {
     }
   }
 
+  static MembershipStatus _membershipStatusFromString(dynamic status) {
+    switch ((status ?? '').toString().toLowerCase().split('.').last) {
+      case 'pending':
+        return MembershipStatus.pending;
+      case 'rejected':
+        return MembershipStatus.rejected;
+      case 'approved':
+      default:
+        return MembershipStatus.approved;
+    }
+  }
+
+  static DateTime? _dateTimeFromValue(dynamic value) {
+    if (value is Timestamp) {
+      return value.toDate();
+    }
+    if (value is DateTime) {
+      return value;
+    }
+    if (value is String && value.isNotEmpty) {
+      return DateTime.tryParse(value);
+    }
+    return null;
+  }
+
   String get displayName => '$firstName $lastName';
+
+  String get membershipStatusLabel {
+    switch (membershipStatus) {
+      case MembershipStatus.approved:
+        return 'Approved';
+      case MembershipStatus.rejected:
+        return 'Rejected';
+      case MembershipStatus.pending:
+        return 'Pending';
+    }
+  }
 }

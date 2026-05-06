@@ -82,6 +82,9 @@ class AuthService {
         firstName: firstName,
         lastName: lastName,
         role: role,
+        membershipStatus: role == UserRole.admin
+            ? MembershipStatus.approved
+            : MembershipStatus.pending,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );

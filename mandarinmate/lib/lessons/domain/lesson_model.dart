@@ -1,5 +1,77 @@
 import 'package:equatable/equatable.dart';
 
+class LearningMaterialType {
+  static const String article = 'article';
+  static const String pdf = 'pdf';
+  static const String video = 'video';
+
+  static const List<String> values = <String>[article, pdf, video];
+}
+
+class LearningMaterial extends Equatable {
+  final String id;
+  final String type;
+  final String title;
+  final String description;
+  final String url;
+  final String fileName;
+  final String storagePath;
+
+  const LearningMaterial({
+    required this.id,
+    required this.type,
+    required this.title,
+    required this.description,
+    required this.url,
+    required this.fileName,
+    required this.storagePath,
+  });
+
+  bool get isArticle => type == LearningMaterialType.article;
+  bool get isPdf => type == LearningMaterialType.pdf;
+  bool get isVideo => type == LearningMaterialType.video;
+
+  factory LearningMaterial.fromMap(Map<String, dynamic> data) {
+    final rawType = (data['type'] ?? '').toString().trim().toLowerCase();
+    final type = LearningMaterialType.values.contains(rawType)
+        ? rawType
+        : LearningMaterialType.article;
+
+    return LearningMaterial(
+      id: (data['id'] ?? '').toString(),
+      type: type,
+      title: (data['title'] ?? '').toString(),
+      description: (data['description'] ?? '').toString(),
+      url: (data['url'] ?? '').toString(),
+      fileName: (data['fileName'] ?? '').toString(),
+      storagePath: (data['storagePath'] ?? '').toString(),
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return <String, dynamic>{
+      'id': id,
+      'type': type,
+      'title': title,
+      'description': description,
+      'url': url,
+      'fileName': fileName,
+      'storagePath': storagePath,
+    };
+  }
+
+  @override
+  List<Object?> get props => [
+    id,
+    type,
+    title,
+    description,
+    url,
+    fileName,
+    storagePath,
+  ];
+}
+
 class LessonUnit extends Equatable {
   final String id;
   final int unitNumber;
@@ -9,6 +81,7 @@ class LessonUnit extends Equatable {
   final int totalLessons;
   final int xpReward;
   final int order;
+  final List<LearningMaterial> materials;
 
   const LessonUnit({
     required this.id,
@@ -19,9 +92,12 @@ class LessonUnit extends Equatable {
     required this.totalLessons,
     required this.xpReward,
     required this.order,
+    required this.materials,
   });
 
   factory LessonUnit.fromFirestore(Map<String, dynamic> data, String docId) {
+    final rawMaterials = (data['materials'] as List?) ?? const <dynamic>[];
+
     return LessonUnit(
       id: docId,
       unitNumber: (data['unitNumber'] as num?)?.toInt() ?? 0,
@@ -31,6 +107,14 @@ class LessonUnit extends Equatable {
       totalLessons: (data['totalLessons'] as num?)?.toInt() ?? 0,
       xpReward: (data['xpReward'] as num?)?.toInt() ?? 0,
       order: (data['order'] as num?)?.toInt() ?? 0,
+      materials: rawMaterials
+          .map(
+            (item) => item is Map
+                ? LearningMaterial.fromMap(Map<String, dynamic>.from(item))
+                : null,
+          )
+          .whereType<LearningMaterial>()
+          .toList(),
     );
   }
 
@@ -44,6 +128,7 @@ class LessonUnit extends Equatable {
     totalLessons,
     xpReward,
     order,
+    materials,
   ];
 }
 

@@ -1,0 +1,71 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function currentUserDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function currentUserRole() {
+      return isSignedIn() && currentUserDoc().exists()
+          ? currentUserDoc().data.role
+          : null;
+    }
+
+    function isAdmin() {
+      return currentUserRole() == 'admin';
+    }
+
+    function isTutor() {
+      return currentUserRole() == 'tutor';
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isSafeUserCreate(userId) {
+      return isOwner(userId)
+          && request.resource.data.uid == userId
+          && request.resource.data.email is string
+          && request.resource.data.username is string
+          && request.resource.data.firstName is string
+          && request.resource.data.lastName is string
+          && request.resource.data.role in ['student', 'tutor']
+          && request.resource.data.membershipStatus == 'pending';
+    }
+
+    function isSafeOwnUserUpdate(userId) {
+      return isOwner(userId)
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.email == resource.data.email
+          && request.resource.data.username == resource.data.username
+          && request.resource.data.role == resource.data.role
+          && request.resource.data.membershipStatus == resource.data.membershipStatus;
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isSafeUserCreate(userId);
+      allow update: if isAdmin() || isSafeOwnUserUpdate(userId);
+      allow delete: if isAdmin();
+    }
+
+    match /lessons/{lessonId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdmin() || isTutor();
+    }
+
+    match /announcements/{announcementId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdmin() || isTutor();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

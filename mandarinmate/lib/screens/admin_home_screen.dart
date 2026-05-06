@@ -4,7 +4,7 @@ import 'package:mandarinmate/utils/app_theme.dart';
 import 'package:mandarinmate/widgets/custom_widgets.dart';
 
 class AdminHomeScreen extends StatefulWidget {
-  const AdminHomeScreen({Key? key}) : super(key: key);
+  const AdminHomeScreen({super.key});
 
   @override
   State<AdminHomeScreen> createState() => _AdminHomeScreenState();
@@ -84,25 +84,23 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                         ),
                         const SizedBox(height: AppDimensions.md),
                         ...const [
-                              '🛡️ Manage User Roles & Permissions',
-                              '📊 View UTM Club App Analytics',
-                              '⚠️ Review Reported Accounts',
-                              '📩 System Announcements Broadcast',
-                            ]
-                            .map(
-                              (feature) => Padding(
-                                padding: const EdgeInsets.only(
-                                  bottom: AppDimensions.md,
-                                ),
-                                child: Text(
-                                  feature,
-                                  style: AppTextStyles.bodyMedium.copyWith(
-                                    color: AppColors.textLight,
-                                  ),
-                                ),
+                          '🛡️ Manage User Roles & Permissions',
+                          '📊 View UTM Club App Analytics',
+                          '⚠️ Review Reported Accounts',
+                          '📩 System Announcements Broadcast',
+                        ].map(
+                          (feature) => Padding(
+                            padding: const EdgeInsets.only(
+                              bottom: AppDimensions.md,
+                            ),
+                            child: Text(
+                              feature,
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: AppColors.textLight,
                               ),
-                            )
-                            .toList(),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),

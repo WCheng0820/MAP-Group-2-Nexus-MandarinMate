@@ -514,56 +514,6 @@ class _HeroBadge extends StatelessWidget {
   }
 }
 
-class _RealtimeStatsCard extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance.collection('users').snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const _LoadingCard(height: 120);
-        }
-        if (snapshot.hasError) {
-          return const _ErrorCard(message: 'Failed to load real-time stats.');
-        }
-
-        final docs = snapshot.data?.docs ?? const [];
-        int students = 0;
-        int tutors = 0;
-        int admins = 0;
-
-        for (final doc in docs) {
-          final role = (doc.data()['role'] ?? 'student')
-              .toString()
-              .toLowerCase();
-          if (role == 'student') students++;
-          if (role == 'tutor') tutors++;
-          if (role == 'admin') admins++;
-        }
-
-        final total = docs.length;
-
-        return Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE8E1FF)),
-          ),
-          child: Row(
-            children: [
-              _StatItem(title: 'Total', value: total.toString()),
-              _StatItem(title: 'Students', value: students.toString()),
-              _StatItem(title: 'Tutors', value: tutors.toString()),
-              _StatItem(title: 'Admins', value: admins.toString()),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
 class _LatestUsersCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -781,40 +731,6 @@ class _RoleBadge extends StatelessWidget {
           fontSize: 11,
           fontWeight: FontWeight.w700,
         ),
-      ),
-    );
-  }
-}
-
-class _StatItem extends StatelessWidget {
-  const _StatItem({required this.title, required this.value});
-
-  final String title;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF6C3BFF),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: TextStyle(
-              color: Colors.grey.shade700,
-              fontWeight: FontWeight.w500,
-              fontSize: 12,
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:mandarinmate/features/lessons/domain/lesson_model.dart';
 import 'package:mandarinmate/features/tutor/presentation/pages/tutor_create_lesson_page.dart';
 
 class TutorLessonsPage extends StatelessWidget {
@@ -17,7 +19,7 @@ class TutorLessonsPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: _green,
         foregroundColor: Colors.white,
-        title: const Text('Urus Lesson'),
+        title: const Text('Manage Lessons'),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -50,9 +52,7 @@ class TutorLessonsPage extends StatelessWidget {
         child: const Icon(Icons.add),
       ),
       body: user == null
-          ? const Center(
-              child: Text('Sila log masuk semula untuk mengurus lesson.'),
-            )
+          ? const Center(child: Text('Please log in again to manage lessons.'))
           : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               stream: FirebaseFirestore.instance
                   .collection('lessons')
@@ -64,16 +64,14 @@ class TutorLessonsPage extends StatelessWidget {
                 }
 
                 if (snapshot.hasError) {
-                  return const Center(
-                    child: Text('Ralat semasa memuatkan lesson.'),
-                  );
+                  return const Center(child: Text('Failed to load lessons.'));
                 }
 
                 final docs = snapshot.data?.docs ?? [];
 
                 if (docs.isEmpty) {
                   return const Center(
-                    child: Text('Belum ada lesson. Tambah lesson baharu.'),
+                    child: Text('No lessons yet. Add a new lesson.'),
                   );
                 }
 
@@ -89,6 +87,16 @@ class TutorLessonsPage extends StatelessWidget {
                     final titleChinese = (data['titleChinese'] ?? '')
                         .toString();
                     final description = (data['description'] ?? '').toString();
+                    final materials = ((data['materials'] as List?) ?? const [])
+                        .map(
+                          (item) => item is Map
+                              ? LearningMaterial.fromMap(
+                                  Map<String, dynamic>.from(item),
+                                )
+                              : null,
+                        )
+                        .whereType<LearningMaterial>()
+                        .toList();
 
                     return Card(
                       elevation: 0,
@@ -145,6 +153,7 @@ class TutorLessonsPage extends StatelessWidget {
                                     context,
                                     lessonDoc.id,
                                     title,
+                                    materials,
                                   ),
                                 ),
                               ],
@@ -175,6 +184,27 @@ class TutorLessonsPage extends StatelessWidget {
                                 style: TextStyle(color: Colors.grey.shade600),
                               ),
                             ],
+                            if (materials.isNotEmpty) ...[
+                              const SizedBox(height: 12),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  Chip(
+                                    avatar: const Icon(
+                                      Icons.attach_file,
+                                      size: 16,
+                                    ),
+                                    label: Text(
+                                      '${materials.length} material${materials.length == 1 ? '' : 's'}',
+                                    ),
+                                    backgroundColor: _green.withValues(
+                                      alpha: 0.08,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -190,18 +220,19 @@ class TutorLessonsPage extends StatelessWidget {
     BuildContext context,
     String docId,
     String title,
+    List<LearningMaterial> materials,
   ) async {
     final shouldDelete =
         await showDialog<bool>(
           context: context,
           builder: (context) {
             return AlertDialog(
-              title: const Text('Padam lesson'),
-              content: Text('Adakah anda pasti mahu memadam "$title"?'),
+              title: const Text('Delete Lesson'),
+              content: Text('Are you sure you want to delete "$title"?'),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Batal'),
+                  child: const Text('Cancel'),
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
@@ -209,7 +240,7 @@ class TutorLessonsPage extends StatelessWidget {
                     foregroundColor: Colors.white,
                   ),
                   onPressed: () => Navigator.pop(context, true),
-                  child: const Text('Padam'),
+                  child: const Text('Delete'),
                 ),
               ],
             );
@@ -226,19 +257,37 @@ class TutorLessonsPage extends StatelessWidget {
           .collection('lessons')
           .doc(docId)
           .delete();
+      await _deleteStoredMaterials(materials);
       if (!context.mounted) {
         return;
       }
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Lesson berjaya dipadam.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Lesson deleted successfully.')),
+      );
     } catch (_) {
       if (!context.mounted) {
         return;
       }
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Gagal memadam lesson.')));
+      ).showSnackBar(const SnackBar(content: Text('Failed to delete lesson.')));
+    }
+  }
+
+  Future<void> _deleteStoredMaterials(List<LearningMaterial> materials) async {
+    for (final material in materials) {
+      if (material.storagePath.isEmpty) {
+        continue;
+      }
+
+      try {
+        await FirebaseStorage.instance
+            .ref()
+            .child(material.storagePath)
+            .delete();
+      } catch (_) {
+        // Ignore storage cleanup failures after the lesson document is deleted.
+      }
     }
   }
 }

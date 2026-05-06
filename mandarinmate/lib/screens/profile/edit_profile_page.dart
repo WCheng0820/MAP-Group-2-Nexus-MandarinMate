@@ -116,6 +116,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       if (newPass.isNotEmpty) {
         if (newPass == confirmPass) {
           await user.updatePassword(newPass);
+          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Password updated.'),

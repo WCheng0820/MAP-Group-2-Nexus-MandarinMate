@@ -1,7 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mandarinmate/features/lessons/domain/lesson_model.dart';
+import 'package:mandarinmate/auth/presentation/bloc/auth_bloc.dart';
+import 'package:mandarinmate/models/user_model.dart';
 import 'package:mandarinmate/screens/profile/edit_profile_page.dart'
     as mandarinmate_edit_profile;
 import 'package:mandarinmate/flashcards/presentation/pages/flashcard_game_page.dart';
@@ -1120,6 +1123,7 @@ class _ProfileTab extends StatelessWidget {
           final email =
               (data['email'] ?? FirebaseAuth.instance.currentUser?.email ?? '')
                   .toString();
+          final membershipStatus = _membershipStatusFromData(data);
           final xp = _toInt(
             data['xp'],
             fallback: _toInt(data['xpPoints'], fallback: 0),
@@ -1169,6 +1173,8 @@ class _ProfileTab extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  _MembershipStatusCard(status: membershipStatus),
                   const SizedBox(height: 16),
                   _HeroBadgeDark(label: '$xp XP earned'),
                   const SizedBox(height: 16),
@@ -1262,9 +1268,7 @@ class _ProfileTab extends StatelessWidget {
   }
 
   Future<void> _logout(BuildContext context) async {
-    await FirebaseAuth.instance.signOut();
-    if (!context.mounted) return;
-    Navigator.pushReplacementNamed(context, '/auth');
+    context.read<AuthBloc>().add(AuthLogoutRequested());
   }
 }
 
@@ -1287,6 +1291,72 @@ class _HeroBadgeDark extends StatelessWidget {
           color: _StudentColors.orange,
           fontWeight: FontWeight.w900,
         ),
+      ),
+    );
+  }
+}
+
+class _MembershipStatusCard extends StatelessWidget {
+  const _MembershipStatusCard({required this.status});
+
+  final MembershipStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    late final String title;
+    late final String subtitle;
+    late final Color color;
+    switch (status) {
+      case MembershipStatus.approved:
+        title = 'Membership Approved';
+        subtitle =
+            'Your account has been approved and is active in the system.';
+        color = const Color(0xFF15803D);
+        break;
+      case MembershipStatus.rejected:
+        title = 'Membership Rejected';
+        subtitle =
+            'Your registration needs admin review before it can be considered valid.';
+        color = const Color(0xFFB91C1C);
+        break;
+      case MembershipStatus.pending:
+        title = 'Membership Pending';
+        subtitle =
+            'Your registration has been submitted and is waiting for admin approval.';
+        color = _StudentColors.orange;
+        break;
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        children: [
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.w900,
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: _StudentColors.muted,
+              fontWeight: FontWeight.w600,
+              height: 1.4,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1374,6 +1444,23 @@ String _displayName(Map<String, dynamic> data) {
   if (fullName.isNotEmpty) return fullName;
 
   return 'Student';
+}
+
+MembershipStatus _membershipStatusFromData(Map<String, dynamic> data) {
+  final status = (data['membershipStatus'] ?? 'approved')
+      .toString()
+      .toLowerCase()
+      .split('.')
+      .last;
+  switch (status) {
+    case 'pending':
+      return MembershipStatus.pending;
+    case 'rejected':
+      return MembershipStatus.rejected;
+    case 'approved':
+    default:
+      return MembershipStatus.approved;
+  }
 }
 
 void _showMessage(BuildContext context, String message) {
