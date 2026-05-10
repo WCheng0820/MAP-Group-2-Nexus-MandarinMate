@@ -373,7 +373,8 @@ class LessonDetailPage extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (_) => FlashcardGamePage(
-                          unit: unit,
+                          levelNumber: unit.unitNumber,
+                          levelTitle: unit.title,
                           vocabItems: vocabItems,
                         ),
                       ),

@@ -7,13 +7,15 @@ import 'package:mandarinmate/auth/presentation/bloc/auth_bloc.dart';
 import 'package:mandarinmate/models/user_model.dart';
 import 'package:mandarinmate/screens/profile/edit_profile_page.dart'
     as mandarinmate_edit_profile;
-import 'package:mandarinmate/flashcards/presentation/pages/flashcard_game_page.dart';
+import 'package:mandarinmate/flashcards/presentation/pages/flashcard_levels_page.dart';
 import 'package:mandarinmate/lessons/presentation/pages/lesson_detail_page.dart';
 import 'package:mandarinmate/lessons/presentation/pages/quiz_page.dart';
 import 'package:mandarinmate/lessons/presentation/pages/vocab_lesson_page.dart';
-import 'package:mandarinmate/features/lessons/ui/lesson_screen.dart' as new_lessons;
+import 'package:mandarinmate/features/lessons/ui/lesson_screen.dart'
+    as new_lessons;
 import 'package:mandarinmate/features/lessons/data/mock_lessons.dart';
-import 'package:mandarinmate/features/lessons/bloc/lesson_bloc.dart' as new_bloc;
+import 'package:mandarinmate/features/lessons/bloc/lesson_bloc.dart'
+    as new_bloc;
 import 'package:mandarinmate/features/lessons/models/lesson_model.dart';
 
 class MainScreen extends StatefulWidget {
@@ -197,7 +199,7 @@ class _StarredItemsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // For MVP gamification context, we mock the starred items. 
+    // For MVP gamification context, we mock the starred items.
     // In future this reads a 'starred' array from User document.
     final starredItems = [
       {'title': '你好', 'type': 'Vocab', 'color': Colors.red},
@@ -228,8 +230,17 @@ class _StarredItemsRow extends StatelessWidget {
               children: [
                 Icon(Icons.star, color: Colors.amber, size: 24),
                 const SizedBox(height: 4),
-                Text(item['title'] as String, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                Text(item['type'] as String, style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+                Text(
+                  item['title'] as String,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+                Text(
+                  item['type'] as String,
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                ),
               ],
             ),
           );
@@ -243,22 +254,9 @@ class _LearnTab extends StatelessWidget {
   const _LearnTab();
 
   static Future<void> openFlashcards(BuildContext context) async {
-    final unitAndVocab = await _firstUnitAndVocab();
-    if (unitAndVocab == null) {
-      if (!context.mounted) return;
-      _showMessage(context, 'No lessons/vocabulary available yet.');
-      return;
-    }
-
-    if (!context.mounted) return;
     await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => FlashcardGamePage(
-          unit: unitAndVocab.unit,
-          vocabItems: unitAndVocab.vocab,
-        ),
-      ),
+      MaterialPageRoute(builder: (_) => const FlashcardLevelsPage()),
     );
   }
 
@@ -450,7 +448,9 @@ class _LearnTab extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 20),
-                _CoursePathView(completedLessons: data['completedLessons'] ?? []),
+                _CoursePathView(
+                  completedLessons: data['completedLessons'] ?? [],
+                ),
                 const SizedBox(height: 20),
                 const Text(
                   'Community Lessons',
@@ -1527,6 +1527,7 @@ void _showMessage(BuildContext context, String message) {
   if (!context.mounted) return;
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 }
+
 class _CoursePathView extends StatelessWidget {
   final List<dynamic> completedLessons;
   const _CoursePathView({required this.completedLessons});
@@ -1555,9 +1556,22 @@ class _CoursePathView extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(unit.title, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
+                          Text(
+                            unit.title,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           const SizedBox(height: 4),
-                          Text(unit.subtitle, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                          Text(
+                            unit.subtitle,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -1570,16 +1584,20 @@ class _CoursePathView extends StatelessWidget {
                 final int index = entry.key;
                 final Lesson lesson = entry.value;
                 final bool isLast = index == unit.lessons.length - 1;
-                
+
                 // Calculate unlock state
                 bool isUnlocked = false;
                 bool isCompleted = completedLessons.contains(lesson.id);
                 if (unitIndex == 0 && index == 0) {
-                     isUnlocked = true;
+                  isUnlocked = true;
                 } else if (index > 0) {
-                     isUnlocked = completedLessons.contains(unit.lessons[index-1].id);
+                  isUnlocked = completedLessons.contains(
+                    unit.lessons[index - 1].id,
+                  );
                 } else if (unitIndex > 0) {
-                     isUnlocked = completedLessons.contains(mockCourseUnits[unitIndex-1].lessons.last.id);
+                  isUnlocked = completedLessons.contains(
+                    mockCourseUnits[unitIndex - 1].lessons.last.id,
+                  );
                 }
                 if (isCompleted) isUnlocked = true;
 
@@ -1596,18 +1614,49 @@ class _CoursePathView extends StatelessWidget {
                               width: 32,
                               height: 32,
                               decoration: BoxDecoration(
-                                color: isCompleted ? unit.color : (isUnlocked ? unit.color.withOpacity(0.5) : Colors.grey.shade300),
+                                color: isCompleted
+                                    ? unit.color
+                                    : (isUnlocked
+                                          ? unit.color.withOpacity(0.5)
+                                          : Colors.grey.shade300),
                                 shape: BoxShape.circle,
-                                border: isCompleted ? null : Border.all(color: isUnlocked ? unit.color : Colors.grey.shade400, width: 3),
+                                border: isCompleted
+                                    ? null
+                                    : Border.all(
+                                        color: isUnlocked
+                                            ? unit.color
+                                            : Colors.grey.shade400,
+                                        width: 3,
+                                      ),
                               ),
-                              child: isCompleted ? const Icon(Icons.check, color: Colors.white, size: 20) : 
-                                    (isUnlocked ? const Icon(Icons.play_arrow, color: Colors.white, size: 18) : const Icon(Icons.lock, color: Colors.grey, size: 16)),
+                              child: isCompleted
+                                  ? const Icon(
+                                      Icons.check,
+                                      color: Colors.white,
+                                      size: 20,
+                                    )
+                                  : (isUnlocked
+                                        ? const Icon(
+                                            Icons.play_arrow,
+                                            color: Colors.white,
+                                            size: 18,
+                                          )
+                                        : const Icon(
+                                            Icons.lock,
+                                            color: Colors.grey,
+                                            size: 16,
+                                          )),
                             ),
                             if (!isLast)
                               Expanded(
                                 child: Container(
                                   width: 4,
-                                  color: completedLessons.contains(unit.lessons[index].id) ? unit.color : Colors.grey.shade200,
+                                  color:
+                                      completedLessons.contains(
+                                        unit.lessons[index].id,
+                                      )
+                                      ? unit.color
+                                      : Colors.grey.shade200,
                                 ),
                               ),
                           ],
@@ -1618,17 +1667,22 @@ class _CoursePathView extends StatelessWidget {
                         child: Padding(
                           padding: const EdgeInsets.only(bottom: 16),
                           child: InkWell(
-                            onTap: isUnlocked ? () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => BlocProvider(
-                                    create: (_) => new_bloc.LessonBloc()..add(new_bloc.StartLesson(lesson)),
-                                    child: new_lessons.LessonScreen(lesson: lesson),
-                                  ),
-                                ),
-                              );
-                            } : null,
+                            onTap: isUnlocked
+                                ? () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => BlocProvider(
+                                          create: (_) => new_bloc.LessonBloc()
+                                            ..add(new_bloc.StartLesson(lesson)),
+                                          child: new_lessons.LessonScreen(
+                                            lesson: lesson,
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                : null,
                             child: Opacity(
                               opacity: isUnlocked ? 1.0 : 0.5,
                               child: Container(
@@ -1648,19 +1702,41 @@ class _CoursePathView extends StatelessWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Text(lesson.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                                        Text(
+                                          lesson.title,
+                                          style: const TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
                                         Row(
                                           children: [
-                                            Text('+${lesson.xpReward}', style: TextStyle(color: Colors.orange.shade700, fontWeight: FontWeight.bold)),
-                                            Icon(Icons.bolt, color: Colors.orange.shade700, size: 16),
+                                            Text(
+                                              '+${lesson.xpReward}',
+                                              style: TextStyle(
+                                                color: Colors.orange.shade700,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            Icon(
+                                              Icons.bolt,
+                                              color: Colors.orange.shade700,
+                                              size: 16,
+                                            ),
                                           ],
                                         ),
                                       ],
                                     ),
                                     const SizedBox(height: 4),
-                                    Text(lesson.subtitle, style: TextStyle(color: Colors.grey.shade600)),
+                                    Text(
+                                      lesson.subtitle,
+                                      style: TextStyle(
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -1679,7 +1755,3 @@ class _CoursePathView extends StatelessWidget {
     );
   }
 }
-
-
-
-

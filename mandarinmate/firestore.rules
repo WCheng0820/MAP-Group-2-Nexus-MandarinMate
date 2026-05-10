@@ -41,7 +41,22 @@ rules_version = '2';
         allow create, update, delete: if isAdmin() || isTutor();
       }
 
+      match /lessons/{lessonId}/vocab/{vocabId} {
+        allow read: if signedIn();
+        allow create, update, delete: if isAdmin() || isTutor();
+      }
+
       match /announcements/{announcementId} {
+        allow read: if signedIn();
+        allow create, update, delete: if isAdmin() || isTutor();
+      }
+
+      match /flashcard_levels/{levelId} {
+        allow read: if signedIn();
+        allow create, update, delete: if isAdmin() || isTutor();
+      }
+
+      match /flashcard_levels/{levelId}/cards/{cardId} {
         allow read: if signedIn();
         allow create, update, delete: if isAdmin() || isTutor();
       }
