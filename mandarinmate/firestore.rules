@@ -1,71 +1,53 @@
 rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    function isSignedIn() {
-      return request.auth != null;
-    }
+  service cloud.firestore {
+    match /databases/{database}/documents {
 
-    function currentUserDoc() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid));
-    }
+      function signedIn() {
+        return request.auth != null;
+      }
 
-    function currentUserRole() {
-      return isSignedIn() && currentUserDoc().exists()
-          ? currentUserDoc().data.role
-          : null;
-    }
+      function isAdmin() {
+        return signedIn()
+          && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+          && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      }
 
-    function isAdmin() {
-      return currentUserRole() == 'admin';
-    }
+      function isTutor() {
+        return signedIn()
+          && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+          && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'tutor';
+      }
 
-    function isTutor() {
-      return currentUserRole() == 'tutor';
-    }
+      match /users/{userId} {
+        allow read: if signedIn();
+        allow create: if signedIn() && request.auth.uid == userId;
+        allow update: if isAdmin() || (
+          signedIn()
+          && request.auth.uid == userId
+          // Allow updating specific progress fields, but prevent modifying roles/emails
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'xp', 
+            'xpPoints', 
+            'completedLessons', 
+            'starredItems',
+            'username' // add any other fields the user should be allowed to edit themselves
+          ])
+        );
+        allow delete: if isAdmin();
+      }
 
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
+      match /lessons/{lessonId} {
+        allow read: if signedIn();
+        allow create, update, delete: if isAdmin() || isTutor();
+      }
 
-    function isSafeUserCreate(userId) {
-      return isOwner(userId)
-          && request.resource.data.uid == userId
-          && request.resource.data.email is string
-          && request.resource.data.username is string
-          && request.resource.data.firstName is string
-          && request.resource.data.lastName is string
-          && request.resource.data.role in ['student', 'tutor']
-          && request.resource.data.membershipStatus == 'pending';
-    }
+      match /announcements/{announcementId} {
+        allow read: if signedIn();
+        allow create, update, delete: if isAdmin() || isTutor();
+      }
 
-    function isSafeOwnUserUpdate(userId) {
-      return isOwner(userId)
-          && request.resource.data.uid == resource.data.uid
-          && request.resource.data.email == resource.data.email
-          && request.resource.data.username == resource.data.username
-          && request.resource.data.role == resource.data.role
-          && request.resource.data.membershipStatus == resource.data.membershipStatus;
-    }
-
-    match /users/{userId} {
-      allow read: if isSignedIn();
-      allow create: if isSafeUserCreate(userId);
-      allow update: if isAdmin() || isSafeOwnUserUpdate(userId);
-      allow delete: if isAdmin();
-    }
-
-    match /lessons/{lessonId} {
-      allow read: if isSignedIn();
-      allow create, update, delete: if isAdmin() || isTutor();
-    }
-
-    match /announcements/{announcementId} {
-      allow read: if isSignedIn();
-      allow create, update, delete: if isAdmin() || isTutor();
-    }
-
-    match /{document=**} {
-      allow read, write: if false;
+      match /{document=**} {
+        allow read, write: if false;
+      }
     }
   }
-}

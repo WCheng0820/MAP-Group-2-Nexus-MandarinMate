@@ -1,0 +1,187 @@
+  Widget _buildCompletionScreen(BuildContext context, LessonCompleted state) {
+    final accuracy = (state.correctAnswers / state.lesson.items.length) * 100;
+    
+    return Container(
+      color: Colors.red.shade900,
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Icon(Icons.emoji_events, size: 100, color: Colors.amber),
+            const SizedBox(height: 16),
+            const Text('LESSON COMPLETE!', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 18, letterSpacing: 2)),
+            const SizedBox(height: 8),
+            const Text('Excellent Work!', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.bold)),
+            
+            const SizedBox(height: 32),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Expanded(child: _buildStatCard('XP Earned', '+\', Icons.bolt, Colors.amber)),
+                const SizedBox(width: 16),
+                Expanded(child: _buildStatCard('Accuracy', '\%', Icons.check_circle_outline, Colors.greenAccent)),
+              ],
+            ),
+            
+            const SizedBox(height: 32),
+            const Text('NEW BADGES EARNED', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 1)),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(16)),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.track_changes, color: Colors.pinkAccent),
+                        const SizedBox(width: 8),
+                        Expanded(child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Sharp Shooter', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                            Text('100% accuracy', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12)),
+                          ],
+                        ))
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(16)),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.flash_on, color: Colors.orangeAccent),
+                        const SizedBox(width: 8),
+                        Expanded(child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Speed Learner', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                            Text('Completed fast', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12)),
+                          ],
+                        ))
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            
+            const Spacer(),
+            
+            ElevatedButton.icon(
+              onPressed: () async {
+                final authState = context.read<AuthBloc>().state;
+                if (authState is AuthAuthenticated) {
+                  final user = authState.user;
+                  final docRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+                  
+                  await docRef.set({
+                    'xpPoints': FieldValue.increment(state.xpEarned),
+                    'xp': FieldValue.increment(state.xpEarned),
+                    'completedLessons': FieldValue.arrayUnion([state.lesson.id])
+                  }, SetOptions(merge: true));
+                  
+                  bool foundCurrent = false;
+                  Lesson? nextLesson;
+                  for (var unit in mockCourseUnits) {
+                    for (var l in unit.lessons) {
+                      if (foundCurrent) {
+                        nextLesson = l;
+                        break;
+                      }
+                      if (l.id == state.lesson.id) foundCurrent = true;
+                    }
+                    if (nextLesson != null) break;
+                  }
+                  
+                  if (!context.mounted) return;
+                  
+                  if (nextLesson != null) {
+                    Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => BlocProvider(
+                            create: (_) => LessonBloc()..add(StartLesson(nextLesson!)),
+                            child: LessonScreen(lesson: nextLesson!),
+                          ),
+                        ),
+                    );
+                  } else {
+                    context.go('/dashboard');
+                  }
+                } else {
+                   context.go('/dashboard');
+                }
+              },
+              icon: const Icon(Icons.emoji_events, color: Colors.red),
+              label: const Text('Next Lesson', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.red)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 56),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => BlocProvider(
+                            create: (_) => LessonBloc()..add(StartLesson(state.lesson)),
+                            child: LessonScreen(lesson: state.lesson),
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.refresh, color: Colors.white),
+                    label: const Text('Retry', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white.withValues(alpha: 0.15),
+                      elevation: 0,
+                      minimumSize: const Size(double.infinity, 56),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      final authState = context.read<AuthBloc>().state;
+                      if (authState is AuthAuthenticated) {
+                        final user = authState.user;
+                        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+                          'xpPoints': FieldValue.increment(state.xpEarned),
+                          'xp': FieldValue.increment(state.xpEarned),
+                          'completedLessons': FieldValue.arrayUnion([state.lesson.id])
+                        }, SetOptions(merge: true));
+                      }
+                      context.go('/dashboard');
+                    },
+                    icon: const Icon(Icons.home, color: Colors.white),
+                    label: const Text('Home', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white.withValues(alpha: 0.15),
+                      elevation: 0,
+                      minimumSize: const Size(double.infinity, 56),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }

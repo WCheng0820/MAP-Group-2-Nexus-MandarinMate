@@ -7,7 +7,7 @@ import 'package:mandarinmate/utils/app_theme.dart';
 import 'package:mandarinmate/widgets/custom_widgets.dart';
 
 class AuthScreen extends StatefulWidget {
-  const AuthScreen({super.key});
+  const AuthScreen({Key? key}) : super(key: key);
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();

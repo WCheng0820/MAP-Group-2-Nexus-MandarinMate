@@ -11,6 +11,10 @@ import 'package:mandarinmate/flashcards/presentation/pages/flashcard_game_page.d
 import 'package:mandarinmate/lessons/presentation/pages/lesson_detail_page.dart';
 import 'package:mandarinmate/lessons/presentation/pages/quiz_page.dart';
 import 'package:mandarinmate/lessons/presentation/pages/vocab_lesson_page.dart';
+import 'package:mandarinmate/features/lessons/ui/lesson_screen.dart' as new_lessons;
+import 'package:mandarinmate/features/lessons/data/mock_lessons.dart';
+import 'package:mandarinmate/features/lessons/bloc/lesson_bloc.dart' as new_bloc;
+import 'package:mandarinmate/features/lessons/models/lesson_model.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -167,11 +171,65 @@ class _HomeTab extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 _SectionHeader(
+                  title: 'Starred Vocab & Phrases',
+                  onViewAll: () {},
+                ),
+                const SizedBox(height: 10),
+                const _StarredItemsRow(),
+                const SizedBox(height: 20),
+                _SectionHeader(
                   title: 'Continue Lessons',
                   onViewAll: onOpenLearn,
                 ),
                 const SizedBox(height: 10),
                 _HomeLessonPreview(onOpenUnit: _LearnTab.openUnitDetail),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _StarredItemsRow extends StatelessWidget {
+  const _StarredItemsRow();
+
+  @override
+  Widget build(BuildContext context) {
+    // For MVP gamification context, we mock the starred items. 
+    // In future this reads a 'starred' array from User document.
+    final starredItems = [
+      {'title': '你好', 'type': 'Vocab', 'color': Colors.red},
+      {'title': '早上好', 'type': 'Vocab', 'color': Colors.blue},
+      {'title': '谢谢', 'type': 'Phrase', 'color': Colors.orange},
+      {'title': '吃饭', 'type': 'Phrase', 'color': Colors.purple},
+    ];
+
+    return SizedBox(
+      height: 110,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: starredItems.length,
+        separatorBuilder: (context, index) => const SizedBox(width: 12),
+        itemBuilder: (context, index) {
+          final item = starredItems[index];
+          final color = item['color'] as Color;
+          return Container(
+            width: 120,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: color.withOpacity(0.3), width: 2),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.star, color: Colors.amber, size: 24),
+                const SizedBox(height: 4),
+                Text(item['title'] as String, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                Text(item['type'] as String, style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
               ],
             ),
           );
@@ -392,8 +450,10 @@ class _LearnTab extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 20),
+                _CoursePathView(completedLessons: data['completedLessons'] ?? []),
+                const SizedBox(height: 20),
                 const Text(
-                  'Mandarin Lessons',
+                  'Community Lessons',
                   style: TextStyle(
                     color: _StudentColors.deep,
                     fontSize: 20,
@@ -1467,3 +1527,159 @@ void _showMessage(BuildContext context, String message) {
   if (!context.mounted) return;
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 }
+class _CoursePathView extends StatelessWidget {
+  final List<dynamic> completedLessons;
+  const _CoursePathView({required this.completedLessons});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: mockCourseUnits.asMap().entries.map((unitEntry) {
+        final unitIndex = unitEntry.key;
+        final unit = unitEntry.value;
+        return Container(
+          margin: const EdgeInsets.only(bottom: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Unit Header Banner
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: unit.color,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(unit.title, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 4),
+                          Text(unit.subtitle, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Lesson Items with Path Line
+              ...unit.lessons.asMap().entries.map((entry) {
+                final int index = entry.key;
+                final Lesson lesson = entry.value;
+                final bool isLast = index == unit.lessons.length - 1;
+                
+                // Calculate unlock state
+                bool isUnlocked = false;
+                bool isCompleted = completedLessons.contains(lesson.id);
+                if (unitIndex == 0 && index == 0) {
+                     isUnlocked = true;
+                } else if (index > 0) {
+                     isUnlocked = completedLessons.contains(unit.lessons[index-1].id);
+                } else if (unitIndex > 0) {
+                     isUnlocked = completedLessons.contains(mockCourseUnits[unitIndex-1].lessons.last.id);
+                }
+                if (isCompleted) isUnlocked = true;
+
+                return IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Path connection visual
+                      SizedBox(
+                        width: 50,
+                        child: Column(
+                          children: [
+                            Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: isCompleted ? unit.color : (isUnlocked ? unit.color.withOpacity(0.5) : Colors.grey.shade300),
+                                shape: BoxShape.circle,
+                                border: isCompleted ? null : Border.all(color: isUnlocked ? unit.color : Colors.grey.shade400, width: 3),
+                              ),
+                              child: isCompleted ? const Icon(Icons.check, color: Colors.white, size: 20) : 
+                                    (isUnlocked ? const Icon(Icons.play_arrow, color: Colors.white, size: 18) : const Icon(Icons.lock, color: Colors.grey, size: 16)),
+                            ),
+                            if (!isLast)
+                              Expanded(
+                                child: Container(
+                                  width: 4,
+                                  color: completedLessons.contains(unit.lessons[index].id) ? unit.color : Colors.grey.shade200,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      // Lesson Card
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: InkWell(
+                            onTap: isUnlocked ? () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => BlocProvider(
+                                    create: (_) => new_bloc.LessonBloc()..add(new_bloc.StartLesson(lesson)),
+                                    child: new_lessons.LessonScreen(lesson: lesson),
+                                  ),
+                                ),
+                              );
+                            } : null,
+                            child: Opacity(
+                              opacity: isUnlocked ? 1.0 : 0.5,
+                              child: Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.05),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(lesson.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                                        Row(
+                                          children: [
+                                            Text('+${lesson.xpReward}', style: TextStyle(color: Colors.orange.shade700, fontWeight: FontWeight.bold)),
+                                            Icon(Icons.bolt, color: Colors.orange.shade700, size: 16),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(lesson.subtitle, style: TextStyle(color: Colors.grey.shade600)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+
+
+
