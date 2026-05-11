@@ -6,6 +6,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:mandarinmate/features/lessons/domain/lesson_model.dart';
+import 'package:mandarinmate/features/lessons/models/lesson_model.dart';
+import 'package:mandarinmate/services/ai_lesson_generator_service.dart';
 
 class TutorCreateLessonPage extends StatefulWidget {
   const TutorCreateLessonPage({super.key, this.docId, this.existingData});
@@ -30,6 +32,8 @@ class _TutorCreateLessonPageState extends State<TutorCreateLessonPage> {
   final _xpRewardController = TextEditingController();
 
   final List<_DraftMaterial> _materials = <_DraftMaterial>[];
+  final List<LessonItem> _interactiveItems = <LessonItem>[];
+  bool _isGeneratingAI = false;
   final Set<String> _storagePathsMarkedForDeletion = <String>{};
 
   bool _isLoading = false;
@@ -49,6 +53,9 @@ class _TutorCreateLessonPageState extends State<TutorCreateLessonPage> {
       _totalLessonsController.text = (data['totalLessons'] ?? '').toString();
       _xpRewardController.text = (data['xpReward'] ?? '').toString();
       _materials.addAll(_parseStoredMaterials(data['materials']));
+      if (data['items'] != null) {
+        _interactiveItems.addAll((data['items'] as List).map((e) => LessonItem.fromMap(Map<String, dynamic>.from(e))));
+      }
     }
   }
 
@@ -115,6 +122,8 @@ class _TutorCreateLessonPageState extends State<TutorCreateLessonPage> {
                     label: 'XP Reward',
                   ),
                   const SizedBox(height: 20),
+                  _buildInteractiveItemsSection(),
+                  const SizedBox(height: 16),
                   _buildMaterialsSection(),
                   const SizedBox(height: 24),
                   SizedBox(
@@ -193,6 +202,105 @@ class _TutorCreateLessonPageState extends State<TutorCreateLessonPage> {
         filled: true,
         fillColor: Colors.white,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+      ),
+    );
+  }
+
+  Future<void> _generateAiItems() async {
+    if (_titleController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a Title first for AI inference')),
+      );
+      return;
+    }
+
+    setState(() => _isGeneratingAI = true);
+    
+    final service = AiLessonGeneratorService();
+    final generated = await service.generateLessonItems(_titleController.text);
+    
+    if (generated.isEmpty) {
+      if (mounted) {
+         ScaffoldMessenger.of(context).showSnackBar(
+           const SnackBar(content: Text('AI Generation failed. Check API key or try again.')),
+         );
+      }
+    }
+    
+    if (mounted) {
+      setState(() {
+        _interactiveItems.addAll(generated);
+        _isGeneratingAI = false;
+      });
+    }
+  }
+
+  Widget _buildInteractiveItemsSection() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Interactive Items',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6B4EE6),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: _isGeneratingAI ? null : _generateAiItems,
+                icon: _isGeneratingAI 
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) 
+                  : const Icon(Icons.auto_awesome, size: 20),
+                label: Text(_isGeneratingAI ? 'Generating...' : 'AI Generate'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (_interactiveItems.isEmpty)
+            const Center(
+              child: Text(
+                'No interactive items. Use AI Generate based on the title!',
+                style: TextStyle(color: Colors.grey),
+              ),
+            )
+          else
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _interactiveItems.length,
+              separatorBuilder: (context, index) => const Divider(),
+              itemBuilder: (context, index) {
+                final item = _interactiveItems[index];
+                return ListTile(
+                  title: Text('${item.chinese} (${item.type.name})', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: Text('${item.pinyin} - ${item.english}'),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete_outline, color: Colors.red),
+                    onPressed: () {
+                      setState(() {
+                        _interactiveItems.removeAt(index);
+                      });
+                    },
+                  ),
+                );
+              },
+            ),
+        ],
       ),
     );
   }
@@ -419,9 +527,12 @@ class _TutorCreateLessonPageState extends State<TutorCreateLessonPage> {
       },
     );
 
-    titleController.dispose();
-    descriptionController.dispose();
-    urlController.dispose();
+    // Delay disposal until dialog animation finishes
+    Future.delayed(const Duration(milliseconds: 500), () {
+      titleController.dispose();
+      descriptionController.dispose();
+      urlController.dispose();
+    });
 
     if (material == null || !mounted) {
       return;
@@ -553,8 +664,11 @@ class _TutorCreateLessonPageState extends State<TutorCreateLessonPage> {
       },
     );
 
-    titleController.dispose();
-    descriptionController.dispose();
+    // Delay disposal until dialog animation finishes
+    Future.delayed(const Duration(milliseconds: 500), () {
+      titleController.dispose();
+      descriptionController.dispose();
+    });
 
     return material;
   }
@@ -598,6 +712,7 @@ class _TutorCreateLessonPageState extends State<TutorCreateLessonPage> {
         'description': _descriptionController.text.trim(),
         'totalLessons': int.parse(_totalLessonsController.text.trim()),
         'xpReward': int.parse(_xpRewardController.text.trim()),
+        'items': _interactiveItems.map((e) => e.toMap()).toList(),
         'materials': materials.map((material) => material.toMap()).toList(),
         'updatedAt': FieldValue.serverTimestamp(),
         'updatedBy': user.uid,
@@ -663,11 +778,13 @@ class _TutorCreateLessonPageState extends State<TutorCreateLessonPage> {
       );
       final ref = FirebaseStorage.instance.ref().child(storagePath);
 
-      await ref.putData(
+      final uploadTask = ref.putData(
         material.bytes!,
         SettableMetadata(contentType: _contentTypeFor(material)),
       );
-      final url = await ref.getDownloadURL();
+      
+      final snapshot = await uploadTask.whenComplete(() {});
+      final url = await snapshot.ref.getDownloadURL();
 
       materials.add(
         material

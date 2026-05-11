@@ -179,8 +179,8 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   Widget _buildContinueCard(dynamic profile) {
     // Logic to find the next lesson to continue
     // For simplicity, find the first lesson ID that is NOT in completedLessons
-    String? nextLessonTitle = "Start your first lesson!";
-    String? nextLessonSubtitle = "Unit 1: Basics";
+    String nextLessonTitle = "Start your first lesson!";
+    String nextLessonSubtitle = "Unit 1: Basics";
     
     bool found = false;
     for (var unit in mockCourseUnits) {

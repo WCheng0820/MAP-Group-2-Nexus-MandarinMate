@@ -71,6 +71,24 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                     );
                   },
                 ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(
+                    Icons.auto_awesome,
+                    color: _TutorColors.green,
+                  ),
+                  title: const Text('AI Auto-Generate Lesson'),
+                  subtitle: const Text('Type unit title to let AI generate vocabulary, listening & quiz'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const TutorCreateLessonPage(),
+                      ),
+                    );
+                  },
+                ),
               ],
             ),
           ),

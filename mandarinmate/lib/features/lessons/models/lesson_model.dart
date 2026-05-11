@@ -30,6 +30,37 @@ class LessonItem {
     this.exampleEnglish,
     this.options,
   });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'type': type.name,
+      'chinese': chinese,
+      'pinyin': pinyin,
+      'english': english,
+      'audioUrl': audioUrl,
+      'exampleSentence': exampleSentence,
+      'exampleEnglish': exampleEnglish,
+      'options': options,
+    };
+  }
+
+  factory LessonItem.fromMap(Map<String, dynamic> map) {
+    return LessonItem(
+      id: map['id'] ?? '',
+      type: LessonType.values.firstWhere(
+        (e) => e.name == map['type'],
+        orElse: () => LessonType.vocabulary,
+      ),
+      chinese: map['chinese'] ?? '',
+      pinyin: map['pinyin'] ?? '',
+      english: map['english'] ?? '',
+      audioUrl: map['audioUrl'],
+      exampleSentence: map['exampleSentence'],
+      exampleEnglish: map['exampleEnglish'],
+      options: map['options'] != null ? List<String>.from(map['options']) : null,
+    );
+  }
 }
 
 class Lesson {
