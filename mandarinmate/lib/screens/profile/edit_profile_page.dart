@@ -153,7 +153,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
-          .update(updates);
+          .set(updates, SetOptions(merge: true));
 
       final fullName =
           '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}';
