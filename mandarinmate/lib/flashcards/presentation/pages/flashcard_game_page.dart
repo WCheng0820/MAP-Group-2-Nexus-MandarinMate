@@ -3,12 +3,14 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:mandarinmate/features/lessons/domain/lesson_model.dart';
 
 class FlashcardGamePage extends StatefulWidget {
-  final LessonUnit unit;
+  final int levelNumber;
+  final String levelTitle;
   final List<VocabItem> vocabItems;
 
   const FlashcardGamePage({
     super.key,
-    required this.unit,
+    required this.levelNumber,
+    required this.levelTitle,
     required this.vocabItems,
   });
 
@@ -17,7 +19,10 @@ class FlashcardGamePage extends StatefulWidget {
 }
 
 class _FlashcardGamePageState extends State<FlashcardGamePage> {
+  static const int _cardsPerLevel = 3;
+
   late final FlutterTts _tts;
+  late final List<VocabItem> _items;
   int _index = 0;
   bool _showBack = false;
   bool _isSpeaking = false;
@@ -25,6 +30,7 @@ class _FlashcardGamePageState extends State<FlashcardGamePage> {
   @override
   void initState() {
     super.initState();
+    _items = widget.vocabItems.take(_cardsPerLevel).toList(growable: false);
     _initTts();
   }
 
@@ -40,15 +46,15 @@ class _FlashcardGamePageState extends State<FlashcardGamePage> {
   }
 
   Future<void> _speakCurrent() async {
-    if (_isSpeaking || widget.vocabItems.isEmpty) {
+    if (_isSpeaking || _items.isEmpty) {
       return;
     }
     setState(() => _isSpeaking = true);
-    await _tts.speak(widget.vocabItems[_index].chinese);
+    await _tts.speak(_items[_index].chinese);
   }
 
   void _next() {
-    if (_index >= widget.vocabItems.length - 1) {
+    if (_index >= _items.length - 1) {
       return;
     }
     setState(() {
@@ -75,20 +81,20 @@ class _FlashcardGamePageState extends State<FlashcardGamePage> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.vocabItems.isEmpty) {
+    if (_items.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: Text('Flashcards: ${widget.unit.title}')),
+        appBar: AppBar(title: Text('Level ${widget.levelNumber} Flashcards')),
         body: const Center(child: Text('No flashcards available.')),
       );
     }
 
-    final item = widget.vocabItems[_index];
-    final progress = (_index + 1) / widget.vocabItems.length;
+    final item = _items[_index];
+    final progress = (_index + 1) / _items.length;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F3FF),
       appBar: AppBar(
-        title: Text('Flashcards: ${widget.unit.title}'),
+        title: Text('Level ${widget.levelNumber}: ${widget.levelTitle}'),
         backgroundColor: const Color(0xFF6C3BFF),
         foregroundColor: Colors.white,
       ),
@@ -106,7 +112,7 @@ class _FlashcardGamePageState extends State<FlashcardGamePage> {
             ),
             const SizedBox(height: 8),
             Text(
-              '${_index + 1}/${widget.vocabItems.length}',
+              '${_index + 1}/${_items.length}',
               textAlign: TextAlign.right,
               style: TextStyle(color: Colors.grey.shade700),
             ),
@@ -215,9 +221,7 @@ class _FlashcardGamePageState extends State<FlashcardGamePage> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: _index < widget.vocabItems.length - 1
-                        ? _next
-                        : null,
+                    onPressed: _index < _items.length - 1 ? _next : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF6C3BFF),
                       foregroundColor: Colors.white,

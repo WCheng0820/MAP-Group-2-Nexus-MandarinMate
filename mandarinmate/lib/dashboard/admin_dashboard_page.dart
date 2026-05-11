@@ -654,7 +654,6 @@ class _ManagementCard extends StatelessWidget {
 
 class _RecentUsersSection extends StatelessWidget {
   const _RecentUsersSection();
-
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(

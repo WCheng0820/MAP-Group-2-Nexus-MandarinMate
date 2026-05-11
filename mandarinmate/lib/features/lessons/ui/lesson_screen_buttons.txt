@@ -1,0 +1,59 @@
+          ElevatedButton(
+            onPressed: () async {
+              // Finish and add points via AuthBloc/Firestore
+              final authState = context.read<AuthBloc>().state;
+              if (authState is AuthAuthenticated) {
+                final user = authState.user;
+                final docRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+                
+                await docRef.set({
+                  'xpPoints': FieldValue.increment(state.xpEarned),
+                  'xp': FieldValue.increment(state.xpEarned),
+                  'completedLessons': FieldValue.arrayUnion([state.lesson.id])
+                }, SetOptions(merge: true));
+                
+                // Find next lesson to navigate to
+                bool foundCurrent = false;
+                Lesson? nextLesson;
+                for (var unit in mockCourseUnits) {
+                  for (var l in unit.lessons) {
+                    if (foundCurrent) {
+                      nextLesson = l;
+                      break;
+                    }
+                    if (l.id == state.lesson.id) foundCurrent = true;
+                  }
+                  if (nextLesson != null) break;
+                }
+                
+                if (!context.mounted) return;
+                
+                if (nextLesson != null) {
+                  Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => BlocProvider(
+                          create: (_) => LessonBloc()..add(StartLesson(nextLesson!)),
+                          child: LessonScreen(lesson: nextLesson!),
+                        ),
+                      ),
+                  );
+                } else {
+                  context.go('/dashboard');
+                }
+              } else {
+                 context.go('/dashboard');
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              minimumSize: const Size(double.infinity, 56),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
+            child: Text('Continue With Next Lesson', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.red.shade600)),
+          ),
+          const SizedBox(height: 12),
+          TextButton(
+             onPressed: () => context.go('/dashboard'),
+             child: const Text('Back to Dashboard', style: TextStyle(fontSize: 16, color: Colors.white70)),
+          ),

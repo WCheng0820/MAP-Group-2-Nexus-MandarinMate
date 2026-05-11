@@ -7,6 +7,8 @@ import 'package:mandarinmate/features/auth/presentation/pages/login_page.dart';
 import 'package:mandarinmate/screens/profile/edit_profile_page.dart'
     as mandarinmate_edit_profile;
 import 'package:mandarinmate/features/tutor/presentation/pages/tutor_announcement_page.dart';
+import 'package:mandarinmate/features/tutor/presentation/pages/tutor_create_flashcards_page.dart';
+import 'package:mandarinmate/features/tutor/presentation/pages/tutor_create_lesson_page.dart';
 import 'package:mandarinmate/features/tutor/presentation/pages/tutor_lessons_page.dart';
 import 'package:mandarinmate/features/tutor/presentation/pages/tutor_students_page.dart';
 
@@ -19,6 +21,63 @@ class TutorDashboardPage extends StatefulWidget {
 
 class _TutorDashboardPageState extends State<TutorDashboardPage> {
   int _currentIndex = 0;
+
+  void _openManageLessonsMenu(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: Colors.white,
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(
+                    Icons.menu_book_rounded,
+                    color: _TutorColors.green,
+                  ),
+                  title: const Text('Add Lesson Unit'),
+                  subtitle: const Text(
+                    'Create a new unit (title, order, materials)',
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const TutorCreateLessonPage(),
+                      ),
+                    );
+                  },
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(
+                    Icons.style_rounded,
+                    color: _TutorColors.green,
+                  ),
+                  title: const Text('Add Flashcards'),
+                  subtitle: const Text('Add 3 flashcards to an existing unit'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const TutorCreateFlashcardsPage(),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -141,12 +200,7 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                         subtitle: 'Add, edit, and delete units',
                         color: _TutorColors.green,
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const TutorLessonsPage(),
-                            ),
-                          );
+                          _openManageLessonsMenu(context);
                         },
                       ),
                       _TutorActionTile(

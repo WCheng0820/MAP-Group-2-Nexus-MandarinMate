@@ -7,10 +7,16 @@ import 'package:mandarinmate/auth/presentation/bloc/auth_bloc.dart';
 import 'package:mandarinmate/models/user_model.dart';
 import 'package:mandarinmate/screens/profile/edit_profile_page.dart'
     as mandarinmate_edit_profile;
-import 'package:mandarinmate/flashcards/presentation/pages/flashcard_game_page.dart';
+import 'package:mandarinmate/flashcards/presentation/pages/flashcard_levels_page.dart';
 import 'package:mandarinmate/lessons/presentation/pages/lesson_detail_page.dart';
 import 'package:mandarinmate/lessons/presentation/pages/quiz_page.dart';
 import 'package:mandarinmate/lessons/presentation/pages/vocab_lesson_page.dart';
+import 'package:mandarinmate/features/lessons/ui/lesson_screen.dart'
+    as new_lessons;
+import 'package:mandarinmate/features/lessons/data/mock_lessons.dart';
+import 'package:mandarinmate/features/lessons/bloc/lesson_bloc.dart'
+    as new_bloc;
+import 'package:mandarinmate/features/lessons/models/lesson_model.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -108,7 +114,29 @@ class _HomeTab extends StatelessWidget {
             data['streak'],
             fallback: _toInt(data['currentStreak'], fallback: 0),
           );
-          final progress = _progressForXp(xp);
+          final completedLessons = (data['completedLessons'] as List?) ?? [];
+          final levelProgress = _progressForXp(xp);
+
+          final totalLessons = mockCourseUnits.fold<int>(
+            0,
+            (total, unit) => total + unit.lessons.length,
+          );
+          final completedCount = completedLessons.length;
+          final courseProgress = totalLessons > 0
+              ? completedCount / totalLessons
+              : 0.0;
+
+          // Find the next incomplete lesson
+          Lesson? nextLesson;
+          for (var unit in mockCourseUnits) {
+            for (var lesson in unit.lessons) {
+              if (!completedLessons.contains(lesson.id)) {
+                nextLesson = lesson;
+                break;
+              }
+            }
+            if (nextLesson != null) break;
+          }
 
           return SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(16, 18, 16, 22),
@@ -118,13 +146,32 @@ class _HomeTab extends StatelessWidget {
                 _StudentHeader(name: name, streak: streak),
                 const SizedBox(height: 14),
                 _ProgressHero(
-                  title: 'PB-003 Learning Dashboard',
+                  title: 'Learning Dashboard',
                   headline: 'Level $level Mandarin',
-                  subtitle: '${(progress * 100).round()}% to next level',
+                  subtitle:
+                      '${(courseProgress * 100).round()}% Course Completed',
                   xp: xp,
-                  progress: progress,
-                  actionLabel: 'Start Learning',
-                  onAction: onOpenLearn,
+                  progress: levelProgress,
+                  actionLabel: nextLesson != null
+                      ? 'Continue Lesson'
+                      : 'Course Completed',
+                  onAction: nextLesson != null
+                      ? () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => BlocProvider(
+                                create: (_) =>
+                                    new_bloc.LessonBloc()
+                                      ..add(new_bloc.StartLesson(nextLesson!)),
+                                child: new_lessons.LessonScreen(
+                                  lesson: nextLesson!,
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+                      : onOpenLearn,
                 ),
                 const SizedBox(height: 16),
                 GridView.count(
@@ -167,11 +214,178 @@ class _HomeTab extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 _SectionHeader(
+                  title: 'Starred Vocab & Phrases',
+                  onViewAll: () {},
+                ),
+                const SizedBox(height: 10),
+                const _StarredItemsRow(),
+                const SizedBox(height: 20),
+                _SectionHeader(
                   title: 'Continue Lessons',
                   onViewAll: onOpenLearn,
                 ),
                 const SizedBox(height: 10),
-                _HomeLessonPreview(onOpenUnit: _LearnTab.openUnitDetail),
+                _HomeContinueLessonCard(completedLessons: completedLessons),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _HomeContinueLessonCard extends StatelessWidget {
+  const _HomeContinueLessonCard({required this.completedLessons});
+
+  final List<dynamic> completedLessons;
+
+  @override
+  Widget build(BuildContext context) {
+    Lesson? nextLesson;
+    CourseUnit? targetUnit;
+
+    for (var unit in mockCourseUnits) {
+      for (var lesson in unit.lessons) {
+        if (!completedLessons.contains(lesson.id)) {
+          nextLesson = lesson;
+          targetUnit = unit;
+          break;
+        }
+      }
+      if (nextLesson != null) break;
+    }
+
+    if (nextLesson == null) {
+      return const _EmptyState(text: 'You have completed all lessons! 🎉');
+    }
+
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => BlocProvider(
+              create: (_) =>
+                  new_bloc.LessonBloc()..add(new_bloc.StartLesson(nextLesson!)),
+              child: new_lessons.LessonScreen(lesson: nextLesson!),
+            ),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFFFE4CF)),
+          boxShadow: [
+            BoxShadow(
+              color: _StudentColors.orange.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color:
+                    targetUnit?.color.withValues(alpha: 0.1) ??
+                    _StudentColors.red.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.play_circle_fill_rounded,
+                color: targetUnit?.color ?? _StudentColors.red,
+                size: 30,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    nextLesson.title,
+                    style: const TextStyle(
+                      color: _StudentColors.deep,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  Text(
+                    targetUnit?.title ?? '',
+                    style: const TextStyle(
+                      color: _StudentColors.muted,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: _StudentColors.muted,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StarredItemsRow extends StatelessWidget {
+  const _StarredItemsRow();
+
+  @override
+  Widget build(BuildContext context) {
+    // For MVP gamification context, we mock the starred items.
+    // In future this reads a 'starred' array from User document.
+    final starredItems = [
+      {'title': '你好', 'type': 'Vocab', 'color': Colors.red},
+      {'title': '早上好', 'type': 'Vocab', 'color': Colors.blue},
+      {'title': '谢谢', 'type': 'Phrase', 'color': Colors.orange},
+      {'title': '吃饭', 'type': 'Phrase', 'color': Colors.purple},
+    ];
+
+    return SizedBox(
+      height: 110,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: starredItems.length,
+        separatorBuilder: (context, index) => const SizedBox(width: 12),
+        itemBuilder: (context, index) {
+          final item = starredItems[index];
+          final color = item['color'] as Color;
+          return Container(
+            width: 120,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: color.withValues(alpha: 0.3), width: 2),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.star, color: Colors.amber, size: 24),
+                const SizedBox(height: 4),
+                Text(
+                  item['title'] as String,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+                Text(
+                  item['type'] as String,
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                ),
               ],
             ),
           );
@@ -185,68 +399,126 @@ class _LearnTab extends StatelessWidget {
   const _LearnTab();
 
   static Future<void> openFlashcards(BuildContext context) async {
-    final unitAndVocab = await _firstUnitAndVocab();
-    if (unitAndVocab == null) {
-      if (!context.mounted) return;
-      _showMessage(context, 'No lessons/vocabulary available yet.');
-      return;
-    }
-
-    if (!context.mounted) return;
     await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => FlashcardGamePage(
-          unit: unitAndVocab.unit,
-          vocabItems: unitAndVocab.vocab,
-        ),
-      ),
+      MaterialPageRoute(builder: (_) => const FlashcardLevelsPage()),
     );
   }
 
   static Future<void> openPronunciation(BuildContext context) async {
     final unitAndVocab = await _firstUnitAndVocab();
-    if (unitAndVocab == null) {
-      if (!context.mounted) return;
-      _showMessage(context, 'No pronunciation data available yet.');
-      return;
-    }
 
-    if (!context.mounted) return;
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => VocabLessonPage(
-          unit: unitAndVocab.unit,
-          vocabItems: unitAndVocab.vocab,
-          focusAudio: true,
+    if (unitAndVocab != null) {
+      if (!context.mounted) return;
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => VocabLessonPage(
+            unit: unitAndVocab.unit,
+            vocabItems: unitAndVocab.vocab,
+            focusAudio: true,
+          ),
         ),
-      ),
-    );
+      );
+    } else {
+      // Fallback to mock data from Unit 1
+      if (mockCourseUnits.isNotEmpty &&
+          mockCourseUnits.first.lessons.isNotEmpty) {
+        final firstLesson = mockCourseUnits.first.lessons.first;
+        final vocabItems = firstLesson.items
+            .where((i) => i.type == LessonType.vocabulary)
+            .map(
+              (i) => VocabItem(
+                chinese: i.chinese,
+                pinyin: i.pinyin,
+                english: i.english,
+                malay: i.english, // Fallback
+              ),
+            )
+            .toList();
+
+        if (!context.mounted) return;
+        final mockUnit = LessonUnit(
+          id: 'mock_u1',
+          unitNumber: 1,
+          title: mockCourseUnits.first.title,
+          titleChinese: '',
+          description: mockCourseUnits.first.subtitle,
+          totalLessons: mockCourseUnits.first.lessons.length,
+          xpReward: 30,
+          order: 1,
+          materials: const [],
+        );
+
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => VocabLessonPage(
+              unit: mockUnit,
+              vocabItems: vocabItems,
+              focusAudio: true,
+            ),
+          ),
+        );
+      }
+    }
   }
 
   static Future<void> openDailyChallenge(BuildContext context) async {
     final unitAndVocab = await _firstUnitAndVocab();
-    if (unitAndVocab == null || unitAndVocab.vocab.isEmpty) {
-      if (!context.mounted) return;
-      _showMessage(context, 'No quiz data available yet.');
-      return;
+
+    List<QuizQuestion> questions = [];
+    LessonUnit? unit;
+
+    if (unitAndVocab != null && unitAndVocab.vocab.isNotEmpty) {
+      unit = unitAndVocab.unit;
+      questions = unitAndVocab.vocab.map((item) {
+        return QuizQuestion(
+          question: 'What does "${item.chinese}" mean?',
+          options: [item.malay, item.english, 'Not sure', 'Other phrase']
+            ..shuffle(),
+          correctIndex: 0,
+          type: 'vocab',
+        );
+      }).toList();
+    } else if (mockCourseUnits.isNotEmpty) {
+      // Fallback to mock data
+      final firstLesson = mockCourseUnits.first.lessons.first;
+      unit = LessonUnit(
+        id: 'mock_u1',
+        unitNumber: 1,
+        title: mockCourseUnits.first.title,
+        titleChinese: '',
+        description: mockCourseUnits.first.subtitle,
+        totalLessons: mockCourseUnits.first.lessons.length,
+        xpReward: 30,
+        order: 1,
+        materials: const [],
+      );
+      questions = firstLesson.items
+          .where((i) => i.type == LessonType.vocabulary)
+          .map(
+            (i) => QuizQuestion(
+              question: 'What does "${i.chinese}" mean?',
+              options: [i.english, 'Apple', 'Water', 'Book']..shuffle(),
+              correctIndex: 0,
+              type: 'vocab',
+            ),
+          )
+          .toList();
     }
 
-    final questions = unitAndVocab.vocab.map((item) {
-      return QuizQuestion(
-        question: 'What does "${item.chinese}" mean?',
-        options: [item.malay, item.english, 'Not sure', 'Other phrase'],
-        correctIndex: 0,
-        type: 'vocab',
-      );
-    }).toList();
+    if (questions.isEmpty) {
+      if (!context.mounted) return;
+      _showMessage(context, 'No challenge data available yet.');
+      return;
+    }
 
     if (!context.mounted) return;
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => QuizPage(unit: unitAndVocab.unit, questions: questions),
+        builder: (_) => QuizPage(unit: unit!, questions: questions),
       ),
     );
   }
@@ -336,7 +608,6 @@ class _LearnTab extends StatelessWidget {
             data['xp'],
             fallback: _toInt(data['xpPoints'], fallback: 0),
           );
-          final progress = _progressForXp(xp);
 
           return SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(16, 18, 16, 22),
@@ -346,11 +617,7 @@ class _LearnTab extends StatelessWidget {
                 _ProgressHero(
                   title: 'Overall Progress',
                   headline: 'Level $level',
-                  subtitle: '${(progress * 100).round()}% to next level',
                   xp: xp,
-                  progress: progress,
-                  actionLabel: 'Practice Now',
-                  onAction: () => openDailyChallenge(context),
                 ),
                 const SizedBox(height: 16),
                 GridView.count(
@@ -392,8 +659,12 @@ class _LearnTab extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 20),
+                _CoursePathView(
+                  completedLessons: data['completedLessons'] ?? [],
+                ),
+                const SizedBox(height: 20),
                 const Text(
-                  'Mandarin Lessons',
+                  'Community Lessons',
                   style: TextStyle(
                     color: _StudentColors.deep,
                     fontSize: 20,
@@ -407,43 +678,6 @@ class _LearnTab extends StatelessWidget {
           );
         },
       ),
-    );
-  }
-}
-
-class _HomeLessonPreview extends StatelessWidget {
-  const _HomeLessonPreview({required this.onOpenUnit});
-
-  final Future<void> Function(BuildContext context, LessonUnit unit) onOpenUnit;
-
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance
-          .collection('lessons')
-          .orderBy('order')
-          .limit(3)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const _LoadingState();
-        }
-
-        final docs = snapshot.data?.docs ?? const [];
-        if (docs.isEmpty) {
-          return const _EmptyState(text: 'No lessons available yet.');
-        }
-
-        final units = docs
-            .map((doc) => LessonUnit.fromFirestore(doc.data(), doc.id))
-            .toList();
-
-        return Column(
-          children: units
-              .map((unit) => _LessonCard(unit: unit, onTap: onOpenUnit))
-              .toList(),
-        );
-      },
     );
   }
 }
@@ -574,20 +808,20 @@ class _ProgressHero extends StatelessWidget {
   const _ProgressHero({
     required this.title,
     required this.headline,
-    required this.subtitle,
+    this.subtitle,
     required this.xp,
-    required this.progress,
-    required this.actionLabel,
-    required this.onAction,
+    this.progress,
+    this.actionLabel,
+    this.onAction,
   });
 
   final String title;
   final String headline;
-  final String subtitle;
+  final String? subtitle;
   final int xp;
-  final double progress;
-  final String actionLabel;
-  final VoidCallback onAction;
+  final double? progress;
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -636,41 +870,50 @@ class _ProgressHero extends StatelessWidget {
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(999),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 10,
-              backgroundColor: Colors.white.withValues(alpha: 0.28),
-              valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+          if (progress != null) ...[
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 10,
+                backgroundColor: Colors.white.withValues(alpha: 0.28),
+                valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
             ),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  subtitle,
-                  style: const TextStyle(
-                    color: Color(0xFFFFF4EA),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
+          ],
+          if (subtitle != null ||
+              (actionLabel != null && onAction != null)) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                if (subtitle != null)
+                  Expanded(
+                    child: Text(
+                      subtitle!,
+                      style: const TextStyle(
+                        color: Color(0xFFFFF4EA),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  )
+                else
+                  const Spacer(),
+                if (actionLabel != null && onAction != null)
+                  FilledButton(
+                    onPressed: onAction,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: _StudentColors.red,
+                      visualDensity: VisualDensity.compact,
+                      textStyle: const TextStyle(fontWeight: FontWeight.w900),
+                    ),
+                    child: Text(actionLabel!),
                   ),
-                ),
-              ),
-              FilledButton(
-                onPressed: onAction,
-                style: FilledButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: _StudentColors.red,
-                  visualDensity: VisualDensity.compact,
-                  textStyle: const TextStyle(fontWeight: FontWeight.w900),
-                ),
-                child: Text(actionLabel),
-              ),
-            ],
-          ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -995,7 +1238,28 @@ class _ProgressSheet extends StatelessWidget {
           data['xp'],
           fallback: _toInt(data['xpPoints'], fallback: 0),
         );
-        final progress = _progressForXp(xp);
+        final levelProgress = _progressForXp(xp);
+        final completedLessons = (data['completedLessons'] as List?) ?? [];
+
+        final totalLessons = mockCourseUnits.fold<int>(
+          0,
+          (total, unit) => total + unit.lessons.length,
+        );
+        final courseProgress = totalLessons > 0
+            ? completedLessons.length / totalLessons
+            : 0.0;
+
+        // Find the next incomplete lesson
+        Lesson? nextLesson;
+        for (var unit in mockCourseUnits) {
+          for (var lesson in unit.lessons) {
+            if (!completedLessons.contains(lesson.id)) {
+              nextLesson = lesson;
+              break;
+            }
+          }
+          if (nextLesson != null) break;
+        }
 
         return Padding(
           padding: const EdgeInsets.fromLTRB(18, 8, 18, 28),
@@ -1015,11 +1279,30 @@ class _ProgressSheet extends StatelessWidget {
               _ProgressHero(
                 title: 'Current Level',
                 headline: 'Level $level',
-                subtitle: '${(progress * 100).round()}% to next level',
+                subtitle: '${(courseProgress * 100).round()}% Course Completed',
                 xp: xp,
-                progress: progress,
-                actionLabel: 'Continue',
-                onAction: () => Navigator.pop(context),
+                progress: levelProgress,
+                actionLabel: nextLesson != null
+                    ? 'Continue Lesson'
+                    : 'Course Completed',
+                onAction: nextLesson != null
+                    ? () {
+                        Navigator.pop(context); // Close sheet
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => BlocProvider(
+                              create: (_) =>
+                                  new_bloc.LessonBloc()
+                                    ..add(new_bloc.StartLesson(nextLesson!)),
+                              child: new_lessons.LessonScreen(
+                                lesson: nextLesson!,
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+                    : () => Navigator.pop(context),
               ),
             ],
           ),
@@ -1466,4 +1749,234 @@ MembershipStatus _membershipStatusFromData(Map<String, dynamic> data) {
 void _showMessage(BuildContext context, String message) {
   if (!context.mounted) return;
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+}
+
+class _CoursePathView extends StatelessWidget {
+  final List<dynamic> completedLessons;
+  const _CoursePathView({required this.completedLessons});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: mockCourseUnits.asMap().entries.map((unitEntry) {
+        final unitIndex = unitEntry.key;
+        final unit = unitEntry.value;
+        return Container(
+          margin: const EdgeInsets.only(bottom: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Unit Header Banner
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: unit.color,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            unit.title,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            unit.subtitle,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Lesson Items with Path Line
+              ...unit.lessons.asMap().entries.map((entry) {
+                final int index = entry.key;
+                final Lesson lesson = entry.value;
+                final bool isLast = index == unit.lessons.length - 1;
+
+                // Calculate unlock state
+                bool isUnlocked = false;
+                bool isCompleted = completedLessons.contains(lesson.id);
+                if (unitIndex == 0 && index == 0) {
+                  isUnlocked = true;
+                } else if (index > 0) {
+                  isUnlocked = completedLessons.contains(
+                    unit.lessons[index - 1].id,
+                  );
+                } else if (unitIndex > 0) {
+                  isUnlocked = completedLessons.contains(
+                    mockCourseUnits[unitIndex - 1].lessons.last.id,
+                  );
+                }
+                if (isCompleted) isUnlocked = true;
+
+                return IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Path connection visual
+                      SizedBox(
+                        width: 50,
+                        child: Column(
+                          children: [
+                            Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: isCompleted
+                                    ? unit.color
+                                    : (isUnlocked
+                                          ? unit.color.withValues(alpha: 0.5)
+                                          : Colors.grey.shade300),
+                                shape: BoxShape.circle,
+                                border: isCompleted
+                                    ? null
+                                    : Border.all(
+                                        color: isUnlocked
+                                            ? unit.color
+                                            : Colors.grey.shade400,
+                                        width: 3,
+                                      ),
+                              ),
+                              child: isCompleted
+                                  ? const Icon(
+                                      Icons.check,
+                                      color: Colors.white,
+                                      size: 20,
+                                    )
+                                  : (isUnlocked
+                                        ? const Icon(
+                                            Icons.play_arrow,
+                                            color: Colors.white,
+                                            size: 18,
+                                          )
+                                        : const Icon(
+                                            Icons.lock,
+                                            color: Colors.grey,
+                                            size: 16,
+                                          )),
+                            ),
+                            if (!isLast)
+                              Expanded(
+                                child: Container(
+                                  width: 4,
+                                  color:
+                                      completedLessons.contains(
+                                        unit.lessons[index].id,
+                                      )
+                                      ? unit.color
+                                      : Colors.grey.shade200,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      // Lesson Card
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: InkWell(
+                            onTap: isUnlocked
+                                ? () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => BlocProvider(
+                                          create: (_) => new_bloc.LessonBloc()
+                                            ..add(new_bloc.StartLesson(lesson)),
+                                          child: new_lessons.LessonScreen(
+                                            lesson: lesson,
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                : null,
+                            child: Opacity(
+                              opacity: isUnlocked ? 1.0 : 0.5,
+                              child: Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.05,
+                                      ),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          lesson.title,
+                                          style: const TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        Row(
+                                          children: [
+                                            Text(
+                                              '+${lesson.xpReward}',
+                                              style: TextStyle(
+                                                color: Colors.orange.shade700,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            Icon(
+                                              Icons.bolt,
+                                              color: Colors.orange.shade700,
+                                              size: 16,
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      lesson.subtitle,
+                                      style: TextStyle(
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
 }

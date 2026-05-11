@@ -21,6 +21,7 @@ class UserProfile {
   final int level;
   final int xpPoints;
   final int currentStreak;
+  final List<String> completedLessons;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -41,6 +42,7 @@ class UserProfile {
     this.level = 1,
     this.xpPoints = 0,
     this.currentStreak = 0,
+    this.completedLessons = const [],
     required this.createdAt,
     required this.updatedAt,
   });
@@ -64,6 +66,7 @@ class UserProfile {
       'level': level,
       'xpPoints': xpPoints,
       'currentStreak': currentStreak,
+      'completedLessons': completedLessons,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
@@ -88,6 +91,7 @@ class UserProfile {
       level: map['level'] ?? 1,
       xpPoints: map['xpPoints'] ?? 0,
       currentStreak: map['currentStreak'] ?? 0,
+      completedLessons: List<String>.from(map['completedLessons'] ?? []),
       createdAt: _dateTimeFromValue(map['createdAt']) ?? DateTime.now(),
       updatedAt: _dateTimeFromValue(map['updatedAt']) ?? DateTime.now(),
     );
