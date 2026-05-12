@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'firebase_options.dart';
 import 'package:mandarinmate/app_router.dart';
 import 'package:mandarinmate/auth/presentation/bloc/auth_bloc.dart';
@@ -11,6 +12,12 @@ import 'package:mandarinmate/utils/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Supabase Storage
+  await Supabase.initialize(
+    url: 'https://nigwphcqqfrvhmnxyppj.supabase.co',
+    anonKey: 'sb_publishable_gD-lXnpHovmnU6VBdKwWZg_aoTBZIo9',
+  );
 
   if (_supportsFirebaseOnCurrentPlatform) {
     await Firebase.initializeApp(

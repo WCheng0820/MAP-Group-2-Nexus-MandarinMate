@@ -3,9 +3,9 @@ import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:mandarinmate/features/lessons/domain/lesson_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class TutorCreateLessonPage extends StatefulWidget {
   const TutorCreateLessonPage({super.key, this.docId, this.existingData});
@@ -419,10 +419,6 @@ class _TutorCreateLessonPageState extends State<TutorCreateLessonPage> {
       },
     );
 
-    titleController.dispose();
-    descriptionController.dispose();
-    urlController.dispose();
-
     if (material == null || !mounted) {
       return;
     }
@@ -553,9 +549,6 @@ class _TutorCreateLessonPageState extends State<TutorCreateLessonPage> {
       },
     );
 
-    titleController.dispose();
-    descriptionController.dispose();
-
     return material;
   }
 
@@ -661,23 +654,31 @@ class _TutorCreateLessonPageState extends State<TutorCreateLessonPage> {
         materialId: material.id,
         fileName: material.fileName,
       );
-      final ref = FirebaseStorage.instance.ref().child(storagePath);
-
-      await ref.putData(
-        material.bytes!,
-        SettableMetadata(contentType: _contentTypeFor(material)),
-      );
-      final url = await ref.getDownloadURL();
-
-      materials.add(
-        material
-            .copyWith(url: url, storagePath: storagePath)
-            .toLearningMaterial(),
-      );
+  
+        await Supabase.instance.client.storage
+            .from('lesson_materials')
+            .uploadBinary(
+              storagePath,
+              material.bytes!,
+              fileOptions: FileOptions(
+                contentType: _contentTypeFor(material),
+                upsert: true,
+              ),
+            );
+            
+        final url = Supabase.instance.client.storage
+            .from('lesson_materials')
+            .getPublicUrl(storagePath);
+  
+        materials.add(
+          material
+              .copyWith(url: url, storagePath: storagePath)
+              .toLearningMaterial(),
+        );
+      }
+      
+      return materials;
     }
-
-    return materials;
-  }
 
   Future<void> _deleteRemovedStorageObjects() async {
     for (final storagePath in _storagePathsMarkedForDeletion) {
@@ -686,7 +687,9 @@ class _TutorCreateLessonPageState extends State<TutorCreateLessonPage> {
       }
 
       try {
-        await FirebaseStorage.instance.ref().child(storagePath).delete();
+        await Supabase.instance.client.storage
+              .from('lesson_materials')
+              .remove([storagePath]);
       } catch (_) {
         // Ignore cleanup failures so lesson changes can still be saved.
       }
