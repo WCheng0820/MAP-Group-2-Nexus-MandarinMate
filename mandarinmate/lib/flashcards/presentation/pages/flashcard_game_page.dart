@@ -18,27 +18,38 @@ class FlashcardGamePage extends StatefulWidget {
   State<FlashcardGamePage> createState() => _FlashcardGamePageState();
 }
 
-class _FlashcardGamePageState extends State<FlashcardGamePage> {
+class _FlashcardGamePageState extends State<FlashcardGamePage>
+    with TickerProviderStateMixin {
   static const int _cardsPerLevel = 3;
 
   late final FlutterTts _tts;
   late final List<VocabItem> _items;
+  late final AnimationController _flipController;
   int _index = 0;
-  bool _showBack = false;
   bool _isSpeaking = false;
 
   @override
   void initState() {
     super.initState();
     _items = widget.vocabItems.take(_cardsPerLevel).toList(growable: false);
+    _flipController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
     _initTts();
   }
 
   Future<void> _initTts() async {
     _tts = FlutterTts();
     await _tts.setLanguage('zh-CN');
-    await _tts.setSpeechRate(0.4);
+    await _tts.setPitch(1.0);
+    await _tts.setSpeechRate(0.5);
     _tts.setCompletionHandler(() {
+      if (mounted) {
+        setState(() => _isSpeaking = false);
+      }
+    });
+    _tts.setErrorHandler((message) {
       if (mounted) {
         setState(() => _isSpeaking = false);
       }
@@ -50,16 +61,29 @@ class _FlashcardGamePageState extends State<FlashcardGamePage> {
       return;
     }
     setState(() => _isSpeaking = true);
-    await _tts.speak(_items[_index].chinese);
+    try {
+      final result = await _tts.speak(_items[_index].chinese);
+      if (result == 0) {
+        // Success
+      } else {
+        if (mounted) {
+          setState(() => _isSpeaking = false);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSpeaking = false);
+      }
+    }
   }
 
   void _next() {
     if (_index >= _items.length - 1) {
       return;
     }
+    _flipController.reset();
     setState(() {
       _index++;
-      _showBack = false;
     });
   }
 
@@ -67,15 +91,24 @@ class _FlashcardGamePageState extends State<FlashcardGamePage> {
     if (_index <= 0) {
       return;
     }
+    _flipController.reset();
     setState(() {
       _index--;
-      _showBack = false;
     });
+  }
+
+  void _toggleFlip() {
+    if (_flipController.isCompleted) {
+      _flipController.reverse();
+    } else {
+      _flipController.forward();
+    }
   }
 
   @override
   void dispose() {
     _tts.stop();
+    _flipController.dispose();
     super.dispose();
   }
 
@@ -119,78 +152,94 @@ class _FlashcardGamePageState extends State<FlashcardGamePage> {
             const SizedBox(height: 12),
             Expanded(
               child: GestureDetector(
-                onTap: () => setState(() => _showBack = !_showBack),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeOut,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.06),
-                        blurRadius: 12,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  padding: const EdgeInsets.all(24),
-                  child: _showBack
-                      ? Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              item.malay,
-                              style: const TextStyle(
-                                fontSize: 30,
-                                fontWeight: FontWeight.w800,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 10),
-                            Text(
-                              item.english,
-                              style: TextStyle(
-                                fontSize: 22,
-                                color: Colors.grey.shade700,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 20),
-                            Text(
-                              'Tap card to show front',
-                              style: TextStyle(color: Colors.grey.shade500),
-                            ),
-                          ],
-                        )
-                      : Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              item.chinese,
-                              style: const TextStyle(
-                                fontSize: 52,
-                                fontWeight: FontWeight.w800,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              item.pinyin,
-                              style: TextStyle(
-                                fontSize: 26,
-                                color: Colors.grey.shade700,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 20),
-                            Text(
-                              'Tap card to reveal meaning',
-                              style: TextStyle(color: Colors.grey.shade500),
+                onTap: _toggleFlip,
+                child: AnimatedBuilder(
+                  animation: _flipController,
+                  builder: (context, child) {
+                    final angle = _flipController.value * 3.14159;
+                    final isFlipped = angle > 1.5707; // π/2
+
+                    return Transform(
+                      alignment: Alignment.center,
+                      transform: Matrix4.identity()
+                        ..setEntry(3, 2, 0.001)
+                        ..rotateY(isFlipped ? angle + 3.14159 : angle),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.06),
+                              blurRadius: 12,
+                              offset: const Offset(0, 6),
                             ),
                           ],
                         ),
+                        padding: const EdgeInsets.all(24),
+                        child: isFlipped
+                            ? Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    item.malay,
+                                    style: const TextStyle(
+                                      fontSize: 30,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    item.english,
+                                    style: TextStyle(
+                                      fontSize: 22,
+                                      color: Colors.grey.shade700,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 20),
+                                  Text(
+                                    'Tap to flip back',
+                                    style: TextStyle(
+                                      color: Colors.grey.shade500,
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    item.chinese,
+                                    style: const TextStyle(
+                                      fontSize: 52,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    item.pinyin,
+                                    style: TextStyle(
+                                      fontSize: 26,
+                                      color: Colors.grey.shade700,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 20),
+                                  Text(
+                                    'Tap to reveal meaning',
+                                    style: TextStyle(
+                                      color: Colors.grey.shade500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                      ),
+                    );
+                  },
                 ),
               ),
             ),
@@ -220,14 +269,23 @@ class _FlashcardGamePageState extends State<FlashcardGamePage> {
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: ElevatedButton(
-                    onPressed: _index < _items.length - 1 ? _next : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6C3BFF),
-                      foregroundColor: Colors.white,
-                    ),
-                    child: const Text('Next'),
-                  ),
+                  child: _index < _items.length - 1
+                      ? ElevatedButton(
+                          onPressed: _next,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF6C3BFF),
+                            foregroundColor: Colors.white,
+                          ),
+                          child: const Text('Next'),
+                        )
+                      : ElevatedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
+                          ),
+                          child: const Text('Finish'),
+                        ),
                 ),
               ],
             ),
