@@ -7,6 +7,7 @@ import 'package:mandarinmate/auth/presentation/bloc/auth_bloc.dart';
 import 'package:mandarinmate/models/user_model.dart';
 import 'package:mandarinmate/screens/profile/edit_profile_page.dart'
     as mandarinmate_edit_profile;
+import 'package:mandarinmate/screens/profile/badges_achievements_page.dart';
 import 'package:mandarinmate/flashcards/presentation/pages/flashcard_levels_page.dart';
 import 'package:mandarinmate/lessons/presentation/pages/lesson_detail_page.dart';
 import 'package:mandarinmate/lessons/presentation/pages/quiz_page.dart';
@@ -35,7 +36,7 @@ class _MainScreenState extends State<MainScreen> {
       const _LearnTab(),
       const _ChatTab(),
       const _ForumTab(),
-      const _ProfileTab(),
+      _ProfileTab(onOpenLearn: () => setState(() => _currentIndex = 1)),
     ];
 
     return Scaffold(
@@ -1530,166 +1531,971 @@ class _ForumTab extends StatelessWidget {
 }
 
 class _ProfileTab extends StatelessWidget {
-  const _ProfileTab();
+  final VoidCallback onOpenLearn;
+  const _ProfileTab({required this.onOpenLearn});
+
+  String _getLevelName(int lvl) {
+    if (lvl <= 2) return 'Beginner';
+    if (lvl <= 4) return 'Elementary';
+    if (lvl <= 6) return 'Learner';
+    if (lvl <= 8) return 'Intermediate';
+    return 'Advanced';
+  }
+
+  int _getUnlockedBadgesCount(int xp, int streak, List<dynamic> completedLessons, int level) {
+    int count = 0;
+    if (streak >= 7) count++;
+    if (completedLessons.isNotEmpty || xp >= 30) count++;
+    if (xp >= 100 || completedLessons.length >= 2) count++;
+    if (xp >= 250 || completedLessons.length >= 3) count++;
+    if (xp >= 500 || completedLessons.length >= 5) count++;
+    if (completedLessons.length >= 8) count++;
+    if (xp >= 1000) count++;
+    if (completedLessons.length >= 12 || level >= 6) count++;
+    return count;
+  }
 
   @override
   Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
 
-    return _StudentPageFrame(
-      child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-        stream: uid == null
-            ? null
-            : FirebaseFirestore.instance
-                  .collection('users')
-                  .doc(uid)
-                  .snapshots(),
-        builder: (context, snapshot) {
-          final data = snapshot.data?.data() ?? <String, dynamic>{};
-          final name = _displayName(data);
-          final email =
-              (data['email'] ?? FirebaseAuth.instance.currentUser?.email ?? '')
-                  .toString();
-          final membershipStatus = _membershipStatusFromData(data);
-          final xp = _toInt(
-            data['xp'],
-            fallback: _toInt(data['xpPoints'], fallback: 0),
-          );
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: uid == null
+          ? null
+          : FirebaseFirestore.instance
+                .collection('users')
+                .doc(uid)
+                .snapshots(),
+      builder: (context, snapshot) {
+        final data = snapshot.data?.data() ?? <String, dynamic>{};
+        final name = _displayName(data);
+        final email =
+            (data['email'] ?? FirebaseAuth.instance.currentUser?.email ?? '')
+                .toString();
+        final level = _toInt(data['level'], fallback: 1);
+        final xp = _toInt(
+          data['xp'],
+          fallback: _toInt(data['xpPoints'], fallback: 0),
+        );
+        final streak = _toInt(
+          data['streak'],
+          fallback: _toInt(data['currentStreak'], fallback: 0),
+        );
+        final completedLessons = (data['completedLessons'] as List?) ?? [];
 
-          return Center(
-            child: Container(
-              width: 330,
-              margin: const EdgeInsets.all(18),
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFFFFE4CF)),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircleAvatar(
-                    radius: 38,
-                    backgroundColor: _StudentColors.red.withValues(alpha: 0.12),
-                    child: Text(
-                      name.isEmpty ? 'S' : name[0].toUpperCase(),
-                      style: const TextStyle(
-                        color: _StudentColors.red,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 28,
-                      ),
+        // Count unlocked badges
+        final badgesCount = _getUnlockedBadgesCount(xp, streak, completedLessons, level);
+
+        // Dynamic stats
+        final int lessonsCompleted = completedLessons.length;
+        final int vocabularyLearned = data['vocabularyLearned'] ?? (completedLessons.length * 6);
+        final int quizzesTaken = data['quizzesTaken'] ?? (completedLessons.length * 2);
+        final int studyDays = data['studyDays'] ?? (streak + 3);
+
+        final nextLevelXp = level * 250;
+        final double levelProgressPercent = (xp / nextLevelXp).clamp(0.0, 1.0);
+        final xpNeeded = nextLevelXp - xp;
+
+        final double statusBarHeight = MediaQuery.of(context).padding.top;
+
+        return Scaffold(
+          backgroundColor: const Color(0xFFF8F9FA),
+          body: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // 1. Red Header Section
+                Container(
+                  padding: EdgeInsets.fromLTRB(20, statusBarHeight + 16, 20, 24),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [_StudentColors.red, _StudentColors.orange],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(32),
+                      bottomRight: Radius.circular(32),
                     ),
                   ),
-                  const SizedBox(height: 14),
-                  Text(
-                    name,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: _StudentColors.deep,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    email,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: _StudentColors.muted,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _MembershipStatusCard(status: membershipStatus),
-                  const SizedBox(height: 16),
-                  _HeroBadgeDark(label: '$xp XP earned'),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      InkWell(
-                        borderRadius: BorderRadius.circular(999),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  const mandarinmate_edit_profile.EditProfilePage(
-                                    roleColor: _StudentColors.red,
-                                  ),
+                      // Header Row: Title & Actions
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Profile',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w900,
                             ),
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 10,
                           ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(999),
-                            border: Border.all(color: const Color(0xFFFFDFC2)),
-                          ),
-                          child: const Row(
+                          Row(
                             children: [
-                              Icon(
-                                Icons.edit_rounded,
-                                color: _StudentColors.orange,
-                                size: 18,
+                              IconButton(
+                                icon: const Icon(Icons.settings_rounded, color: Colors.white, size: 24),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const mandarinmate_edit_profile.EditProfilePage(
+                                        roleColor: _StudentColors.orange,
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
-                              SizedBox(width: 8),
-                              Text(
-                                'Edit Profile',
-                                style: TextStyle(
-                                  color: _StudentColors.deep,
-                                  fontWeight: FontWeight.w800,
-                                ),
+                              IconButton(
+                                icon: const Icon(Icons.share_rounded, color: Colors.white, size: 24),
+                                onPressed: () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Profile link copied to clipboard! 🔗'),
+                                      behavior: SnackBarBehavior.floating,
+                                      backgroundColor: Color(0xFF2E7D32),
+                                    ),
+                                  );
+                                },
                               ),
                             ],
                           ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // User Avatar & Edit Button
+                      Stack(
+                        children: [
+                          CircleAvatar(
+                            radius: 45,
+                            backgroundColor: const Color(0xFFFFD54F), // Premium Yellow
+                            child: Text(
+                              name.isEmpty ? 'S' : name[0].toUpperCase(),
+                              style: const TextStyle(
+                                color: _StudentColors.orange, // Gradient Red
+                                fontWeight: FontWeight.w900,
+                                fontSize: 36,
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const mandarinmate_edit_profile.EditProfilePage(
+                                      roleColor: _StudentColors.orange,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black12,
+                                      blurRadius: 4,
+                                      offset: Offset(0, 2),
+                                    )
+                                  ]
+                                ),
+                                child: const Icon(
+                                  Icons.edit_rounded,
+                                  color: _StudentColors.orange,
+                                  size: 14,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      // Display Name
+                      Text(
+                        name,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      InkWell(
-                        borderRadius: BorderRadius.circular(999),
-                        onTap: () => _logout(context),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFFF0F0),
-                            borderRadius: BorderRadius.circular(999),
-                            border: Border.all(color: const Color(0xFFFFD6D6)),
-                          ),
-                          child: const Row(
-                            children: [
-                              Icon(
-                                Icons.logout_rounded,
-                                color: Color(0xFFD32F2F),
-                                size: 18,
-                              ),
-                              SizedBox(width: 8),
-                              Text(
-                                'Logout',
-                                style: TextStyle(
-                                  color: Color(0xFFD32F2F),
-                                  fontWeight: FontWeight.w800,
+                      const SizedBox(height: 4),
+                      // Email
+                      Text(
+                        email,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.85),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      // Role Chips
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.16),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: const Row(
+                              children: [
+                                Icon(Icons.school_rounded, color: Colors.white, size: 14),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Student',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.16),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: const Text(
+                              'Mandarin Club',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      // Horizontal stats row
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildHeaderStatCard(
+                              icon: '🔥',
+                              value: '$streak',
+                              label: 'Streak',
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildHeaderStatCard(
+                              icon: '⚡',
+                              value: '$xp',
+                              label: 'XP',
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildHeaderStatCard(
+                              icon: '⭐',
+                              value: 'Lv.$level',
+                              label: 'Level',
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => BadgesAchievementsPage(
+                                      xp: xp,
+                                      streak: streak,
+                                      completedLessons: completedLessons,
+                                      level: level,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: _buildHeaderStatCard(
+                                icon: '🏆',
+                                value: '$badgesCount',
+                                label: 'Badges',
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                // 2. Body Scrollable Cards
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
+                  child: Column(
+                    children: [
+                      // Card 1: Current Level Progress
+                      _buildProfileCard(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Current Level',
+                                      style: TextStyle(
+                                        color: Color(0xFF90A4AE),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Level $level · ${_getLevelName(level)}',
+                                      style: const TextStyle(
+                                        color: Color(0xFF263238),
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                TextButton(
+                                  onPressed: () => _showLevelMilestonesDialog(context, level, xp),
+                                  child: const Text(
+                                    'View all',
+                                    style: TextStyle(
+                                      color: _StudentColors.orange,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            // Progress bar
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(99),
+                              child: LinearProgressIndicator(
+                                value: levelProgressPercent,
+                                backgroundColor: const Color(0xFFECEFF1),
+                                valueColor: const AlwaysStoppedAnimation<Color>(_StudentColors.orange),
+                                minHeight: 12,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  xpNeeded > 0
+                                      ? '$xpNeeded XP needed to reach Level ${level + 1} · ${_getLevelName(level + 1)}'
+                                      : 'Max level progress reached! 🎉',
+                                  style: const TextStyle(
+                                    color: Color(0xFF78909C),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Text(
+                                  '$xp/$nextLevelXp XP',
+                                  style: const TextStyle(
+                                    color: Color(0xFF546E7A),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Card 2: Badges Preview Card
+                      _buildProfileCard(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Badges',
+                                  style: TextStyle(
+                                    color: Color(0xFF263238),
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => BadgesAchievementsPage(
+                                          xp: xp,
+                                          streak: streak,
+                                          completedLessons: completedLessons,
+                                          level: level,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: const Text(
+                                    'All badges',
+                                    style: TextStyle(
+                                      color: _StudentColors.orange,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            // Display first 4 badges
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                _buildBadgePreviewIcon('🔥', '7-Day Streak', streak >= 7),
+                                _buildBadgePreviewIcon('⭐', 'First Lesson', completedLessons.isNotEmpty || xp >= 30),
+                                _buildBadgePreviewIcon('🎯', 'Perfect Score', xp >= 100 || completedLessons.length >= 2),
+                                _buildBadgePreviewIcon('⚡', 'Speed Learner', xp >= 250 || completedLessons.length >= 3),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Card 3: Learning Stats Card
+                      _buildProfileCard(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Learning Stats',
+                              style: TextStyle(
+                                color: Color(0xFF263238),
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            GridView.count(
+                              crossAxisCount: 2,
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                              childAspectRatio: 1.45,
+                              children: [
+                                _buildStatCardItem(
+                                  icon: '📚',
+                                  value: '$lessonsCompleted',
+                                  label: 'Lessons Completed',
+                                  bgColor: const Color(0xFFE3F2FD),
+                                  iconColor: Colors.blue,
+                                ),
+                                _buildStatCardItem(
+                                  icon: '📝',
+                                  value: '$vocabularyLearned',
+                                  label: 'Vocabulary Learned',
+                                  bgColor: const Color(0xFFE8F5E9),
+                                  iconColor: Colors.green,
+                                ),
+                                _buildStatCardItem(
+                                  icon: '✏️',
+                                  value: '$quizzesTaken',
+                                  label: 'Quizzes Taken',
+                                  bgColor: const Color(0xFFFFF3E0),
+                                  iconColor: Colors.orange,
+                                ),
+                                _buildStatCardItem(
+                                  icon: '📅',
+                                  value: '$studyDays',
+                                  label: 'Study Days',
+                                  bgColor: const Color(0xFFF3E5F5),
+                                  iconColor: Colors.purple,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Card 4: Recent Activity
+                      _buildProfileCard(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Recent Activity',
+                              style: TextStyle(
+                                color: Color(0xFF263238),
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            _buildRecentActivityItem(
+                              icon: '📚',
+                              title: 'Completed Lesson ${lessonsCompleted > 0 ? lessonsCompleted : "1"}: Greetings',
+                              time: '2h ago',
+                              xp: '+50 XP',
+                              bgColor: const Color(0xFFE3F2FD),
+                            ),
+                            _buildRecentActivityItem(
+                              icon: '🎯',
+                              title: 'Daily Challenge completed',
+                              time: '3h ago',
+                              xp: '+100 XP',
+                              bgColor: const Color(0xFFFFEBEE),
+                            ),
+                            _buildRecentActivityItem(
+                              icon: '⚡',
+                              title: 'Flashcard session: 6 cards',
+                              time: '5h ago',
+                              xp: '+20 XP',
+                              bgColor: const Color(0xFFFFF9C4),
+                            ),
+                            _buildRecentActivityItem(
+                              icon: '💬',
+                              title: 'Posted in Community Forum',
+                              time: '1d ago',
+                              xp: '+5 XP',
+                              bgColor: const Color(0xFFE8F5E9),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Card 5: Bottom Navigation Links
+                      _buildProfileCard(
+                        padding: EdgeInsets.zero,
+                        child: Column(
+                          children: [
+                            _buildNavigationRow(
+                              icon: Icons.menu_book_rounded,
+                              iconBg: const Color(0xFFFFF3E0),
+                              iconColor: _StudentColors.orange,
+                              title: 'My Learning Path',
+                              onTap: onOpenLearn,
+                            ),
+                            const Divider(height: 1, color: Color(0xFFECEFF1)),
+                            _buildNavigationRow(
+                              icon: Icons.emoji_events_rounded,
+                              iconBg: const Color(0xFFFFF9C4),
+                              iconColor: Colors.amber.shade800,
+                              title: 'Leaderboard',
+                              onTap: () {
+                                showModalBottomSheet(
+                                  context: context,
+                                  shape: const RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                                  ),
+                                  builder: (context) => const _LeaderboardSheet(),
+                                );
+                              },
+                            ),
+                            const Divider(height: 1, color: Color(0xFFECEFF1)),
+                            _buildNavigationRow(
+                              icon: Icons.settings_rounded,
+                              iconBg: const Color(0xFFECEFF1),
+                              iconColor: const Color(0xFF546E7A),
+                              title: 'Settings & Profile Edit',
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const mandarinmate_edit_profile.EditProfilePage(
+                                      roleColor: _StudentColors.orange,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            const Divider(height: 1, color: Color(0xFFECEFF1)),
+                            _buildNavigationRow(
+                              icon: Icons.logout_rounded,
+                              iconBg: const Color(0xFFFFF0F0),
+                              iconColor: const Color(0xFFD32F2F),
+                              title: 'Logout',
+                              onTap: () => _logout(context),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildHeaderStatCard({
+    required String icon,
+    required String value,
+    required String label,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          Text(
+            icon,
+            style: const TextStyle(fontSize: 20),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.7),
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileCard({
+    required Widget child,
+    EdgeInsetsGeometry padding = const EdgeInsets.all(20),
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: padding,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFECEFF1)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+
+  Widget _buildBadgePreviewIcon(String icon, String title, bool unlocked) {
+    return Container(
+      width: 70,
+      height: 90,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: unlocked ? const Color(0xFFFFD54F).withOpacity(0.4) : const Color(0xFFECEFF1),
+          width: unlocked ? 1.5 : 1,
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Opacity(
+            opacity: unlocked ? 1.0 : 0.2,
+            child: Text(
+              icon,
+              style: const TextStyle(fontSize: 28),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+            child: Text(
+              title,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: unlocked ? const Color(0xFF263238) : const Color(0xFFB0BEC5),
+                fontSize: 9,
+                fontWeight: FontWeight.bold,
               ),
             ),
-          );
-        },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatCardItem({
+    required String icon,
+    required String value,
+    required String label,
+    required Color bgColor,
+    required Color iconColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F9FB),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFECEFF1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: bgColor,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  icon,
+                  style: const TextStyle(fontSize: 18),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                value,
+                style: const TextStyle(
+                  color: Color(0xFF263238),
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF78909C),
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecentActivityItem({
+    required String icon,
+    required String title,
+    required String time,
+    required String xp,
+    required Color bgColor,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: bgColor,
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              icon,
+              style: const TextStyle(fontSize: 18),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFF263238),
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  time,
+                  style: const TextStyle(
+                    color: Color(0xFF90A4AE),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            xp,
+            style: const TextStyle(
+              color: Color(0xFF2E7D32),
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+
+
+  Widget _buildNavigationRow({
+    required IconData icon,
+    required Color iconBg,
+    required Color iconColor,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: iconBg,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: iconColor, size: 20),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  color: Color(0xFF37474F),
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: Color(0xFF90A4AE),
+              size: 22,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showLevelMilestonesDialog(BuildContext context, int level, int xp) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          title: const Text(
+            'Level Milestones',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildMilestoneRow('Lv.1-2', 'Beginner', 0),
+              _buildMilestoneRow('Lv.3-4', 'Elementary', 500),
+              _buildMilestoneRow('Lv.5-6', 'Learner', 1000),
+              _buildMilestoneRow('Lv.7-8', 'Intermediate', 1750),
+              _buildMilestoneRow('Lv.9+', 'Advanced', 2500),
+              const SizedBox(height: 12),
+              Text(
+                'You currently have $xp XP.',
+                style: const TextStyle(
+                  color: Color(0xFF78909C),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              style: TextButton.styleFrom(
+                foregroundColor: _StudentColors.orange,
+              ),
+              child: const Text('Awesome'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildMilestoneRow(String levelRange, String title, int xpRequired) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.stars_rounded, color: Colors.amber, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                levelRange,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF37474F)),
+              ),
+              Text(
+                '$xpRequired XP',
+                style: const TextStyle(fontSize: 10, color: Color(0xFF90A4AE)),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
