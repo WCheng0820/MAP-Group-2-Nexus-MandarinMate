@@ -38,6 +38,7 @@ class LessonsPage extends StatelessWidget {
                   builder: (_) => LessonDetailPage(
                     unit: state.unit,
                     vocabItems: state.vocabItems,
+                    isCompleted: false,
                   ),
                 ),
               );

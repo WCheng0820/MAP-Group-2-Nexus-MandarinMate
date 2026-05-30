@@ -85,10 +85,16 @@ class _MainScreenState extends State<MainScreen> {
   }
 }
 
-class _HomeTab extends StatelessWidget {
+class _HomeTab extends StatefulWidget {
+  final VoidCallback onOpenLearn;
   const _HomeTab({required this.onOpenLearn});
 
-  final VoidCallback onOpenLearn;
+  @override
+  State<_HomeTab> createState() => _HomeTabState();
+}
+
+class _HomeTabState extends State<_HomeTab> {
+  List<CourseUnit>? _cachedDynamicUnits;
 
   @override
   Widget build(BuildContext context) {
@@ -102,8 +108,8 @@ class _HomeTab extends StatelessWidget {
                   .collection('users')
                   .doc(uid)
                   .snapshots(),
-        builder: (context, snapshot) {
-          final data = snapshot.data?.data() ?? <String, dynamic>{};
+        builder: (context, userSnapshot) {
+          final data = userSnapshot.data?.data() ?? <String, dynamic>{};
           final name = _displayName(data);
           final level = _toInt(data['level'], fallback: 1);
           final xp = _toInt(
@@ -117,117 +123,150 @@ class _HomeTab extends StatelessWidget {
           final completedLessons = (data['completedLessons'] as List?) ?? [];
           final levelProgress = _progressForXp(xp);
 
-          final totalLessons = mockCourseUnits.fold<int>(
-            0,
-            (total, unit) => total + unit.lessons.length,
-          );
-          final completedCount = completedLessons.length;
-          final courseProgress = totalLessons > 0
-              ? completedCount / totalLessons
-              : 0.0;
-
-          // Find the next incomplete lesson
-          Lesson? nextLesson;
-          for (var unit in mockCourseUnits) {
-            for (var lesson in unit.lessons) {
-              if (!completedLessons.contains(lesson.id)) {
-                nextLesson = lesson;
-                break;
+          return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+            stream: FirebaseFirestore.instance
+                .collection('lessons')
+                .orderBy('order')
+                .snapshots(),
+            builder: (context, lessonsSnapshot) {
+              List<QueryDocumentSnapshot<Map<String, dynamic>>> vocabDocRefs = [];
+              if (lessonsSnapshot.hasData) {
+                vocabDocRefs = lessonsSnapshot.data!.docs.where((doc) {
+                  final type = doc.data()['type'] as String?;
+                  final materialsList = doc.data()['materials'] as List?;
+                  final isMaterial = type == 'material' || (type != 'vocab_unit' && materialsList != null && materialsList.isNotEmpty);
+                  return !isMaterial; // Only dynamic vocab units
+                }).toList();
               }
-            }
-            if (nextLesson != null) break;
-          }
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 18, 16, 22),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _StudentHeader(name: name, streak: streak),
-                const SizedBox(height: 14),
-                _ProgressHero(
-                  title: 'Learning Dashboard',
-                  headline: 'Level $level Mandarin',
-                  subtitle:
-                      '${(courseProgress * 100).round()}% Course Completed',
-                  xp: xp,
-                  progress: levelProgress,
-                  actionLabel: nextLesson != null
-                      ? 'Continue Lesson'
-                      : 'Course Completed',
-                  onAction: nextLesson != null
-                      ? () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => BlocProvider(
-                                create: (_) =>
-                                    new_bloc.LessonBloc()
-                                      ..add(new_bloc.StartLesson(nextLesson!)),
-                                child: new_lessons.LessonScreen(
-                                  lesson: nextLesson!,
-                                ),
-                              ),
+              return FutureBuilder<List<CourseUnit>>(
+                future: _fetchDynamicUnits(vocabDocRefs),
+                builder: (context, futureSnapshot) {
+                  final dynamicUnits = futureSnapshot.data ?? _cachedDynamicUnits ?? [];
+                  if (futureSnapshot.hasData) {
+                    _cachedDynamicUnits = dynamicUnits;
+                  }
+
+                  final allUnits = [...mockCourseUnits, ...dynamicUnits];
+
+                  final totalLessons = allUnits.fold<int>(
+                    0,
+                    (total, unit) => total + unit.lessons.length,
+                  );
+                  final completedCount = completedLessons.length;
+                  final courseProgress = totalLessons > 0
+                      ? completedCount / totalLessons
+                      : 0.0;
+
+                  // Find the next incomplete lesson
+                  Lesson? nextLesson;
+                  for (var unit in allUnits) {
+                    for (var lesson in unit.lessons) {
+                      if (!completedLessons.contains(lesson.id)) {
+                        nextLesson = lesson;
+                        break;
+                      }
+                    }
+                    if (nextLesson != null) break;
+                  }
+
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(16, 18, 16, 22),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _StudentHeader(name: name, streak: streak),
+                        const SizedBox(height: 14),
+                        _ProgressHero(
+                          title: 'Learning Dashboard',
+                          headline: 'Level $level Mandarin',
+                          subtitle:
+                              '${(courseProgress * 100).round()}% Course Completed',
+                          xp: xp,
+                          progress: levelProgress,
+                          actionLabel: nextLesson != null
+                              ? 'Continue Lesson'
+                              : 'Course Completed',
+                          onAction: nextLesson != null
+                              ? () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => BlocProvider(
+                                        create: (_) =>
+                                            new_bloc.LessonBloc()
+                                              ..add(new_bloc.StartLesson(nextLesson!)),
+                                        child: new_lessons.LessonScreen(
+                                          lesson: nextLesson!,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }
+                              : widget.onOpenLearn,
+                        ),
+                        const SizedBox(height: 16),
+                        GridView.count(
+                          crossAxisCount: 2,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 10,
+                          childAspectRatio: 1.18,
+                          children: [
+                            _StudentActionTile(
+                              icon: Icons.menu_book_rounded,
+                              title: 'Mandarin Lessons',
+                              subtitle: 'Vocab, quiz, listening',
+                              color: _StudentColors.red,
+                              onTap: widget.onOpenLearn,
                             ),
-                          );
-                        }
-                      : onOpenLearn,
-                ),
-                const SizedBox(height: 16),
-                GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10,
-                  childAspectRatio: 1.18,
-                  children: [
-                    _StudentActionTile(
-                      icon: Icons.menu_book_rounded,
-                      title: 'Mandarin Lessons',
-                      subtitle: 'Vocab, quiz, listening',
-                      color: _StudentColors.red,
-                      onTap: onOpenLearn,
+                            _StudentActionTile(
+                              icon: Icons.style_rounded,
+                              title: 'Flashcards',
+                              subtitle: 'Revision tools',
+                              color: _StudentColors.orange,
+                              onTap: () => _LearnTab.openFlashcards(context),
+                            ),
+                            _StudentActionTile(
+                              icon: Icons.local_fire_department_rounded,
+                              title: 'Daily Challenge',
+                              subtitle: 'Earn bonus XP',
+                              color: const Color(0xFF16A34A),
+                              onTap: () => _LearnTab.openDailyChallenge(context),
+                            ),
+                            _StudentActionTile(
+                              icon: Icons.graphic_eq_rounded,
+                              title: 'Pronunciation',
+                              subtitle: 'Audio practice',
+                              color: const Color(0xFF2F80ED),
+                              onTap: () => _LearnTab.openPronunciation(context),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        _SectionHeader(
+                          title: 'Starred Vocab & Phrases',
+                          onViewAll: () {},
+                        ),
+                        const SizedBox(height: 10),
+                        const _StarredItemsRow(),
+                        const SizedBox(height: 20),
+                        _SectionHeader(
+                          title: 'Continue Lessons',
+                          onViewAll: widget.onOpenLearn,
+                        ),
+                        const SizedBox(height: 10),
+                        _HomeContinueLessonCard(
+                          completedLessons: completedLessons,
+                          allUnits: allUnits,
+                        ),
+                      ],
                     ),
-                    _StudentActionTile(
-                      icon: Icons.style_rounded,
-                      title: 'Flashcards',
-                      subtitle: 'Revision tools',
-                      color: _StudentColors.orange,
-                      onTap: () => _LearnTab.openFlashcards(context),
-                    ),
-                    _StudentActionTile(
-                      icon: Icons.local_fire_department_rounded,
-                      title: 'Daily Challenge',
-                      subtitle: 'Earn bonus XP',
-                      color: const Color(0xFF16A34A),
-                      onTap: () => _LearnTab.openDailyChallenge(context),
-                    ),
-                    _StudentActionTile(
-                      icon: Icons.graphic_eq_rounded,
-                      title: 'Pronunciation',
-                      subtitle: 'Audio practice',
-                      color: const Color(0xFF2F80ED),
-                      onTap: () => _LearnTab.openPronunciation(context),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                _SectionHeader(
-                  title: 'Starred Vocab & Phrases',
-                  onViewAll: () {},
-                ),
-                const SizedBox(height: 10),
-                const _StarredItemsRow(),
-                const SizedBox(height: 20),
-                _SectionHeader(
-                  title: 'Continue Lessons',
-                  onViewAll: onOpenLearn,
-                ),
-                const SizedBox(height: 10),
-                _HomeContinueLessonCard(completedLessons: completedLessons),
-              ],
-            ),
+                  );
+                },
+              );
+            },
           );
         },
       ),
@@ -236,16 +275,20 @@ class _HomeTab extends StatelessWidget {
 }
 
 class _HomeContinueLessonCard extends StatelessWidget {
-  const _HomeContinueLessonCard({required this.completedLessons});
+  const _HomeContinueLessonCard({
+    required this.completedLessons,
+    required this.allUnits,
+  });
 
   final List<dynamic> completedLessons;
+  final List<CourseUnit> allUnits;
 
   @override
   Widget build(BuildContext context) {
     Lesson? nextLesson;
     CourseUnit? targetUnit;
 
-    for (var unit in mockCourseUnits) {
+    for (var unit in allUnits) {
       for (var lesson in unit.lessons) {
         if (!completedLessons.contains(lesson.id)) {
           nextLesson = lesson;
@@ -526,11 +569,12 @@ class _LearnTab extends StatelessWidget {
   static Future<void> openUnitDetail(
     BuildContext context,
     LessonUnit unit,
+    bool isCompleted,
   ) async {
     final vocabSnapshot = await FirebaseFirestore.instance
         .collection('lessons')
         .doc(unit.id)
-        .collection('vocab')
+        .collection('vocabulary')
         .get();
 
     final vocab = vocabSnapshot.docs
@@ -541,7 +585,11 @@ class _LearnTab extends StatelessWidget {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => LessonDetailPage(unit: unit, vocabItems: vocab),
+        builder: (_) => LessonDetailPage(
+          unit: unit,
+          vocabItems: vocab,
+          isCompleted: isCompleted,
+        ),
       ),
     );
   }
@@ -560,7 +608,7 @@ class _LearnTab extends StatelessWidget {
     final vocabSnapshot = await FirebaseFirestore.instance
         .collection('lessons')
         .doc(unitDoc.id)
-        .collection('vocab')
+        .collection('vocabulary')
         .get();
 
     final vocab = vocabSnapshot.docs
@@ -662,17 +710,10 @@ class _LearnTab extends StatelessWidget {
                 _CoursePathView(
                   completedLessons: data['completedLessons'] ?? [],
                 ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Community Lessons',
-                  style: TextStyle(
-                    color: _StudentColors.deep,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                  ),
+                _LessonsList(
+                  onOpenUnit: openUnitDetail,
+                  completedLessons: List<String>.from(data['completedLessons'] ?? []),
                 ),
-                const SizedBox(height: 10),
-                _LessonsList(onOpenUnit: openUnitDetail),
               ],
             ),
           );
@@ -683,9 +724,10 @@ class _LearnTab extends StatelessWidget {
 }
 
 class _LessonsList extends StatelessWidget {
-  const _LessonsList({required this.onOpenUnit});
+  const _LessonsList({required this.onOpenUnit, required this.completedLessons});
 
-  final Future<void> Function(BuildContext context, LessonUnit unit) onOpenUnit;
+  final Future<void> Function(BuildContext context, LessonUnit unit, bool isCompleted) onOpenUnit;
+  final List<String> completedLessons;
 
   @override
   Widget build(BuildContext context) {
@@ -704,15 +746,53 @@ class _LessonsList extends StatelessWidget {
           return const _EmptyState(text: 'No lessons available yet.');
         }
 
-        final units = docs
-            .map((doc) => LessonUnit.fromFirestore(doc.data(), doc.id))
-            .toList();
+        // Separate units into regular learning path and community materials
+        final regularUnits = <LessonUnit>[];
+        final communityUnits = <LessonUnit>[];
 
-        return Column(
-          children: units
-              .map((unit) => _LessonCard(unit: unit, onTap: onOpenUnit))
-              .toList(),
-        );
+        for (final doc in docs) {
+          final data = doc.data();
+          final type = data['type'] as String?;
+          final materialsList = data['materials'] as List?;
+          
+          final isMaterial = type == 'material' || (type != 'vocab_unit' && materialsList != null && materialsList.isNotEmpty);
+
+          if (isMaterial) {
+            communityUnits.add(LessonUnit.fromFirestore(data, doc.id));
+          } else {
+            // Include both system and vocab_unit as regular path
+            regularUnits.add(LessonUnit.fromFirestore(data, doc.id));
+          }
+        }
+
+        final sections = <Widget>[];
+        
+                  // Remove the heading completely for standard units
+                  if (communityUnits.isNotEmpty) {
+                    sections.add(
+                      const Padding(
+                        padding: EdgeInsets.only(top: 20, bottom: 12),
+                        child: Text(
+                          'Community Lessons',
+                          style: TextStyle(
+                            color: Color(0xFF1a1a1a),
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    );
+                    for (final unit in communityUnits) {
+                      final isCompleted = completedLessons.contains(unit.id);
+                      sections.add(_LessonCard(
+                        unit: unit,
+                        onTap: onOpenUnit,
+                        isCompleted: isCompleted,
+                      ));
+                    }
+                  }
+
+        return Column(children: sections);
       },
     );
   }
@@ -1050,10 +1130,15 @@ class _SectionHeader extends StatelessWidget {
 }
 
 class _LessonCard extends StatelessWidget {
-  const _LessonCard({required this.unit, required this.onTap});
+  const _LessonCard({
+    required this.unit,
+    required this.onTap,
+    required this.isCompleted,
+  });
 
   final LessonUnit unit;
-  final Future<void> Function(BuildContext context, LessonUnit unit) onTap;
+  final Future<void> Function(BuildContext context, LessonUnit unit, bool isCompleted) onTap;
+  final bool isCompleted;
 
   @override
   Widget build(BuildContext context) {
@@ -1064,7 +1149,7 @@ class _LessonCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
-          onTap: () => onTap(context, unit),
+          onTap: () => onTap(context, unit, isCompleted),
           child: Container(
             padding: const EdgeInsets.all(13),
             decoration: BoxDecoration(
@@ -1122,24 +1207,57 @@ class _LessonCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 7,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _StudentColors.orange.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    '+${unit.xpReward} XP',
-                    style: const TextStyle(
-                      color: _StudentColors.orange,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w900,
+                if (isCompleted) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8F5E9),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: const Color(0xFFC8E6C9)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.check_circle_rounded,
+                          color: Color(0xFF2E7D32),
+                          size: 14,
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          'Completed',
+                          style: TextStyle(
+                            color: Color(0xFF2E7D32),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
+                ] else ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 7,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _StudentColors.orange.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      '+${unit.xpReward} XP',
+                      style: const TextStyle(
+                        color: _StudentColors.orange,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -1241,71 +1359,97 @@ class _ProgressSheet extends StatelessWidget {
         final levelProgress = _progressForXp(xp);
         final completedLessons = (data['completedLessons'] as List?) ?? [];
 
-        final totalLessons = mockCourseUnits.fold<int>(
-          0,
-          (total, unit) => total + unit.lessons.length,
-        );
-        final courseProgress = totalLessons > 0
-            ? completedLessons.length / totalLessons
-            : 0.0;
-
-        // Find the next incomplete lesson
-        Lesson? nextLesson;
-        for (var unit in mockCourseUnits) {
-          for (var lesson in unit.lessons) {
-            if (!completedLessons.contains(lesson.id)) {
-              nextLesson = lesson;
-              break;
+        return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          stream: FirebaseFirestore.instance
+              .collection('lessons')
+              .orderBy('order')
+              .snapshots(),
+          builder: (context, lessonsSnapshot) {
+            List<QueryDocumentSnapshot<Map<String, dynamic>>> vocabDocRefs = [];
+            if (lessonsSnapshot.hasData) {
+              vocabDocRefs = lessonsSnapshot.data!.docs.where((doc) {
+                final type = doc.data()['type'] as String?;
+                final materialsList = doc.data()['materials'] as List?;
+                final isMaterial = type == 'material' || (type != 'vocab_unit' && materialsList != null && materialsList.isNotEmpty);
+                return !isMaterial; // Only dynamic vocab units
+              }).toList();
             }
-          }
-          if (nextLesson != null) break;
-        }
 
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(18, 8, 18, 28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Learning Progress',
-                style: TextStyle(
-                  color: _StudentColors.deep,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 16),
-              _ProgressHero(
-                title: 'Current Level',
-                headline: 'Level $level',
-                subtitle: '${(courseProgress * 100).round()}% Course Completed',
-                xp: xp,
-                progress: levelProgress,
-                actionLabel: nextLesson != null
-                    ? 'Continue Lesson'
-                    : 'Course Completed',
-                onAction: nextLesson != null
-                    ? () {
-                        Navigator.pop(context); // Close sheet
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => BlocProvider(
-                              create: (_) =>
-                                  new_bloc.LessonBloc()
-                                    ..add(new_bloc.StartLesson(nextLesson!)),
-                              child: new_lessons.LessonScreen(
-                                lesson: nextLesson!,
-                              ),
-                            ),
-                          ),
-                        );
-                      }
-                    : () => Navigator.pop(context),
-              ),
-            ],
-          ),
+            return FutureBuilder<List<CourseUnit>>(
+              future: _fetchDynamicUnits(vocabDocRefs),
+              builder: (context, futureSnapshot) {
+                final dynamicUnits = futureSnapshot.data ?? [];
+                final allUnits = [...mockCourseUnits, ...dynamicUnits];
+
+                final totalLessons = allUnits.fold<int>(
+                  0,
+                  (total, unit) => total + unit.lessons.length,
+                );
+                final courseProgress = totalLessons > 0
+                    ? completedLessons.length / totalLessons
+                    : 0.0;
+
+                // Find the next incomplete lesson
+                Lesson? nextLesson;
+                for (var unit in allUnits) {
+                  for (var lesson in unit.lessons) {
+                    if (!completedLessons.contains(lesson.id)) {
+                      nextLesson = lesson;
+                      break;
+                    }
+                  }
+                  if (nextLesson != null) break;
+                }
+
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 8, 18, 28),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Learning Progress',
+                        style: TextStyle(
+                          color: _StudentColors.deep,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _ProgressHero(
+                        title: 'Current Level',
+                        headline: 'Level $level',
+                        subtitle: '${(courseProgress * 100).round()}% Course Completed',
+                        xp: xp,
+                        progress: levelProgress,
+                        actionLabel: nextLesson != null
+                            ? 'Continue Lesson'
+                            : 'Course Completed',
+                        onAction: nextLesson != null
+                            ? () {
+                                Navigator.pop(context); // Close sheet
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => BlocProvider(
+                                      create: (_) =>
+                                          new_bloc.LessonBloc()
+                                            ..add(new_bloc.StartLesson(nextLesson!)),
+                                      child: new_lessons.LessonScreen(
+                                        lesson: nextLesson!,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }
+                            : () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
         );
       },
     );
@@ -1751,16 +1895,142 @@ void _showMessage(BuildContext context, String message) {
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 }
 
-class _CoursePathView extends StatelessWidget {
+Future<List<CourseUnit>> _fetchDynamicUnits(List<QueryDocumentSnapshot<Map<String, dynamic>>> docs) async {
+  final list = <CourseUnit>[];
+  for (int dIndex = 0; dIndex < docs.length; dIndex++) {
+    final doc = docs[dIndex];
+    final data = doc.data();
+    final vocabSnapshot = await doc.reference.collection('vocabulary').get();
+    final vocabDocs = vocabSnapshot.docs;
+     
+    final lessons = <Lesson>[];
+    for (int i = 0; i < vocabDocs.length; i++) {
+      final vData = vocabDocs[i].data();
+      final word = vData['word'] ?? '';
+      final english = vData['meaning'] ?? '';
+       
+      lessons.add(Lesson(
+        id: '${doc.id}_$i',
+        title: '$word - $english',
+        subtitle: vData['pronunciation'] ?? '',
+        isCompleted: false,
+        isLocked: true,
+        xpReward: 30, // Default 30 XP as in image
+        items: generateItemsForVocab(
+          word,
+          vData['pronunciation'] ?? '',
+          english,
+          vData['exampleSentence'] ?? '',
+          vData['exampleMeaning'] ?? '',
+        )
+      ));
+    }
+    
+    // If there's a summary quiz, add it as a final lesson
+    if (data['summaryQuiz'] != null) {
+      lessons.add(Lesson(
+        id: '${doc.id}_quiz',
+        title: 'Unit ${data['unitNumber']} Summary Quiz',
+        subtitle: 'Review & Test',
+        isCompleted: false,
+        isLocked: true,
+        xpReward: 100, // Summary gives more XP
+        items: [
+           LessonItem(
+             id: '${doc.id}_quiz_item',
+             type: LessonType.quiz,
+             chinese: data['summaryQuiz']['question'] ?? 'Quiz',
+             pinyin: '',
+             english: 'Review',
+             options: List<String>.from(data['summaryQuiz']['options'] ?? []),
+           )
+        ]
+      ));
+    }
+     
+    final uNum = data['unitNumber'] ?? (dIndex + 4);
+    final colors = [
+      const Color(0xFF6C3BFF), // Premium Royal Purple
+      const Color(0xFF0F6E56), // Premium Teal
+      const Color(0xFFD81B60), // Premium Dark Pink
+      const Color(0xFFE65100), // Premium Dark Orange
+      const Color(0xFF006064), // Premium Cyan
+      const Color(0xFF1E88E5), // Premium Blue
+    ];
+    final color = colors[(uNum is int ? uNum : 4) % colors.length];
+
+    list.add(CourseUnit(
+      id: doc.id,
+      title: 'Unit $uNum: ${data['title'] ?? 'Unit'}',
+      subtitle: (data['titleChinese'] != null && data['titleChinese'].toString().trim().isNotEmpty)
+          ? data['titleChinese'].toString().trim()
+          : (data['description'] ?? 'Vocabulary'),
+      color: color,
+      lessons: lessons,
+    ));
+  }
+  return list;
+}
+
+class _CoursePathView extends StatefulWidget {
   final List<dynamic> completedLessons;
   const _CoursePathView({required this.completedLessons});
 
   @override
+  State<_CoursePathView> createState() => _CoursePathViewState();
+}
+
+class _CoursePathViewState extends State<_CoursePathView> {
+  List<CourseUnit>? _dynamicUnits;
+  int _currentPage = 0;
+  static const int _pageSize = 3;
+
+  @override
   Widget build(BuildContext context) {
-    return Column(
-      children: mockCourseUnits.asMap().entries.map((unitEntry) {
-        final unitIndex = unitEntry.key;
-        final unit = unitEntry.value;
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance.collection('lessons').orderBy('order').snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData && _dynamicUnits == null) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        
+        List<QueryDocumentSnapshot<Map<String, dynamic>>> vocabDocRefs = [];
+        if (snapshot.hasData) {
+          vocabDocRefs = snapshot.data!.docs.where((doc) {
+            final type = doc.data()['type'] as String?;
+            final materialsList = doc.data()['materials'] as List?;
+            final isMaterial = type == 'material' || (type != 'vocab_unit' && materialsList != null && materialsList.isNotEmpty);
+            return !isMaterial; // Only dynamic vocab units
+          }).toList();
+        }
+
+        return FutureBuilder<List<CourseUnit>>(
+          future: _fetchDynamicUnits(vocabDocRefs),
+          builder: (context, futureSnapshot) {
+            final dynamicUnits = futureSnapshot.data ?? _dynamicUnits ?? [];
+            if (futureSnapshot.hasData) {
+              _dynamicUnits = dynamicUnits;
+            }
+
+            final allUnits = [...mockCourseUnits, ...dynamicUnits];
+
+            final totalPages = allUnits.isEmpty ? 1 : (allUnits.length / _pageSize).ceil();
+            if (_currentPage >= totalPages) {
+              _currentPage = totalPages - 1;
+            }
+            if (_currentPage < 0) {
+              _currentPage = 0;
+            }
+
+            final startIndex = _currentPage * _pageSize;
+            final endIndex = (startIndex + _pageSize).clamp(0, allUnits.length);
+            final paginatedUnits = allUnits.sublist(startIndex, endIndex);
+
+            return Column(
+              children: [
+                ...paginatedUnits.asMap().entries.map((entry) {
+                  final unit = entry.value;
+                  final unitIndex = startIndex + entry.key;
         return Container(
           margin: const EdgeInsets.only(bottom: 24),
           child: Column(
@@ -1810,16 +2080,16 @@ class _CoursePathView extends StatelessWidget {
 
                 // Calculate unlock state
                 bool isUnlocked = false;
-                bool isCompleted = completedLessons.contains(lesson.id);
+                bool isCompleted = widget.completedLessons.contains(lesson.id);
                 if (unitIndex == 0 && index == 0) {
                   isUnlocked = true;
                 } else if (index > 0) {
-                  isUnlocked = completedLessons.contains(
+                  isUnlocked = widget.completedLessons.contains(
                     unit.lessons[index - 1].id,
                   );
                 } else if (unitIndex > 0) {
-                  isUnlocked = completedLessons.contains(
-                    mockCourseUnits[unitIndex - 1].lessons.last.id,
+                  isUnlocked = widget.completedLessons.contains(
+                    allUnits[unitIndex - 1].lessons.last.id,
                   );
                 }
                 if (isCompleted) isUnlocked = true;
@@ -1875,7 +2145,7 @@ class _CoursePathView extends StatelessWidget {
                                 child: Container(
                                   width: 4,
                                   color:
-                                      completedLessons.contains(
+                                      widget.completedLessons.contains(
                                         unit.lessons[index].id,
                                       )
                                       ? unit.color
@@ -1930,13 +2200,18 @@ class _CoursePathView extends StatelessWidget {
                                       mainAxisAlignment:
                                           MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Text(
-                                          lesson.title,
-                                          style: const TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
+                                        Expanded(
+                                          child: Text(
+                                            lesson.title,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
                                         ),
+                                        const SizedBox(width: 8),
                                         Row(
                                           children: [
                                             Text(
@@ -1976,7 +2251,103 @@ class _CoursePathView extends StatelessWidget {
             ],
           ),
         );
-      }).toList(),
+                }).toList(),
+                if (totalPages > 1) ...[
+                  const SizedBox(height: 12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        ElevatedButton(
+                          onPressed: _currentPage > 0
+                              ? () => setState(() => _currentPage--)
+                              : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: _StudentColors.orange,
+                            disabledForegroundColor: Colors.grey.shade400,
+                            elevation: 0,
+                            minimumSize: const Size(100, 44),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              side: BorderSide(
+                                color: _currentPage > 0
+                                    ? const Color(0xFFFFDFC2)
+                                    : Colors.grey.shade200,
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.chevron_left_rounded),
+                              SizedBox(width: 4),
+                              Text(
+                                'Previous',
+                                style: TextStyle(fontWeight: FontWeight.w900),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Text(
+                          'Page ${_currentPage + 1} of $totalPages',
+                          style: const TextStyle(
+                            color: _StudentColors.deep,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 14,
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: _currentPage < totalPages - 1
+                              ? () => setState(() => _currentPage++)
+                              : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: _StudentColors.orange,
+                            disabledForegroundColor: Colors.grey.shade400,
+                            elevation: 0,
+                            minimumSize: const Size(100, 44),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              side: BorderSide(
+                                color: _currentPage < totalPages - 1
+                                    ? const Color(0xFFFFDFC2)
+                                    : Colors.grey.shade200,
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Next',
+                                style: TextStyle(fontWeight: FontWeight.w900),
+                              ),
+                              SizedBox(width: 4),
+                              Icon(Icons.chevron_right_rounded),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }

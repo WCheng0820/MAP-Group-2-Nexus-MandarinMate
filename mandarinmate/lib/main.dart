@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'firebase_options.dart';
 import 'package:mandarinmate/app_router.dart';
 import 'package:mandarinmate/auth/presentation/bloc/auth_bloc.dart';
@@ -12,6 +13,9 @@ import 'package:mandarinmate/utils/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Load runtime environment variables from .env (if present)
+  await dotenv.load();
 
   // Initialize Supabase Storage
   await Supabase.initialize(

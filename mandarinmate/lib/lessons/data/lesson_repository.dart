@@ -21,7 +21,7 @@ class LessonRepository {
     final snapshot = await _firestore
         .collection('lessons')
         .doc(unitDocId)
-        .collection('vocab')
+        .collection('vocabulary')
         .get();
 
     return snapshot.docs.map((doc) => VocabItem.fromMap(doc.data())).toList();

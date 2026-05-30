@@ -7,9 +7,7 @@ import 'package:mandarinmate/features/auth/presentation/pages/login_page.dart';
 import 'package:mandarinmate/screens/profile/edit_profile_page.dart'
     as mandarinmate_edit_profile;
 import 'package:mandarinmate/features/tutor/presentation/pages/tutor_announcement_page.dart';
-import 'package:mandarinmate/features/tutor/presentation/pages/tutor_create_flashcards_page.dart';
-import 'package:mandarinmate/features/tutor/presentation/pages/tutor_create_lesson_page.dart';
-import 'package:mandarinmate/features/tutor/presentation/pages/tutor_lessons_page.dart';
+import 'package:mandarinmate/tutor/presentation/pages/tutor_manage_lessons_hub_page.dart';
 import 'package:mandarinmate/features/tutor/presentation/pages/tutor_students_page.dart';
 
 class TutorDashboardPage extends StatefulWidget {
@@ -22,67 +20,9 @@ class TutorDashboardPage extends StatefulWidget {
 class _TutorDashboardPageState extends State<TutorDashboardPage> {
   int _currentIndex = 0;
 
-  void _openManageLessonsMenu(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      backgroundColor: Colors.white,
-      builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  leading: const Icon(
-                    Icons.menu_book_rounded,
-                    color: _TutorColors.green,
-                  ),
-                  title: const Text('Add Lesson Unit'),
-                  subtitle: const Text(
-                    'Create a new unit (title, order, materials)',
-                  ),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const TutorCreateLessonPage(),
-                      ),
-                    );
-                  },
-                ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(
-                    Icons.style_rounded,
-                    color: _TutorColors.green,
-                  ),
-                  title: const Text('Add Flashcards'),
-                  subtitle: const Text('Add 3 flashcards to an existing unit'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const TutorCreateFlashcardsPage(),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
-
     return Scaffold(
       backgroundColor: _TutorColors.paper,
       bottomNavigationBar: BottomNavigationBar(
@@ -97,7 +37,7 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.menu_book_rounded),
+            icon: Icon(Icons.class_rounded),
             label: 'Lessons',
           ),
           BottomNavigationBarItem(
@@ -159,14 +99,14 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                           studentSnapshot.data?.docs.length ?? 0;
                       return _TutorHero(
                         title: 'Tutor Dashboard',
-                        headline: 'Manage Mandarin Lessons',
+                        headline: 'Manage All Learning Resources',
                         subtitle: '$studentCount active students',
-                        actionLabel: 'Tambah Lesson',
+                        actionLabel: 'Manage Lessons',
                         onAction: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const TutorLessonsPage(),
+                              builder: (_) => const TutorManageLessonsHubPage(),
                             ),
                           );
                         },
@@ -180,7 +120,7 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const TutorLessonsPage(),
+                          builder: (_) => const TutorManageLessonsHubPage(),
                         ),
                       );
                     },
@@ -195,12 +135,17 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                     childAspectRatio: 1.18,
                     children: [
                       _TutorActionTile(
-                        icon: Icons.menu_book_rounded,
+                        icon: Icons.class_rounded,
                         title: 'Manage Lessons',
-                        subtitle: 'Add, edit, and delete units',
+                        subtitle: 'Manage vocab, materials, and flashcards',
                         color: _TutorColors.green,
                         onTap: () {
-                          _openManageLessonsMenu(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const TutorManageLessonsHubPage(),
+                            ),
+                          );
                         },
                       ),
                       _TutorActionTile(
@@ -263,7 +208,7 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
       case 1:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const TutorLessonsPage()),
+          MaterialPageRoute(builder: (_) => const TutorManageLessonsHubPage()),
         );
         return;
       case 2:

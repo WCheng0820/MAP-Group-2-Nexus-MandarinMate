@@ -84,9 +84,13 @@ class _LessonScreenState extends State<LessonScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildLessonContent(context, item, state),
-                const Spacer(),
-                if (state.showFeedback)
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: _buildLessonContent(context, item, state),
+                  ),
+                ),
+                if (state.showFeedback) ...[
+                  const SizedBox(height: 16),
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -113,6 +117,7 @@ class _LessonScreenState extends State<LessonScreen> {
                       ],
                     ),
                   ),
+                ],
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: state.showFeedback

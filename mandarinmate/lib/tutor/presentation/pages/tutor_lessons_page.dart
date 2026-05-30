@@ -3,13 +3,20 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:mandarinmate/features/lessons/domain/lesson_model.dart';
-import 'package:mandarinmate/features/tutor/presentation/pages/tutor_create_lesson_page.dart';
-import 'package:mandarinmate/features/tutor/presentation/pages/tutor_create_flashcards_page.dart';
+import 'package:mandarinmate/features/tutor/presentation/pages/tutor_create_learning_materials_page.dart';
 
-class TutorLessonsPage extends StatelessWidget {
+
+class TutorLessonsPage extends StatefulWidget {
   const TutorLessonsPage({super.key});
 
-  static const Color _green = Color(0xFF0F6E56);
+  @override
+  State<TutorLessonsPage> createState() => _TutorLessonsPageState();
+}
+
+class _TutorLessonsPageState extends State<TutorLessonsPage> {
+  static const int _pageSize = 3;
+  int _currentPage = 0;
+
   static const Color _purple = Color(0xFF6C3BFF);
 
   static Widget _sectionHeader(String title) {
@@ -34,30 +41,44 @@ class TutorLessonsPage extends StatelessWidget {
     final user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6FBF8),
+      backgroundColor: const Color(0xFFF9F8FF),
       appBar: AppBar(
-        backgroundColor: _green,
+        backgroundColor: _purple,
         foregroundColor: Colors.white,
-        title: const Text('Manage Lessons'),
+        title: const Text('Manage Learning Materials'),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            onPressed: user == null ? null : () => _openCreateMenu(context),
+            onPressed: user == null
+                ? null
+                : () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const TutorCreateLearningMaterialsPage(),
+                      ),
+                    ),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: _green,
+        backgroundColor: _purple,
         foregroundColor: Colors.white,
-        onPressed: user == null ? null : () => _openCreateMenu(context),
+        onPressed: user == null
+            ? null
+            : () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const TutorCreateLearningMaterialsPage(),
+                  ),
+                ),
         child: const Icon(Icons.add),
       ),
       body: user == null
-          ? const Center(child: Text('Please log in again to manage lessons.'))
+          ? const Center(child: Text('Please log in again to manage learning materials.'))
           : ListView(
               padding: EdgeInsets.zero,
               children: [
-                _sectionHeader('Your Lesson Units'),
+                _sectionHeader('Your Learning Materials'),
                 StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                   stream: FirebaseFirestore.instance
                       .collection('lessons')
@@ -74,15 +95,21 @@ class TutorLessonsPage extends StatelessWidget {
                     if (snapshot.hasError) {
                       return const Padding(
                         padding: EdgeInsets.symmetric(horizontal: 16),
-                        child: Text('Failed to load your lessons.'),
+                        child: Text('Failed to load your learning materials.'),
                       );
                     }
 
-                    final docs = snapshot.data?.docs ?? [];
+                    // Client-side filter: exclude vocabulary units
+                    final docs = (snapshot.data?.docs ?? [])
+                        .where((doc) =>
+                            (doc.data()['type'] ?? '').toString() !=
+                            'vocab_unit')
+                        .toList();
+
                     if (docs.isEmpty) {
                       return const Padding(
                         padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
-                        child: Text('No lesson units created yet.'),
+                        child: Text('No learning materials created yet.'),
                       );
                     }
 
@@ -96,355 +123,157 @@ class TutorLessonsPage extends StatelessWidget {
                         return aUnit.compareTo(bUnit);
                       });
 
-                    return ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: sortedDocs.length,
-                      separatorBuilder: (_, index) =>
-                          const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        final lessonDoc = sortedDocs[index];
-                        final data = lessonDoc.data();
-                        final unitNumber = (data['unitNumber'] ?? '')
-                            .toString();
-                        final title = (data['title'] ?? '').toString();
-                        final titleChinese = (data['titleChinese'] ?? '')
-                            .toString();
-                        final description = (data['description'] ?? '')
-                            .toString();
-                        final materials =
-                            ((data['materials'] as List?) ?? const [])
-                                .map(
-                                  (item) => item is Map
-                                      ? LearningMaterial.fromMap(
-                                          Map<String, dynamic>.from(item),
-                                        )
-                                      : null,
-                                )
+                    // Client-side pagination: chunk sortedDocs into pages of size _pageSize
+                    final pages = <List<QueryDocumentSnapshot<Map<String, dynamic>>>>[];
+                    for (var i = 0; i < sortedDocs.length; i += _pageSize) {
+                      pages.add(sortedDocs.sublist(i, (i + _pageSize).clamp(0, sortedDocs.length)));
+                    }
+                    final totalPages = pages.isEmpty ? 1 : pages.length;
+                    if (_currentPage >= totalPages) {
+                      _currentPage = totalPages - 1;
+                    }
+                    final visibleDocs = pages.isEmpty ? <QueryDocumentSnapshot<Map<String, dynamic>>>[] : pages[_currentPage];
+
+                    return Column(
+                      children: [
+                        ListView.separated(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: visibleDocs.length,
+                          separatorBuilder: (_, index) => const SizedBox(height: 12),
+                          itemBuilder: (context, index) {
+                            final lessonDoc = visibleDocs[index];
+                            final data = lessonDoc.data();
+                            final unitNumber = (data['unitNumber'] ?? '').toString();
+                            final title = (data['title'] ?? '').toString();
+                            final titleChinese = (data['titleChinese'] ?? '').toString();
+                            final description = (data['description'] ?? '').toString();
+                            final materials = ((data['materials'] as List?) ?? const [])
+                                .map((item) => item is Map ? LearningMaterial.fromMap(Map<String, dynamic>.from(item)) : null)
                                 .whereType<LearningMaterial>()
                                 .toList();
 
-                        return Card(
-                          elevation: 0,
-                          color: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            side: BorderSide(color: Colors.grey.shade200),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
+                            return Card(
+                              elevation: 0,
+                              color: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                side: BorderSide(color: Colors.grey.shade200),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 8,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: _green.withValues(alpha: 0.10),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Text(
-                                        'Unit $unitNumber',
-                                        style: const TextStyle(
-                                          color: _green,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                    ),
-                                    const Spacer(),
-                                    IconButton(
-                                      icon: const Icon(Icons.edit_outlined),
-                                      color: _green,
-                                      onPressed: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) =>
-                                                TutorCreateLessonPage(
-                                                  docId: lessonDoc.id,
-                                                  existingData: data,
-                                                ),
+                                    Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                          decoration: BoxDecoration(
+                                            color: _purple.withValues(alpha: 0.10),
+                                            borderRadius: BorderRadius.circular(12),
                                           ),
-                                        );
-                                      },
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.delete_outline),
-                                      color: Colors.red.shade400,
-                                      onPressed: () => _confirmDelete(
-                                        context,
-                                        lessonDoc.id,
-                                        title,
-                                        materials,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  title,
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                if (titleChinese.isNotEmpty) ...[
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    titleChinese,
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      color: Colors.grey.shade700,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                                if (description.isNotEmpty) ...[
-                                  const SizedBox(height: 10),
-                                  Text(
-                                    description,
-                                    style: TextStyle(
-                                      color: Colors.grey.shade600,
-                                    ),
-                                  ),
-                                ],
-                                if (materials.isNotEmpty) ...[
-                                  const SizedBox(height: 12),
-                                  Wrap(
-                                    spacing: 8,
-                                    runSpacing: 8,
-                                    children: [
-                                      Chip(
-                                        avatar: const Icon(
-                                          Icons.attach_file,
-                                          size: 16,
+                                          child: Text('Set $unitNumber', style: const TextStyle(color: _purple, fontWeight: FontWeight.w700)),
                                         ),
-                                        label: Text(
-                                          '${materials.length} material${materials.length == 1 ? '' : 's'}',
+                                        const Spacer(),
+                                        IconButton(
+                                          icon: const Icon(Icons.edit_outlined),
+                                          color: _purple,
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(builder: (_) => TutorCreateLearningMaterialsPage(docId: lessonDoc.id, existingData: data)),
+                                            );
+                                          },
                                         ),
-                                        backgroundColor: _green.withValues(
-                                          alpha: 0.08,
+                                        IconButton(
+                                          icon: const Icon(Icons.delete_outline),
+                                          color: Colors.red.shade400,
+                                          onPressed: () => _confirmDelete(context, lessonDoc.id, title, materials),
                                         ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                                    if (titleChinese.isNotEmpty) ...[
+                                      const SizedBox(height: 4),
+                                      Text(titleChinese, style: TextStyle(fontSize: 15, color: Colors.grey.shade700, fontWeight: FontWeight.w500)),
+                                    ],
+                                    if (description.isNotEmpty) ...[
+                                      const SizedBox(height: 10),
+                                      Text(description, style: TextStyle(color: Colors.grey.shade600)),
+                                    ],
+                                    if (materials.isNotEmpty) ...[
+                                      const SizedBox(height: 12),
+                                      Wrap(
+                                        spacing: 8,
+                                        runSpacing: 8,
+                                        children: [
+                                          Chip(
+                                            avatar: const Icon(Icons.attach_file, size: 16),
+                                            label: Text('${materials.length} material${materials.length == 1 ? '' : 's'}'),
+                                            backgroundColor: _purple.withValues(alpha: 0.08),
+                                          ),
+                                        ],
                                       ),
                                     ],
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        );
-                      },
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                     );
                   },
                 ),
-                _sectionHeader('Your Flashcards'),
+                const SizedBox(height: 12),
+                // Pagination controls
                 StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                   stream: FirebaseFirestore.instance
-                      .collection('flashcard_levels')
+                      .collection('lessons')
                       .where('createdBy', isEqualTo: user.uid)
                       .snapshots(),
                   builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 18),
-                        child: Center(
-                          child: CircularProgressIndicator(color: _purple),
-                        ),
-                      );
-                    }
-
-                    if (snapshot.hasError) {
-                      return const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16),
-                        child: Text('Failed to load your flashcards.'),
-                      );
-                    }
-
-                    final docs = snapshot.data?.docs ?? [];
-                    if (docs.isEmpty) {
-                      return const Padding(
-                        padding: EdgeInsets.fromLTRB(16, 0, 16, 24),
-                        child: Text('No flashcard levels created yet.'),
-                      );
-                    }
-
-                    final levels =
-                        docs
-                            .map((doc) {
-                              final data = doc.data();
-                              final levelNumber =
-                                  int.tryParse(doc.id) ??
-                                  _asInt(data['levelNumber']);
-                              final title = (data['title'] ?? 'Flashcards')
-                                  .toString();
-                              final description = (data['description'] ?? '')
-                                  .toString();
-                              final order = _asInt(
-                                data['order'],
-                                fallback: levelNumber,
-                              );
-                              return _TutorFlashcardLevel(
-                                docId: doc.id,
-                                levelNumber: levelNumber,
-                                order: order,
-                                title: title,
-                                description: description,
-                              );
-                            })
-                            .where((level) => level.levelNumber > 0)
-                            .toList()
-                          ..sort((a, b) {
-                            if (a.order != b.order) {
-                              return a.order.compareTo(b.order);
-                            }
-                            return a.levelNumber.compareTo(b.levelNumber);
-                          });
-
-                    return ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: levels.length,
-                      separatorBuilder: (_, index) =>
-                          const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        final level = levels[index];
-                        return Card(
-                          elevation: 0,
-                          color: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            side: BorderSide(color: Colors.grey.shade200),
+                    final allDocs = snapshot.data?.docs ?? [];
+                    // Client-side filter: exclude vocabulary units
+                    final docsCount = allDocs
+                        .where((doc) =>
+                            (doc.data()['type'] ?? '').toString() !=
+                            'vocab_unit')
+                        .length;
+                    final totalPages = (docsCount / _pageSize).ceil();
+                    if (totalPages <= 1) return const SizedBox.shrink();
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          IconButton(
+                            onPressed: _currentPage > 0 ? () => setState(() => _currentPage--) : null,
+                            icon: const Icon(Icons.chevron_left),
                           ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: ExpansionTile(
-                              tilePadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 6,
+                          for (var i = 0; i < totalPages; i++)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: i == _currentPage ? _purple : Colors.grey.shade200,
+                                  foregroundColor: i == _currentPage ? Colors.white : Colors.black,
+                                  minimumSize: const Size(40, 36),
+                                ),
+                                onPressed: () => setState(() => _currentPage = i),
+                                child: Text('${i + 1}'),
                               ),
-                              collapsedIconColor: Colors.grey.shade700,
-                              iconColor: Colors.grey.shade700,
-                              leading: Container(
-                                width: 44,
-                                height: 44,
-                                decoration: BoxDecoration(
-                                  color: _purple.withValues(alpha: 0.14),
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                                child: const Icon(
-                                  Icons.style_rounded,
-                                  color: _purple,
-                                ),
-                              ),
-                              title: Text(
-                                'Level ${level.levelNumber}: ${level.title}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              subtitle: level.description.trim().isEmpty
-                                  ? const Text('Tap to view cards')
-                                  : Text(
-                                      level.description,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                              children: [
-                                StreamBuilder<
-                                  QuerySnapshot<Map<String, dynamic>>
-                                >(
-                                  stream: FirebaseFirestore.instance
-                                      .collection('flashcard_levels')
-                                      .doc(level.docId)
-                                      .collection('cards')
-                                      .orderBy('order')
-                                      .snapshots(),
-                                  builder: (context, cardsSnapshot) {
-                                    if (cardsSnapshot.connectionState ==
-                                        ConnectionState.waiting) {
-                                      return const Padding(
-                                        padding: EdgeInsets.all(16),
-                                        child: Center(
-                                          child: CircularProgressIndicator(
-                                            color: _purple,
-                                          ),
-                                        ),
-                                      );
-                                    }
-
-                                    if (cardsSnapshot.hasError) {
-                                      return const Padding(
-                                        padding: EdgeInsets.fromLTRB(
-                                          16,
-                                          0,
-                                          16,
-                                          16,
-                                        ),
-                                        child: Text('Failed to load cards.'),
-                                      );
-                                    }
-
-                                    final cardDocs =
-                                        cardsSnapshot.data?.docs ?? [];
-                                    if (cardDocs.isEmpty) {
-                                      return const Padding(
-                                        padding: EdgeInsets.fromLTRB(
-                                          16,
-                                          0,
-                                          16,
-                                          16,
-                                        ),
-                                        child: Text(
-                                          'No cards yet in this level.',
-                                        ),
-                                      );
-                                    }
-
-                                    return Column(
-                                      children: [
-                                        for (final doc in cardDocs)
-                                          ListTile(
-                                            dense: true,
-                                            title: Text(
-                                              (doc.data()['chinese'] ?? '')
-                                                  .toString(),
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.w800,
-                                              ),
-                                            ),
-                                            subtitle: Text(
-                                              [
-                                                    (doc.data()['pinyin'] ?? '')
-                                                        .toString(),
-                                                    (doc.data()['english'] ??
-                                                            '')
-                                                        .toString(),
-                                                    (doc.data()['malay'] ?? '')
-                                                        .toString(),
-                                                  ]
-                                                  .where(
-                                                    (s) => s.trim().isNotEmpty,
-                                                  )
-                                                  .join(' • '),
-                                            ),
-                                          ),
-                                      ],
-                                    );
-                                  },
-                                ),
-                              ],
                             ),
+                          IconButton(
+                            onPressed: _currentPage < totalPages - 1 ? () => setState(() => _currentPage++) : null,
+                            icon: const Icon(Icons.chevron_right),
                           ),
-                        );
-                      },
+                        ],
+                      ),
                     );
                   },
                 ),
@@ -453,56 +282,7 @@ class TutorLessonsPage extends StatelessWidget {
     );
   }
 
-  void _openCreateMenu(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      backgroundColor: Colors.white,
-      builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.menu_book_rounded, color: _green),
-                  title: const Text('Add Lesson Unit'),
-                  subtitle: const Text(
-                    'Create a new unit (title, order, materials)',
-                  ),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const TutorCreateLessonPage(),
-                      ),
-                    );
-                  },
-                ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.style_rounded, color: _green),
-                  title: const Text('Add Flashcards'),
-                  subtitle: const Text('Add 3 flashcards to a level'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const TutorCreateFlashcardsPage(),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
+
 
   Future<void> _confirmDelete(
     BuildContext context,
@@ -515,7 +295,7 @@ class TutorLessonsPage extends StatelessWidget {
           context: context,
           builder: (context) {
             return AlertDialog(
-              title: const Text('Delete Lesson'),
+              title: const Text('Delete Learning Materials'),
               content: Text('Are you sure you want to delete "$title"?'),
               actions: [
                 TextButton(
@@ -550,7 +330,7 @@ class TutorLessonsPage extends StatelessWidget {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lesson deleted successfully.')),
+        const SnackBar(content: Text('Learning materials deleted successfully.')),
       );
     } catch (_) {
       if (!context.mounted) {
@@ -558,7 +338,7 @@ class TutorLessonsPage extends StatelessWidget {
       }
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Failed to delete lesson.')));
+      ).showSnackBar(const SnackBar(content: Text('Failed to delete learning materials.')));
     }
   }
 
@@ -574,24 +354,8 @@ class TutorLessonsPage extends StatelessWidget {
             .child(material.storagePath)
             .delete();
       } catch (_) {
-        // Ignore storage cleanup failures after the lesson document is deleted.
+        // Ignore storage cleanup failures after the learning materials document is deleted.
       }
     }
   }
-}
-
-class _TutorFlashcardLevel {
-  const _TutorFlashcardLevel({
-    required this.docId,
-    required this.levelNumber,
-    required this.order,
-    required this.title,
-    required this.description,
-  });
-
-  final String docId;
-  final int levelNumber;
-  final int order;
-  final String title;
-  final String description;
 }

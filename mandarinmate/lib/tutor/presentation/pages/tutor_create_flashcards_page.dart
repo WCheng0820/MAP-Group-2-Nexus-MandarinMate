@@ -11,7 +11,7 @@ class TutorCreateFlashcardsPage extends StatefulWidget {
 }
 
 class _TutorCreateFlashcardsPageState extends State<TutorCreateFlashcardsPage> {
-  static const Color _green = Color(0xFF0F6E56);
+  static const Color _orange = Color(0xFFFF8A21);
   static const int _cardsPerLevel = 3;
 
   final _levelNumberController = TextEditingController();
@@ -229,9 +229,9 @@ class _TutorCreateFlashcardsPageState extends State<TutorCreateFlashcardsPage> {
     final user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6FBF8),
+      backgroundColor: const Color(0xFFFFF9F5),
       appBar: AppBar(
-        backgroundColor: _green,
+        backgroundColor: _orange,
         foregroundColor: Colors.white,
         title: const Text('Add Flashcards'),
       ),
@@ -291,7 +291,7 @@ class _TutorCreateFlashcardsPageState extends State<TutorCreateFlashcardsPage> {
                     child: ElevatedButton.icon(
                       onPressed: _isSaving ? null : _save,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: _green,
+                        backgroundColor: _orange,
                         foregroundColor: Colors.white,
                       ),
                       icon: _isSaving

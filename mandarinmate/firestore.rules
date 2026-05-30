@@ -41,7 +41,7 @@ rules_version = '2';
         allow create, update, delete: if isAdmin() || isTutor();
       }
 
-      match /lessons/{lessonId}/vocab/{vocabId} {
+      match /lessons/{lessonId}/vocabulary/{vocabId} {
         allow read: if signedIn();
         allow create, update, delete: if isAdmin() || isTutor();
       }

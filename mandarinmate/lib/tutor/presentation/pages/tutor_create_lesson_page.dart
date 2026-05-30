@@ -7,18 +7,18 @@ import 'package:flutter/material.dart';
 import 'package:mandarinmate/features/lessons/domain/lesson_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class TutorCreateLessonPage extends StatefulWidget {
-  const TutorCreateLessonPage({super.key, this.docId, this.existingData});
+class TutorCreateLearningMaterialsPage extends StatefulWidget {
+  const TutorCreateLearningMaterialsPage({super.key, this.docId, this.existingData});
 
   final String? docId;
   final Map<String, dynamic>? existingData;
 
   @override
-  State<TutorCreateLessonPage> createState() => _TutorCreateLessonPageState();
+  State<TutorCreateLearningMaterialsPage> createState() => _TutorCreateLearningMaterialsPageState();
 }
 
-class _TutorCreateLessonPageState extends State<TutorCreateLessonPage> {
-  static const Color _green = Color(0xFF0F6E56);
+class _TutorCreateLearningMaterialsPageState extends State<TutorCreateLearningMaterialsPage> {
+  static const Color _purple = Color(0xFF6C3BFF);
 
   final _formKey = GlobalKey<FormState>();
   final _unitNumberController = TextEditingController();
@@ -69,11 +69,11 @@ class _TutorCreateLessonPageState extends State<TutorCreateLessonPage> {
     final user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6FBF8),
+      backgroundColor: const Color(0xFFF9F8FF),
       appBar: AppBar(
-        backgroundColor: _green,
+        backgroundColor: _purple,
         foregroundColor: Colors.white,
-        title: Text(_isEditMode ? 'Edit Lesson' : 'Create Lesson'),
+        title: Text(_isEditMode ? 'Edit Learning Materials' : 'Create Learning Materials'),
       ),
       body: user == null
           ? const Center(child: Text('Please log in again to continue.'))
@@ -84,7 +84,7 @@ class _TutorCreateLessonPageState extends State<TutorCreateLessonPage> {
                 children: [
                   _buildNumberField(
                     controller: _unitNumberController,
-                    label: 'Unit Number',
+                    label: 'Material Set Number',
                   ),
                   const SizedBox(height: 12),
                   _buildNumberField(
@@ -107,7 +107,7 @@ class _TutorCreateLessonPageState extends State<TutorCreateLessonPage> {
                   const SizedBox(height: 12),
                   _buildNumberField(
                     controller: _totalLessonsController,
-                    label: 'Total Lessons',
+                    label: 'Total Materials',
                   ),
                   const SizedBox(height: 12),
                   _buildNumberField(
@@ -121,7 +121,7 @@ class _TutorCreateLessonPageState extends State<TutorCreateLessonPage> {
                     height: 52,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: _green,
+                        backgroundColor: _purple,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
@@ -137,7 +137,7 @@ class _TutorCreateLessonPageState extends State<TutorCreateLessonPage> {
                                 color: Colors.white,
                               ),
                             )
-                          : Text(_isEditMode ? 'Update Lesson' : 'Save Lesson'),
+                          : Text(_isEditMode ? 'Update Materials' : 'Save Materials'),
                     ),
                   ),
                 ],
@@ -214,7 +214,7 @@ class _TutorCreateLessonPageState extends State<TutorCreateLessonPage> {
           ),
           const SizedBox(height: 6),
           Text(
-            'Add article links or upload PDF and video files to support your Mandarin lessons.',
+            'Add article links or upload PDF and video files to support your Mandarin learning materials.',
             style: TextStyle(color: Colors.grey.shade700, height: 1.4),
           ),
           const SizedBox(height: 16),
@@ -249,7 +249,7 @@ class _TutorCreateLessonPageState extends State<TutorCreateLessonPage> {
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFF7FBF9),
+                color: const Color(0xFFFAF9FF),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: Colors.grey.shade200),
               ),
@@ -274,7 +274,7 @@ class _TutorCreateLessonPageState extends State<TutorCreateLessonPage> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7FBF9),
+        color: const Color(0xFFFAF9FF),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.grey.shade200),
       ),
@@ -285,10 +285,10 @@ class _TutorCreateLessonPageState extends State<TutorCreateLessonPage> {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: _green.withValues(alpha: 0.10),
+              color: _purple.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(_iconForMaterial(material.type), color: _green),
+            child: Icon(_iconForMaterial(material.type), color: _purple),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -306,7 +306,7 @@ class _TutorCreateLessonPageState extends State<TutorCreateLessonPage> {
                 Text(
                   _labelForMaterial(material.type),
                   style: const TextStyle(
-                    color: _green,
+                    color: _purple,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -385,7 +385,7 @@ class _TutorCreateLessonPageState extends State<TutorCreateLessonPage> {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: _green,
+                backgroundColor: _purple,
                 foregroundColor: Colors.white,
               ),
               onPressed: () {
@@ -516,7 +516,7 @@ class _TutorCreateLessonPageState extends State<TutorCreateLessonPage> {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: _green,
+                backgroundColor: _purple,
                 foregroundColor: Colors.white,
               ),
               onPressed: () {
@@ -594,6 +594,7 @@ class _TutorCreateLessonPageState extends State<TutorCreateLessonPage> {
         'materials': materials.map((material) => material.toMap()).toList(),
         'updatedAt': FieldValue.serverTimestamp(),
         'updatedBy': user.uid,
+        'type': 'material', // Mark as community lesson material
       };
 
       if (_isEditMode) {
@@ -616,8 +617,8 @@ class _TutorCreateLessonPageState extends State<TutorCreateLessonPage> {
         SnackBar(
           content: Text(
             _isEditMode
-                ? 'Lesson updated successfully.'
-                : 'Lesson saved successfully.',
+                ? 'Learning materials updated successfully.'
+                : 'Learning materials saved successfully.',
           ),
         ),
       );
@@ -628,7 +629,7 @@ class _TutorCreateLessonPageState extends State<TutorCreateLessonPage> {
       }
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Failed to save lesson: $e')));
+      ).showSnackBar(SnackBar(content: Text('Failed to save learning materials: $e')));
     } finally {
       if (mounted) {
         setState(() {
@@ -691,7 +692,7 @@ class _TutorCreateLessonPageState extends State<TutorCreateLessonPage> {
               .from('lesson_materials')
               .remove([storagePath]);
       } catch (_) {
-        // Ignore cleanup failures so lesson changes can still be saved.
+        // Ignore cleanup failures so learning material changes can still be saved.
       }
     }
   }
@@ -883,7 +884,7 @@ class _DraftMaterial {
 
   String get statusText {
     if (requiresUpload) {
-      return 'Menunggu dimuat naik semasa simpan lesson';
+      return 'Menunggu dimuat naik semasa simpan learning materials';
     }
     if (type == LearningMaterialType.article) {
       return url;
