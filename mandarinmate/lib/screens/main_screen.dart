@@ -112,11 +112,12 @@ class _HomeTabState extends State<_HomeTab> {
         builder: (context, userSnapshot) {
           final data = userSnapshot.data?.data() ?? <String, dynamic>{};
           final name = _displayName(data);
-          final level = _toInt(data['level'], fallback: 1);
           final xp = _toInt(
             data['xp'],
             fallback: _toInt(data['xpPoints'], fallback: 0),
           );
+          final level = (xp ~/ 250) + 1;
+          final starredItems = (data['starredItems'] as List?) ?? [];
           final streak = _toInt(
             data['streak'],
             fallback: _toInt(data['currentStreak'], fallback: 0),
@@ -245,13 +246,15 @@ class _HomeTabState extends State<_HomeTab> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 20),
-                        _SectionHeader(
-                          title: 'Starred Vocab & Phrases',
-                          onViewAll: () {},
-                        ),
-                        const SizedBox(height: 10),
-                        const _StarredItemsRow(),
+                        if (starredItems.isNotEmpty) ...[
+                          const SizedBox(height: 20),
+                          _SectionHeader(
+                            title: 'Starred Vocab & Phrases',
+                            onViewAll: () {},
+                          ),
+                          const SizedBox(height: 10),
+                          _StarredItemsRow(starredItems: starredItems),
+                        ],
                         const SizedBox(height: 20),
                         _SectionHeader(
                           title: 'Continue Lessons',
@@ -261,6 +264,30 @@ class _HomeTabState extends State<_HomeTab> {
                         _HomeContinueLessonCard(
                           completedLessons: completedLessons,
                           allUnits: allUnits,
+                        ),
+                        const SizedBox(height: 20),
+                        _SectionHeader(
+                          title: 'Recent Badges',
+                          onViewAll: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => BadgesAchievementsPage(
+                                  xp: xp,
+                                  streak: streak,
+                                  completedLessons: completedLessons,
+                                  level: level,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        _RecentBadgesRow(
+                          xp: xp,
+                          streak: streak,
+                          completedLessons: completedLessons,
+                          level: level,
                         ),
                       ],
                     ),
@@ -384,19 +411,11 @@ class _HomeContinueLessonCard extends StatelessWidget {
 }
 
 class _StarredItemsRow extends StatelessWidget {
-  const _StarredItemsRow();
+  final List<dynamic> starredItems;
+  const _StarredItemsRow({required this.starredItems});
 
   @override
   Widget build(BuildContext context) {
-    // For MVP gamification context, we mock the starred items.
-    // In future this reads a 'starred' array from User document.
-    final starredItems = [
-      {'title': '你好', 'type': 'Vocab', 'color': Colors.red},
-      {'title': '早上好', 'type': 'Vocab', 'color': Colors.blue},
-      {'title': '谢谢', 'type': 'Phrase', 'color': Colors.orange},
-      {'title': '吃饭', 'type': 'Phrase', 'color': Colors.purple},
-    ];
-
     return SizedBox(
       height: 110,
       child: ListView.separated(
@@ -404,8 +423,19 @@ class _StarredItemsRow extends StatelessWidget {
         itemCount: starredItems.length,
         separatorBuilder: (context, index) => const SizedBox(width: 12),
         itemBuilder: (context, index) {
-          final item = starredItems[index];
-          final color = item['color'] as Color;
+          final rawItem = starredItems[index];
+          final item = rawItem is Map ? rawItem : <String, dynamic>{};
+          final title = (item['title'] ?? '').toString();
+          final type = (item['type'] ?? 'Vocab').toString();
+          
+          final colors = [
+            _StudentColors.orange,
+            _StudentColors.red,
+            const Color(0xFF2F80ED),
+            const Color(0xFF16A34A),
+          ];
+          final color = colors[index % colors.length];
+
           return Container(
             width: 120,
             padding: const EdgeInsets.all(12),
@@ -417,18 +447,137 @@ class _StarredItemsRow extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.star, color: Colors.amber, size: 24),
+                const Icon(Icons.star, color: Colors.amber, size: 24),
                 const SizedBox(height: 4),
                 Text(
-                  item['title'] as String,
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
                   ),
                 ),
                 Text(
-                  item['type'] as String,
+                  type,
                   style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _RecentBadgesRow extends StatelessWidget {
+  final int xp;
+  final int streak;
+  final List<dynamic> completedLessons;
+  final int level;
+
+  const _RecentBadgesRow({
+    required this.xp,
+    required this.streak,
+    required this.completedLessons,
+    required this.level,
+  });
+
+  List<Map<String, dynamic>> _getBadges() {
+    final list = <Map<String, dynamic>>[];
+    if (streak >= 7) {
+      list.add({'title': '7 Day Streak', 'icon': '🔥', 'unlocked': true});
+    }
+    if (completedLessons.isNotEmpty || xp >= 30) {
+      list.add({'title': 'First Lesson', 'icon': '⭐', 'unlocked': true});
+    }
+    if (xp >= 100 || completedLessons.length >= 2) {
+      list.add({'title': 'Perfect Score', 'icon': '🎯', 'unlocked': true});
+    }
+    if (xp >= 250 || completedLessons.length >= 3) {
+      list.add({'title': 'Speed Learner', 'icon': '⚡', 'unlocked': true});
+    }
+    if (xp >= 500 || completedLessons.length >= 5) {
+      list.add({'title': 'Speaker', 'icon': '🗣️', 'unlocked': true});
+    }
+    if (completedLessons.length >= 8) {
+      list.add({'title': 'Bookworm', 'icon': '📚', 'unlocked': true});
+    }
+    if (xp >= 1000) {
+      list.add({'title': 'Top Learner', 'icon': '🏆', 'unlocked': true});
+    }
+    if (completedLessons.length >= 12 || level >= 6) {
+      list.add({'title': 'Graduate', 'icon': '🎓', 'unlocked': true});
+    }
+
+    if (list.isEmpty) {
+      list.addAll([
+        {'title': '7 Day Streak', 'icon': '🔥', 'unlocked': false},
+        {'title': 'First Lesson', 'icon': '⭐', 'unlocked': false},
+        {'title': 'Perfect Score', 'icon': '🎯', 'unlocked': false},
+      ]);
+    }
+    return list;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final badges = _getBadges();
+
+    return SizedBox(
+      height: 120,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: badges.length,
+        separatorBuilder: (context, index) => const SizedBox(width: 12),
+        itemBuilder: (context, index) {
+          final badge = badges[index];
+          final bool unlocked = badge['unlocked'] as bool;
+
+          return Container(
+            width: 120,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: unlocked
+                    ? const Color(0xFFFFD54F).withOpacity(0.4)
+                    : const Color(0xFFECEFF1),
+                width: unlocked ? 1.5 : 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: unlocked
+                      ? Colors.amber.withOpacity(0.04)
+                      : Colors.black.withOpacity(0.01),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Opacity(
+                  opacity: unlocked ? 1.0 : 0.25,
+                  child: Text(
+                    badge['icon'] as String,
+                    style: const TextStyle(fontSize: 32),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  badge['title'] as String,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: unlocked ? const Color(0xFF263238) : const Color(0xFFB0BEC5),
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
@@ -652,11 +801,11 @@ class _LearnTab extends StatelessWidget {
                   .snapshots(),
         builder: (context, userSnapshot) {
           final data = userSnapshot.data?.data() ?? <String, dynamic>{};
-          final level = _toInt(data['level'], fallback: 1);
           final xp = _toInt(
             data['xp'],
             fallback: _toInt(data['xpPoints'], fallback: 0),
           );
+          final level = (xp ~/ 250) + 1;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(16, 18, 16, 22),
@@ -1352,11 +1501,11 @@ class _ProgressSheet extends StatelessWidget {
           : FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
       builder: (context, snapshot) {
         final data = snapshot.data?.data() ?? <String, dynamic>{};
-        final level = _toInt(data['level'], fallback: 1);
         final xp = _toInt(
           data['xp'],
           fallback: _toInt(data['xpPoints'], fallback: 0),
         );
+        final level = (xp ~/ 250) + 1;
         final levelProgress = _progressForXp(xp);
         final completedLessons = (data['completedLessons'] as List?) ?? [];
 
@@ -1572,11 +1721,11 @@ class _ProfileTab extends StatelessWidget {
         final email =
             (data['email'] ?? FirebaseAuth.instance.currentUser?.email ?? '')
                 .toString();
-        final level = _toInt(data['level'], fallback: 1);
         final xp = _toInt(
           data['xp'],
           fallback: _toInt(data['xpPoints'], fallback: 0),
         );
+        final level = (xp ~/ 250) + 1;
         final streak = _toInt(
           data['streak'],
           fallback: _toInt(data['currentStreak'], fallback: 0),
@@ -1592,8 +1741,9 @@ class _ProfileTab extends StatelessWidget {
         final int quizzesTaken = data['quizzesTaken'] ?? (completedLessons.length * 2);
         final int studyDays = data['studyDays'] ?? (streak + 3);
 
-        final nextLevelXp = level * 250;
-        final double levelProgressPercent = (xp / nextLevelXp).clamp(0.0, 1.0);
+        final int nextLevelXp = level * 250;
+        final int currentLevelStart = (level - 1) * 250;
+        final double levelProgressPercent = ((xp - currentLevelStart) / 250).clamp(0.0, 1.0);
         final xpNeeded = nextLevelXp - xp;
 
         final double statusBarHeight = MediaQuery.of(context).padding.top;
@@ -2664,7 +2814,7 @@ int _toInt(dynamic value, {required int fallback}) {
 }
 
 double _progressForXp(int xp) {
-  return ((xp % 500) / 500).clamp(0.0, 1.0).toDouble();
+  return ((xp % 250) / 250).clamp(0.0, 1.0).toDouble();
 }
 
 String _displayName(Map<String, dynamic> data) {
