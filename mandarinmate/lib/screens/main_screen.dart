@@ -131,12 +131,17 @@ class _HomeTabState extends State<_HomeTab> {
                 .orderBy('order')
                 .snapshots(),
             builder: (context, lessonsSnapshot) {
-              List<QueryDocumentSnapshot<Map<String, dynamic>>> vocabDocRefs = [];
+              List<QueryDocumentSnapshot<Map<String, dynamic>>> vocabDocRefs =
+                  [];
               if (lessonsSnapshot.hasData) {
                 vocabDocRefs = lessonsSnapshot.data!.docs.where((doc) {
                   final type = doc.data()['type'] as String?;
                   final materialsList = doc.data()['materials'] as List?;
-                  final isMaterial = type == 'material' || (type != 'vocab_unit' && materialsList != null && materialsList.isNotEmpty);
+                  final isMaterial =
+                      type == 'material' ||
+                      (type != 'vocab_unit' &&
+                          materialsList != null &&
+                          materialsList.isNotEmpty);
                   return !isMaterial; // Only dynamic vocab units
                 }).toList();
               }
@@ -144,7 +149,8 @@ class _HomeTabState extends State<_HomeTab> {
               return FutureBuilder<List<CourseUnit>>(
                 future: _fetchDynamicUnits(vocabDocRefs),
                 builder: (context, futureSnapshot) {
-                  final dynamicUnits = futureSnapshot.data ?? _cachedDynamicUnits ?? [];
+                  final dynamicUnits =
+                      futureSnapshot.data ?? _cachedDynamicUnits ?? [];
                   if (futureSnapshot.hasData) {
                     _cachedDynamicUnits = dynamicUnits;
                   }
@@ -195,9 +201,10 @@ class _HomeTabState extends State<_HomeTab> {
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) => BlocProvider(
-                                        create: (_) =>
-                                            new_bloc.LessonBloc()
-                                              ..add(new_bloc.StartLesson(nextLesson!)),
+                                        create: (_) => new_bloc.LessonBloc()
+                                          ..add(
+                                            new_bloc.StartLesson(nextLesson!),
+                                          ),
                                         child: new_lessons.LessonScreen(
                                           lesson: nextLesson!,
                                         ),
@@ -235,7 +242,8 @@ class _HomeTabState extends State<_HomeTab> {
                               title: 'Daily Challenge',
                               subtitle: 'Earn bonus XP',
                               color: const Color(0xFF16A34A),
-                              onTap: () => _LearnTab.openDailyChallenge(context),
+                              onTap: () =>
+                                  _LearnTab.openDailyChallenge(context),
                             ),
                             _StudentActionTile(
                               icon: Icons.graphic_eq_rounded,
@@ -427,7 +435,7 @@ class _StarredItemsRow extends StatelessWidget {
           final item = rawItem is Map ? rawItem : <String, dynamic>{};
           final title = (item['title'] ?? '').toString();
           final type = (item['type'] ?? 'Vocab').toString();
-          
+
           final colors = [
             _StudentColors.orange,
             _StudentColors.red,
@@ -574,7 +582,9 @@ class _RecentBadgesRow extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: unlocked ? const Color(0xFF263238) : const Color(0xFFB0BEC5),
+                    color: unlocked
+                        ? const Color(0xFF263238)
+                        : const Color(0xFFB0BEC5),
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                   ),
@@ -769,11 +779,12 @@ class _LearnTab extends StatelessWidget {
   }
 
   Future<void> _openLeaderboard(BuildContext context) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
       backgroundColor: Colors.white,
-      builder: (_) => const _LeaderboardSheet(),
+      builder: (_) => _LeaderboardSheet(currentUid: uid),
     );
   }
 
@@ -862,7 +873,9 @@ class _LearnTab extends StatelessWidget {
                 ),
                 _LessonsList(
                   onOpenUnit: openUnitDetail,
-                  completedLessons: List<String>.from(data['completedLessons'] ?? []),
+                  completedLessons: List<String>.from(
+                    data['completedLessons'] ?? [],
+                  ),
                 ),
               ],
             ),
@@ -874,9 +887,17 @@ class _LearnTab extends StatelessWidget {
 }
 
 class _LessonsList extends StatelessWidget {
-  const _LessonsList({required this.onOpenUnit, required this.completedLessons});
+  const _LessonsList({
+    required this.onOpenUnit,
+    required this.completedLessons,
+  });
 
-  final Future<void> Function(BuildContext context, LessonUnit unit, bool isCompleted) onOpenUnit;
+  final Future<void> Function(
+    BuildContext context,
+    LessonUnit unit,
+    bool isCompleted,
+  )
+  onOpenUnit;
   final List<String> completedLessons;
 
   @override
@@ -904,8 +925,12 @@ class _LessonsList extends StatelessWidget {
           final data = doc.data();
           final type = data['type'] as String?;
           final materialsList = data['materials'] as List?;
-          
-          final isMaterial = type == 'material' || (type != 'vocab_unit' && materialsList != null && materialsList.isNotEmpty);
+
+          final isMaterial =
+              type == 'material' ||
+              (type != 'vocab_unit' &&
+                  materialsList != null &&
+                  materialsList.isNotEmpty);
 
           if (isMaterial) {
             communityUnits.add(LessonUnit.fromFirestore(data, doc.id));
@@ -916,31 +941,33 @@ class _LessonsList extends StatelessWidget {
         }
 
         final sections = <Widget>[];
-        
-                  // Remove the heading completely for standard units
-                  if (communityUnits.isNotEmpty) {
-                    sections.add(
-                      const Padding(
-                        padding: EdgeInsets.only(top: 20, bottom: 12),
-                        child: Text(
-                          'Community Lessons',
-                          style: TextStyle(
-                            color: Color(0xFF1a1a1a),
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    );
-                    for (final unit in communityUnits) {
-                      final isCompleted = completedLessons.contains(unit.id);
-                      sections.add(_LessonCard(
-                        unit: unit,
-                        onTap: onOpenUnit,
-                        isCompleted: isCompleted,
-                      ));
-                    }
-                  }
+
+        // Remove the heading completely for standard units
+        if (communityUnits.isNotEmpty) {
+          sections.add(
+            const Padding(
+              padding: EdgeInsets.only(top: 20, bottom: 12),
+              child: Text(
+                'Community Lessons',
+                style: TextStyle(
+                  color: Color(0xFF1a1a1a),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          );
+          for (final unit in communityUnits) {
+            final isCompleted = completedLessons.contains(unit.id);
+            sections.add(
+              _LessonCard(
+                unit: unit,
+                onTap: onOpenUnit,
+                isCompleted: isCompleted,
+              ),
+            );
+          }
+        }
 
         return Column(children: sections);
       },
@@ -1287,7 +1314,12 @@ class _LessonCard extends StatelessWidget {
   });
 
   final LessonUnit unit;
-  final Future<void> Function(BuildContext context, LessonUnit unit, bool isCompleted) onTap;
+  final Future<void> Function(
+    BuildContext context,
+    LessonUnit unit,
+    bool isCompleted,
+  )
+  onTap;
   final bool isCompleted;
 
   @override
@@ -1418,7 +1450,9 @@ class _LessonCard extends StatelessWidget {
 }
 
 class _LeaderboardSheet extends StatelessWidget {
-  const _LeaderboardSheet();
+  const _LeaderboardSheet({this.currentUid});
+
+  final String? currentUid;
 
   @override
   Widget build(BuildContext context) {
@@ -1426,64 +1460,606 @@ class _LeaderboardSheet extends StatelessWidget {
       stream: FirebaseFirestore.instance
           .collection('users')
           .where('role', isEqualTo: 'student')
-          .orderBy('xp', descending: true)
-          .limit(5)
           .snapshots(),
       builder: (context, snapshot) {
-        final docs = snapshot.data?.docs ?? const [];
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const _LoadingState();
         }
+        final docs = snapshot.data?.docs ?? const [];
         if (docs.isEmpty) {
           return const _EmptyState(text: 'No leaderboard data yet.');
         }
 
-        return ListView.builder(
-          padding: const EdgeInsets.fromLTRB(18, 6, 18, 24),
-          shrinkWrap: true,
-          itemCount: docs.length + 1,
-          itemBuilder: (context, index) {
-            if (index == 0) {
-              return const Padding(
-                padding: EdgeInsets.only(bottom: 10),
-                child: Text(
-                  'Leaderboard',
-                  style: TextStyle(
-                    color: _StudentColors.deep,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              );
-            }
+        final entries = _leaderboardEntriesFromDocs(docs);
+        final currentIndex = entries.indexWhere(
+          (entry) => entry.uid == currentUid,
+        );
+        final currentEntry = currentIndex >= 0 ? entries[currentIndex] : null;
+        final nextEntry = currentIndex > 0 ? entries[currentIndex - 1] : null;
+        final topEntries = entries.take(10).toList();
+        final displayEntries = <_LeaderboardEntry>[
+          ...topEntries,
+          if (currentEntry != null &&
+              !topEntries.any((entry) => entry.uid == currentEntry.uid))
+            currentEntry,
+        ];
 
-            final data = docs[index - 1].data();
-            final name = _displayName(data);
-            final xp = _toInt(
-              data['xp'],
-              fallback: _toInt(data['xpPoints'], fallback: 0),
-            );
-
-            return ListTile(
-              leading: CircleAvatar(
-                backgroundColor: _StudentColors.orange.withValues(alpha: 0.14),
-                child: Text(
-                  '$index',
-                  style: const TextStyle(
-                    color: _StudentColors.red,
-                    fontWeight: FontWeight.w900,
+        return SafeArea(
+          top: false,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(18, 8, 18, 28),
+            shrinkWrap: true,
+            children: [
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Leaderboard Ranking',
+                      style: TextStyle(
+                        color: _StudentColors.deep,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
                   ),
+                  IconButton(
+                    tooltip: 'Close',
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              if (currentEntry != null) ...[
+                _MyRankHero(entry: currentEntry, nextEntry: nextEntry),
+                const SizedBox(height: 16),
+              ],
+              const Text(
+                'Top Students',
+                style: TextStyle(
+                  color: _StudentColors.deep,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
                 ),
               ),
-              title: Text(name),
-              trailing: Text(
-                '$xp XP',
-                style: const TextStyle(fontWeight: FontWeight.w900),
+              const SizedBox(height: 10),
+              ...displayEntries.map(
+                (entry) => _LeaderboardRankTile(
+                  entry: entry,
+                  isCurrentUser: entry.uid == currentUid,
+                ),
               ),
-            );
-          },
+            ],
+          ),
         );
       },
+    );
+  }
+}
+
+class _LeaderboardEntry {
+  const _LeaderboardEntry({
+    required this.uid,
+    required this.rank,
+    required this.name,
+    required this.xp,
+    required this.level,
+    required this.badges,
+    required this.completedLessons,
+  });
+
+  final String uid;
+  final int rank;
+  final String name;
+  final int xp;
+  final int level;
+  final int badges;
+  final int completedLessons;
+}
+
+List<_LeaderboardEntry> _leaderboardEntriesFromDocs(
+  List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+) {
+  final sortedDocs = [...docs]
+    ..sort((a, b) {
+      final aData = a.data();
+      final bData = b.data();
+      final aXp = _toInt(
+        aData['xp'],
+        fallback: _toInt(aData['xpPoints'], fallback: 0),
+      );
+      final bXp = _toInt(
+        bData['xp'],
+        fallback: _toInt(bData['xpPoints'], fallback: 0),
+      );
+      return bXp.compareTo(aXp);
+    });
+
+  return sortedDocs.asMap().entries.map((entry) {
+    final data = entry.value.data();
+    final xp = _toInt(
+      data['xp'],
+      fallback: _toInt(data['xpPoints'], fallback: 0),
+    );
+    final level = (xp ~/ 250) + 1;
+    final streak = _toInt(
+      data['streak'],
+      fallback: _toInt(data['currentStreak'], fallback: 0),
+    );
+    final completedLessons = (data['completedLessons'] as List?) ?? [];
+
+    return _LeaderboardEntry(
+      uid: entry.value.id,
+      rank: entry.key + 1,
+      name: _displayName(data),
+      xp: xp,
+      level: level,
+      badges: _unlockedBadgesCount(xp, streak, completedLessons, level),
+      completedLessons: completedLessons.length,
+    );
+  }).toList();
+}
+
+class _MyRankHero extends StatelessWidget {
+  const _MyRankHero({required this.entry, this.nextEntry});
+
+  final _LeaderboardEntry entry;
+  final _LeaderboardEntry? nextEntry;
+
+  @override
+  Widget build(BuildContext context) {
+    final xpToNext = nextEntry == null
+        ? 0
+        : (nextEntry!.xp - entry.xp + 1).clamp(0, 999999);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [_StudentColors.red, _StudentColors.orange],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x30E93A2F),
+            blurRadius: 18,
+            offset: Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Your Ranking',
+            style: TextStyle(
+              color: Color(0xFFFFF4EA),
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '#${entry.rank}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 38,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              _HeroBadge(label: '${entry.xp} XP'),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            nextEntry == null
+                ? 'You are leading the leaderboard.'
+                : '$xpToNext XP to pass #${nextEntry!.rank} ${nextEntry!.name}',
+            style: const TextStyle(
+              color: Color(0xFFFFF4EA),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _RankHeroMetric(
+                  value: 'Lv.${entry.level}',
+                  label: 'Level',
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _RankHeroMetric(
+                  value: '${entry.badges}',
+                  label: 'Badges',
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _RankHeroMetric(
+                  value: '${entry.completedLessons}',
+                  label: 'Lessons',
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RankHeroMetric extends StatelessWidget {
+  const _RankHeroMetric({required this.value, required this.label});
+
+  final String value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        children: [
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 15,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFFFFF4EA),
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LeaderboardRankTile extends StatelessWidget {
+  const _LeaderboardRankTile({
+    required this.entry,
+    required this.isCurrentUser,
+  });
+
+  final _LeaderboardEntry entry;
+  final bool isCurrentUser;
+
+  @override
+  Widget build(BuildContext context) {
+    final rankColor = switch (entry.rank) {
+      1 => const Color(0xFFFFB300),
+      2 => const Color(0xFF90A4AE),
+      3 => const Color(0xFFB87333),
+      _ => _StudentColors.orange,
+    };
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isCurrentUser ? const Color(0xFFFFF3E0) : Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isCurrentUser
+              ? _StudentColors.orange.withValues(alpha: 0.5)
+              : const Color(0xFFFFE4CF),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: rankColor.withValues(alpha: 0.14),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                '#${entry.rank}',
+                style: TextStyle(color: rankColor, fontWeight: FontWeight.w900),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isCurrentUser ? '${entry.name} (You)' : entry.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: _StudentColors.deep,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Level ${entry.level} · ${entry.badges} badges · ${entry.completedLessons} lessons',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: _StudentColors.muted,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            '${entry.xp} XP',
+            style: const TextStyle(
+              color: _StudentColors.deep,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LeaderboardSummaryCard extends StatelessWidget {
+  const _LeaderboardSummaryCard({
+    required this.currentUid,
+    required this.xp,
+    required this.level,
+    required this.badgesCount,
+    required this.levelProgress,
+    required this.onOpenLeaderboard,
+  });
+
+  final String? currentUid;
+  final int xp;
+  final int level;
+  final int badgesCount;
+  final double levelProgress;
+  final VoidCallback onOpenLeaderboard;
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .where('role', isEqualTo: 'student')
+          .snapshots(),
+      builder: (context, snapshot) {
+        final entries = snapshot.hasData
+            ? _leaderboardEntriesFromDocs(snapshot.data!.docs)
+            : const <_LeaderboardEntry>[];
+        final rankIndex = entries.indexWhere(
+          (entry) => entry.uid == currentUid,
+        );
+        final rankText = rankIndex >= 0 ? '#${rankIndex + 1}' : '--';
+        final totalStudents = entries.length;
+        final nextEntry = rankIndex > 0 ? entries[rankIndex - 1] : null;
+        final xpMessage = nextEntry == null
+            ? 'You are leading your class.'
+            : '${(nextEntry.xp - xp + 1).clamp(0, 999999)} XP to pass #${nextEntry.rank}.';
+
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: const Color(0xFFFFE4CF)),
+            boxShadow: [
+              BoxShadow(
+                color: _StudentColors.orange.withValues(alpha: 0.05),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF3E0),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(
+                      Icons.emoji_events_rounded,
+                      color: _StudentColors.orange,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Leaderboard Ranking',
+                          style: TextStyle(
+                            color: Color(0xFF263238),
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        Text(
+                          totalStudents == 0
+                              ? 'Rank will appear after students earn XP.'
+                              : 'Ranked $rankText of $totalStudents students',
+                          style: const TextStyle(
+                            color: Color(0xFF78909C),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: onOpenLeaderboard,
+                    child: const Text(
+                      'View',
+                      style: TextStyle(
+                        color: _StudentColors.orange,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _CompactMetric(
+                      label: 'Rank',
+                      value: rankText,
+                      color: _StudentColors.red,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _CompactMetric(
+                      label: 'XP',
+                      value: '$xp',
+                      color: _StudentColors.orange,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _CompactMetric(
+                      label: 'Badges',
+                      value: '$badgesCount',
+                      color: const Color(0xFF7C3AED),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Level $level progress',
+                    style: const TextStyle(
+                      color: Color(0xFF546E7A),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  Text(
+                    '${(levelProgress * 100).round()}%',
+                    style: const TextStyle(
+                      color: Color(0xFF546E7A),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(99),
+                child: LinearProgressIndicator(
+                  value: levelProgress,
+                  minHeight: 10,
+                  backgroundColor: const Color(0xFFECEFF1),
+                  valueColor: const AlwaysStoppedAnimation<Color>(
+                    _StudentColors.orange,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                snapshot.connectionState == ConnectionState.waiting
+                    ? 'Loading class ranking...'
+                    : xpMessage,
+                style: const TextStyle(
+                  color: Color(0xFF78909C),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _CompactMetric extends StatelessWidget {
+  const _CompactMetric({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  final String label;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: color,
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF78909C),
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1520,7 +2096,11 @@ class _ProgressSheet extends StatelessWidget {
               vocabDocRefs = lessonsSnapshot.data!.docs.where((doc) {
                 final type = doc.data()['type'] as String?;
                 final materialsList = doc.data()['materials'] as List?;
-                final isMaterial = type == 'material' || (type != 'vocab_unit' && materialsList != null && materialsList.isNotEmpty);
+                final isMaterial =
+                    type == 'material' ||
+                    (type != 'vocab_unit' &&
+                        materialsList != null &&
+                        materialsList.isNotEmpty);
                 return !isMaterial; // Only dynamic vocab units
               }).toList();
             }
@@ -1569,7 +2149,8 @@ class _ProgressSheet extends StatelessWidget {
                       _ProgressHero(
                         title: 'Current Level',
                         headline: 'Level $level',
-                        subtitle: '${(courseProgress * 100).round()}% Course Completed',
+                        subtitle:
+                            '${(courseProgress * 100).round()}% Course Completed',
                         xp: xp,
                         progress: levelProgress,
                         actionLabel: nextLesson != null
@@ -1582,9 +2163,10 @@ class _ProgressSheet extends StatelessWidget {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => BlocProvider(
-                                      create: (_) =>
-                                          new_bloc.LessonBloc()
-                                            ..add(new_bloc.StartLesson(nextLesson!)),
+                                      create: (_) => new_bloc.LessonBloc()
+                                        ..add(
+                                          new_bloc.StartLesson(nextLesson!),
+                                        ),
                                       child: new_lessons.LessonScreen(
                                         lesson: nextLesson!,
                                       ),
@@ -1691,7 +2273,12 @@ class _ProfileTab extends StatelessWidget {
     return 'Advanced';
   }
 
-  int _getUnlockedBadgesCount(int xp, int streak, List<dynamic> completedLessons, int level) {
+  int _getUnlockedBadgesCount(
+    int xp,
+    int streak,
+    List<dynamic> completedLessons,
+    int level,
+  ) {
     int count = 0;
     if (streak >= 7) count++;
     if (completedLessons.isNotEmpty || xp >= 30) count++;
@@ -1711,10 +2298,7 @@ class _ProfileTab extends StatelessWidget {
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
       stream: uid == null
           ? null
-          : FirebaseFirestore.instance
-                .collection('users')
-                .doc(uid)
-                .snapshots(),
+          : FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
       builder: (context, snapshot) {
         final data = snapshot.data?.data() ?? <String, dynamic>{};
         final name = _displayName(data);
@@ -1733,17 +2317,25 @@ class _ProfileTab extends StatelessWidget {
         final completedLessons = (data['completedLessons'] as List?) ?? [];
 
         // Count unlocked badges
-        final badgesCount = _getUnlockedBadgesCount(xp, streak, completedLessons, level);
+        final badgesCount = _getUnlockedBadgesCount(
+          xp,
+          streak,
+          completedLessons,
+          level,
+        );
 
         // Dynamic stats
         final int lessonsCompleted = completedLessons.length;
-        final int vocabularyLearned = data['vocabularyLearned'] ?? (completedLessons.length * 6);
-        final int quizzesTaken = data['quizzesTaken'] ?? (completedLessons.length * 2);
+        final int vocabularyLearned =
+            data['vocabularyLearned'] ?? (completedLessons.length * 6);
+        final int quizzesTaken =
+            data['quizzesTaken'] ?? (completedLessons.length * 2);
         final int studyDays = data['studyDays'] ?? (streak + 3);
 
         final int nextLevelXp = level * 250;
         final int currentLevelStart = (level - 1) * 250;
-        final double levelProgressPercent = ((xp - currentLevelStart) / 250).clamp(0.0, 1.0);
+        final double levelProgressPercent = ((xp - currentLevelStart) / 250)
+            .clamp(0.0, 1.0);
         final xpNeeded = nextLevelXp - xp;
 
         final double statusBarHeight = MediaQuery.of(context).padding.top;
@@ -1756,7 +2348,12 @@ class _ProfileTab extends StatelessWidget {
               children: [
                 // 1. Red Header Section
                 Container(
-                  padding: EdgeInsets.fromLTRB(20, statusBarHeight + 16, 20, 24),
+                  padding: EdgeInsets.fromLTRB(
+                    20,
+                    statusBarHeight + 16,
+                    20,
+                    24,
+                  ),
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
                       colors: [_StudentColors.red, _StudentColors.orange],
@@ -1786,24 +2383,35 @@ class _ProfileTab extends StatelessWidget {
                           Row(
                             children: [
                               IconButton(
-                                icon: const Icon(Icons.settings_rounded, color: Colors.white, size: 24),
+                                icon: const Icon(
+                                  Icons.settings_rounded,
+                                  color: Colors.white,
+                                  size: 24,
+                                ),
                                 onPressed: () {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (_) => const mandarinmate_edit_profile.EditProfilePage(
-                                        roleColor: _StudentColors.orange,
-                                      ),
+                                      builder: (_) =>
+                                          const mandarinmate_edit_profile.EditProfilePage(
+                                            roleColor: _StudentColors.orange,
+                                          ),
                                     ),
                                   );
                                 },
                               ),
                               IconButton(
-                                icon: const Icon(Icons.share_rounded, color: Colors.white, size: 24),
+                                icon: const Icon(
+                                  Icons.share_rounded,
+                                  color: Colors.white,
+                                  size: 24,
+                                ),
                                 onPressed: () {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
-                                      content: Text('Profile link copied to clipboard! 🔗'),
+                                      content: Text(
+                                        'Profile link copied to clipboard! 🔗',
+                                      ),
                                       behavior: SnackBarBehavior.floating,
                                       backgroundColor: Color(0xFF2E7D32),
                                     ),
@@ -1820,7 +2428,9 @@ class _ProfileTab extends StatelessWidget {
                         children: [
                           CircleAvatar(
                             radius: 45,
-                            backgroundColor: const Color(0xFFFFD54F), // Premium Yellow
+                            backgroundColor: const Color(
+                              0xFFFFD54F,
+                            ), // Premium Yellow
                             child: Text(
                               name.isEmpty ? 'S' : name[0].toUpperCase(),
                               style: const TextStyle(
@@ -1838,9 +2448,10 @@ class _ProfileTab extends StatelessWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) => const mandarinmate_edit_profile.EditProfilePage(
-                                      roleColor: _StudentColors.orange,
-                                    ),
+                                    builder: (_) =>
+                                        const mandarinmate_edit_profile.EditProfilePage(
+                                          roleColor: _StudentColors.orange,
+                                        ),
                                   ),
                                 );
                               },
@@ -1854,8 +2465,8 @@ class _ProfileTab extends StatelessWidget {
                                       color: Colors.black12,
                                       blurRadius: 4,
                                       offset: Offset(0, 2),
-                                    )
-                                  ]
+                                    ),
+                                  ],
                                 ),
                                 child: const Icon(
                                   Icons.edit_rounded,
@@ -1895,14 +2506,21 @@ class _ProfileTab extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.16),
                               borderRadius: BorderRadius.circular(999),
                             ),
                             child: const Row(
                               children: [
-                                Icon(Icons.school_rounded, color: Colors.white, size: 14),
+                                Icon(
+                                  Icons.school_rounded,
+                                  color: Colors.white,
+                                  size: 14,
+                                ),
                                 SizedBox(width: 6),
                                 Text(
                                   'Student',
@@ -1917,7 +2535,10 @@ class _ProfileTab extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.16),
                               borderRadius: BorderRadius.circular(999),
@@ -1991,9 +2612,35 @@ class _ProfileTab extends StatelessWidget {
 
                 // 2. Body Scrollable Cards
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 20.0,
+                  ),
                   child: Column(
                     children: [
+                      _LeaderboardSummaryCard(
+                        currentUid: uid,
+                        xp: xp,
+                        level: level,
+                        badgesCount: badgesCount,
+                        levelProgress: levelProgressPercent,
+                        onOpenLeaderboard: () {
+                          showModalBottomSheet(
+                            context: context,
+                            showDragHandle: true,
+                            backgroundColor: Colors.white,
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.vertical(
+                                top: Radius.circular(24),
+                              ),
+                            ),
+                            builder: (context) =>
+                                _LeaderboardSheet(currentUid: uid),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
                       // Card 1: Current Level Progress
                       _buildProfileCard(
                         child: Column(
@@ -2025,7 +2672,11 @@ class _ProfileTab extends StatelessWidget {
                                   ],
                                 ),
                                 TextButton(
-                                  onPressed: () => _showLevelMilestonesDialog(context, level, xp),
+                                  onPressed: () => _showLevelMilestonesDialog(
+                                    context,
+                                    level,
+                                    xp,
+                                  ),
                                   child: const Text(
                                     'View all',
                                     style: TextStyle(
@@ -2044,7 +2695,9 @@ class _ProfileTab extends StatelessWidget {
                               child: LinearProgressIndicator(
                                 value: levelProgressPercent,
                                 backgroundColor: const Color(0xFFECEFF1),
-                                valueColor: const AlwaysStoppedAnimation<Color>(_StudentColors.orange),
+                                valueColor: const AlwaysStoppedAnimation<Color>(
+                                  _StudentColors.orange,
+                                ),
                                 minHeight: 12,
                               ),
                             ),
@@ -2123,10 +2776,26 @@ class _ProfileTab extends StatelessWidget {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                _buildBadgePreviewIcon('🔥', '7-Day Streak', streak >= 7),
-                                _buildBadgePreviewIcon('⭐', 'First Lesson', completedLessons.isNotEmpty || xp >= 30),
-                                _buildBadgePreviewIcon('🎯', 'Perfect Score', xp >= 100 || completedLessons.length >= 2),
-                                _buildBadgePreviewIcon('⚡', 'Speed Learner', xp >= 250 || completedLessons.length >= 3),
+                                _buildBadgePreviewIcon(
+                                  '🔥',
+                                  '7-Day Streak',
+                                  streak >= 7,
+                                ),
+                                _buildBadgePreviewIcon(
+                                  '⭐',
+                                  'First Lesson',
+                                  completedLessons.isNotEmpty || xp >= 30,
+                                ),
+                                _buildBadgePreviewIcon(
+                                  '🎯',
+                                  'Perfect Score',
+                                  xp >= 100 || completedLessons.length >= 2,
+                                ),
+                                _buildBadgePreviewIcon(
+                                  '⚡',
+                                  'Speed Learner',
+                                  xp >= 250 || completedLessons.length >= 3,
+                                ),
                               ],
                             ),
                           ],
@@ -2207,7 +2876,8 @@ class _ProfileTab extends StatelessWidget {
                             const SizedBox(height: 16),
                             _buildRecentActivityItem(
                               icon: '📚',
-                              title: 'Completed Lesson ${lessonsCompleted > 0 ? lessonsCompleted : "1"}: Greetings',
+                              title:
+                                  'Completed Lesson ${lessonsCompleted > 0 ? lessonsCompleted : "1"}: Greetings',
                               time: '2h ago',
                               xp: '+50 XP',
                               bgColor: const Color(0xFFE3F2FD),
@@ -2260,9 +2930,12 @@ class _ProfileTab extends StatelessWidget {
                                 showModalBottomSheet(
                                   context: context,
                                   shape: const RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                                    borderRadius: BorderRadius.vertical(
+                                      top: Radius.circular(24),
+                                    ),
                                   ),
-                                  builder: (context) => const _LeaderboardSheet(),
+                                  builder: (context) =>
+                                      _LeaderboardSheet(currentUid: uid),
                                 );
                               },
                             ),
@@ -2276,9 +2949,10 @@ class _ProfileTab extends StatelessWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) => const mandarinmate_edit_profile.EditProfilePage(
-                                      roleColor: _StudentColors.orange,
-                                    ),
+                                    builder: (_) =>
+                                        const mandarinmate_edit_profile.EditProfilePage(
+                                          roleColor: _StudentColors.orange,
+                                        ),
                                   ),
                                 );
                               },
@@ -2318,10 +2992,7 @@ class _ProfileTab extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Text(
-            icon,
-            style: const TextStyle(fontSize: 20),
-          ),
+          Text(icon, style: const TextStyle(fontSize: 20)),
           const SizedBox(height: 6),
           Text(
             value,
@@ -2376,7 +3047,9 @@ class _ProfileTab extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: unlocked ? const Color(0xFFFFD54F).withOpacity(0.4) : const Color(0xFFECEFF1),
+          color: unlocked
+              ? const Color(0xFFFFD54F).withOpacity(0.4)
+              : const Color(0xFFECEFF1),
           width: unlocked ? 1.5 : 1,
         ),
       ),
@@ -2385,10 +3058,7 @@ class _ProfileTab extends StatelessWidget {
         children: [
           Opacity(
             opacity: unlocked ? 1.0 : 0.2,
-            child: Text(
-              icon,
-              style: const TextStyle(fontSize: 28),
-            ),
+            child: Text(icon, style: const TextStyle(fontSize: 28)),
           ),
           const SizedBox(height: 6),
           Padding(
@@ -2399,7 +3069,9 @@ class _ProfileTab extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                color: unlocked ? const Color(0xFF263238) : const Color(0xFFB0BEC5),
+                color: unlocked
+                    ? const Color(0xFF263238)
+                    : const Color(0xFFB0BEC5),
                 fontSize: 9,
                 fontWeight: FontWeight.bold,
               ),
@@ -2436,10 +3108,7 @@ class _ProfileTab extends StatelessWidget {
                   color: bgColor,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(
-                  icon,
-                  style: const TextStyle(fontSize: 18),
-                ),
+                child: Text(icon, style: const TextStyle(fontSize: 18)),
               ),
               const SizedBox(width: 8),
               Text(
@@ -2479,14 +3148,8 @@ class _ProfileTab extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: bgColor,
-              shape: BoxShape.circle,
-            ),
-            child: Text(
-              icon,
-              style: const TextStyle(fontSize: 18),
-            ),
+            decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle),
+            child: Text(icon, style: const TextStyle(fontSize: 18)),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -2527,8 +3190,6 @@ class _ProfileTab extends StatelessWidget {
       ),
     );
   }
-
-
 
   Widget _buildNavigationRow({
     required IconData icon,
@@ -2578,7 +3239,9 @@ class _ProfileTab extends StatelessWidget {
       context: context,
       builder: (context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
           title: const Text(
             'Level Milestones',
             style: TextStyle(fontWeight: FontWeight.bold),
@@ -2637,7 +3300,10 @@ class _ProfileTab extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF37474F)),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF37474F),
+                ),
               ),
               Text(
                 '$xpRequired XP',
@@ -2817,6 +3483,24 @@ double _progressForXp(int xp) {
   return ((xp % 250) / 250).clamp(0.0, 1.0).toDouble();
 }
 
+int _unlockedBadgesCount(
+  int xp,
+  int streak,
+  List<dynamic> completedLessons,
+  int level,
+) {
+  int count = 0;
+  if (streak >= 7) count++;
+  if (completedLessons.isNotEmpty || xp >= 30) count++;
+  if (xp >= 100 || completedLessons.length >= 2) count++;
+  if (xp >= 250 || completedLessons.length >= 3) count++;
+  if (xp >= 500 || completedLessons.length >= 5) count++;
+  if (completedLessons.length >= 8) count++;
+  if (xp >= 1000) count++;
+  if (completedLessons.length >= 12 || level >= 6) count++;
+  return count;
+}
+
 String _displayName(Map<String, dynamic> data) {
   final name = (data['name'] ?? '').toString().trim();
   if (name.isNotEmpty) return name;
@@ -2851,59 +3535,65 @@ void _showMessage(BuildContext context, String message) {
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 }
 
-Future<List<CourseUnit>> _fetchDynamicUnits(List<QueryDocumentSnapshot<Map<String, dynamic>>> docs) async {
+Future<List<CourseUnit>> _fetchDynamicUnits(
+  List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+) async {
   final list = <CourseUnit>[];
   for (int dIndex = 0; dIndex < docs.length; dIndex++) {
     final doc = docs[dIndex];
     final data = doc.data();
     final vocabSnapshot = await doc.reference.collection('vocabulary').get();
     final vocabDocs = vocabSnapshot.docs;
-     
+
     final lessons = <Lesson>[];
     for (int i = 0; i < vocabDocs.length; i++) {
       final vData = vocabDocs[i].data();
       final word = vData['word'] ?? '';
       final english = vData['meaning'] ?? '';
-       
-      lessons.add(Lesson(
-        id: '${doc.id}_$i',
-        title: '$word - $english',
-        subtitle: vData['pronunciation'] ?? '',
-        isCompleted: false,
-        isLocked: true,
-        xpReward: 30, // Default 30 XP as in image
-        items: generateItemsForVocab(
-          word,
-          vData['pronunciation'] ?? '',
-          english,
-          vData['exampleSentence'] ?? '',
-          vData['exampleMeaning'] ?? '',
-        )
-      ));
+
+      lessons.add(
+        Lesson(
+          id: '${doc.id}_$i',
+          title: '$word - $english',
+          subtitle: vData['pronunciation'] ?? '',
+          isCompleted: false,
+          isLocked: true,
+          xpReward: 30, // Default 30 XP as in image
+          items: generateItemsForVocab(
+            word,
+            vData['pronunciation'] ?? '',
+            english,
+            vData['exampleSentence'] ?? '',
+            vData['exampleMeaning'] ?? '',
+          ),
+        ),
+      );
     }
-    
+
     // If there's a summary quiz, add it as a final lesson
     if (data['summaryQuiz'] != null) {
-      lessons.add(Lesson(
-        id: '${doc.id}_quiz',
-        title: 'Unit ${data['unitNumber']} Summary Quiz',
-        subtitle: 'Review & Test',
-        isCompleted: false,
-        isLocked: true,
-        xpReward: 100, // Summary gives more XP
-        items: [
-           LessonItem(
-             id: '${doc.id}_quiz_item',
-             type: LessonType.quiz,
-             chinese: data['summaryQuiz']['question'] ?? 'Quiz',
-             pinyin: '',
-             english: 'Review',
-             options: List<String>.from(data['summaryQuiz']['options'] ?? []),
-           )
-        ]
-      ));
+      lessons.add(
+        Lesson(
+          id: '${doc.id}_quiz',
+          title: 'Unit ${data['unitNumber']} Summary Quiz',
+          subtitle: 'Review & Test',
+          isCompleted: false,
+          isLocked: true,
+          xpReward: 100, // Summary gives more XP
+          items: [
+            LessonItem(
+              id: '${doc.id}_quiz_item',
+              type: LessonType.quiz,
+              chinese: data['summaryQuiz']['question'] ?? 'Quiz',
+              pinyin: '',
+              english: 'Review',
+              options: List<String>.from(data['summaryQuiz']['options'] ?? []),
+            ),
+          ],
+        ),
+      );
     }
-     
+
     final uNum = data['unitNumber'] ?? (dIndex + 4);
     final colors = [
       const Color(0xFF6C3BFF), // Premium Royal Purple
@@ -2915,15 +3605,19 @@ Future<List<CourseUnit>> _fetchDynamicUnits(List<QueryDocumentSnapshot<Map<Strin
     ];
     final color = colors[(uNum is int ? uNum : 4) % colors.length];
 
-    list.add(CourseUnit(
-      id: doc.id,
-      title: 'Unit $uNum: ${data['title'] ?? 'Unit'}',
-      subtitle: (data['titleChinese'] != null && data['titleChinese'].toString().trim().isNotEmpty)
-          ? data['titleChinese'].toString().trim()
-          : (data['description'] ?? 'Vocabulary'),
-      color: color,
-      lessons: lessons,
-    ));
+    list.add(
+      CourseUnit(
+        id: doc.id,
+        title: 'Unit $uNum: ${data['title'] ?? 'Unit'}',
+        subtitle:
+            (data['titleChinese'] != null &&
+                data['titleChinese'].toString().trim().isNotEmpty)
+            ? data['titleChinese'].toString().trim()
+            : (data['description'] ?? 'Vocabulary'),
+        color: color,
+        lessons: lessons,
+      ),
+    );
   }
   return list;
 }
@@ -2944,18 +3638,25 @@ class _CoursePathViewState extends State<_CoursePathView> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance.collection('lessons').orderBy('order').snapshots(),
+      stream: FirebaseFirestore.instance
+          .collection('lessons')
+          .orderBy('order')
+          .snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData && _dynamicUnits == null) {
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         List<QueryDocumentSnapshot<Map<String, dynamic>>> vocabDocRefs = [];
         if (snapshot.hasData) {
           vocabDocRefs = snapshot.data!.docs.where((doc) {
             final type = doc.data()['type'] as String?;
             final materialsList = doc.data()['materials'] as List?;
-            final isMaterial = type == 'material' || (type != 'vocab_unit' && materialsList != null && materialsList.isNotEmpty);
+            final isMaterial =
+                type == 'material' ||
+                (type != 'vocab_unit' &&
+                    materialsList != null &&
+                    materialsList.isNotEmpty);
             return !isMaterial; // Only dynamic vocab units
           }).toList();
         }
@@ -2970,7 +3671,9 @@ class _CoursePathViewState extends State<_CoursePathView> {
 
             final allUnits = [...mockCourseUnits, ...dynamicUnits];
 
-            final totalPages = allUnits.isEmpty ? 1 : (allUnits.length / _pageSize).ceil();
+            final totalPages = allUnits.isEmpty
+                ? 1
+                : (allUnits.length / _pageSize).ceil();
             if (_currentPage >= totalPages) {
               _currentPage = totalPages - 1;
             }
@@ -2987,226 +3690,248 @@ class _CoursePathViewState extends State<_CoursePathView> {
                 ...paginatedUnits.asMap().entries.map((entry) {
                   final unit = entry.value;
                   final unitIndex = startIndex + entry.key;
-        return Container(
-          margin: const EdgeInsets.only(bottom: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Unit Header Banner
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: unit.color,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            unit.title,
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontWeight: FontWeight.bold,
-                            ),
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Unit Header Banner
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: unit.color,
+                            borderRadius: BorderRadius.circular(20),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            unit.subtitle,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Lesson Items with Path Line
-              ...unit.lessons.asMap().entries.map((entry) {
-                final int index = entry.key;
-                final Lesson lesson = entry.value;
-                final bool isLast = index == unit.lessons.length - 1;
-
-                // Calculate unlock state
-                bool isUnlocked = false;
-                bool isCompleted = widget.completedLessons.contains(lesson.id);
-                if (unitIndex == 0 && index == 0) {
-                  isUnlocked = true;
-                } else if (index > 0) {
-                  isUnlocked = widget.completedLessons.contains(
-                    unit.lessons[index - 1].id,
-                  );
-                } else if (unitIndex > 0) {
-                  isUnlocked = widget.completedLessons.contains(
-                    allUnits[unitIndex - 1].lessons.last.id,
-                  );
-                }
-                if (isCompleted) isUnlocked = true;
-
-                return IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Path connection visual
-                      SizedBox(
-                        width: 50,
-                        child: Column(
-                          children: [
-                            Container(
-                              width: 32,
-                              height: 32,
-                              decoration: BoxDecoration(
-                                color: isCompleted
-                                    ? unit.color
-                                    : (isUnlocked
-                                          ? unit.color.withValues(alpha: 0.5)
-                                          : Colors.grey.shade300),
-                                shape: BoxShape.circle,
-                                border: isCompleted
-                                    ? null
-                                    : Border.all(
-                                        color: isUnlocked
-                                            ? unit.color
-                                            : Colors.grey.shade400,
-                                        width: 3,
-                                      ),
-                              ),
-                              child: isCompleted
-                                  ? const Icon(
-                                      Icons.check,
-                                      color: Colors.white,
-                                      size: 20,
-                                    )
-                                  : (isUnlocked
-                                        ? const Icon(
-                                            Icons.play_arrow,
-                                            color: Colors.white,
-                                            size: 18,
-                                          )
-                                        : const Icon(
-                                            Icons.lock,
-                                            color: Colors.grey,
-                                            size: 16,
-                                          )),
-                            ),
-                            if (!isLast)
+                          child: Row(
+                            children: [
                               Expanded(
-                                child: Container(
-                                  width: 4,
-                                  color:
-                                      widget.completedLessons.contains(
-                                        unit.lessons[index].id,
-                                      )
-                                      ? unit.color
-                                      : Colors.grey.shade200,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                      // Lesson Card
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: InkWell(
-                            onTap: isUnlocked
-                                ? () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => BlocProvider(
-                                          create: (_) => new_bloc.LessonBloc()
-                                            ..add(new_bloc.StartLesson(lesson)),
-                                          child: new_lessons.LessonScreen(
-                                            lesson: lesson,
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                : null,
-                            child: Opacity(
-                              opacity: isUnlocked ? 1.0 : 0.5,
-                              child: Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(16),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(
-                                        alpha: 0.05,
-                                      ),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            lesson.title,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Row(
-                                          children: [
-                                            Text(
-                                              '+${lesson.xpReward}',
-                                              style: TextStyle(
-                                                color: Colors.orange.shade700,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                            Icon(
-                                              Icons.bolt,
-                                              color: Colors.orange.shade700,
-                                              size: 16,
-                                            ),
-                                          ],
-                                        ),
-                                      ],
+                                    Text(
+                                      unit.title,
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      lesson.subtitle,
-                                      style: TextStyle(
-                                        color: Colors.grey.shade600,
+                                      unit.subtitle,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-                            ),
+                            ],
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                );
-              }),
-            ],
-          ),
-        );
+                        const SizedBox(height: 16),
+                        // Lesson Items with Path Line
+                        ...unit.lessons.asMap().entries.map((entry) {
+                          final int index = entry.key;
+                          final Lesson lesson = entry.value;
+                          final bool isLast = index == unit.lessons.length - 1;
+
+                          // Calculate unlock state
+                          bool isUnlocked = false;
+                          bool isCompleted = widget.completedLessons.contains(
+                            lesson.id,
+                          );
+                          if (unitIndex == 0 && index == 0) {
+                            isUnlocked = true;
+                          } else if (index > 0) {
+                            isUnlocked = widget.completedLessons.contains(
+                              unit.lessons[index - 1].id,
+                            );
+                          } else if (unitIndex > 0) {
+                            isUnlocked = widget.completedLessons.contains(
+                              allUnits[unitIndex - 1].lessons.last.id,
+                            );
+                          }
+                          if (isCompleted) isUnlocked = true;
+
+                          return IntrinsicHeight(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                // Path connection visual
+                                SizedBox(
+                                  width: 50,
+                                  child: Column(
+                                    children: [
+                                      Container(
+                                        width: 32,
+                                        height: 32,
+                                        decoration: BoxDecoration(
+                                          color: isCompleted
+                                              ? unit.color
+                                              : (isUnlocked
+                                                    ? unit.color.withValues(
+                                                        alpha: 0.5,
+                                                      )
+                                                    : Colors.grey.shade300),
+                                          shape: BoxShape.circle,
+                                          border: isCompleted
+                                              ? null
+                                              : Border.all(
+                                                  color: isUnlocked
+                                                      ? unit.color
+                                                      : Colors.grey.shade400,
+                                                  width: 3,
+                                                ),
+                                        ),
+                                        child: isCompleted
+                                            ? const Icon(
+                                                Icons.check,
+                                                color: Colors.white,
+                                                size: 20,
+                                              )
+                                            : (isUnlocked
+                                                  ? const Icon(
+                                                      Icons.play_arrow,
+                                                      color: Colors.white,
+                                                      size: 18,
+                                                    )
+                                                  : const Icon(
+                                                      Icons.lock,
+                                                      color: Colors.grey,
+                                                      size: 16,
+                                                    )),
+                                      ),
+                                      if (!isLast)
+                                        Expanded(
+                                          child: Container(
+                                            width: 4,
+                                            color:
+                                                widget.completedLessons
+                                                    .contains(
+                                                      unit.lessons[index].id,
+                                                    )
+                                                ? unit.color
+                                                : Colors.grey.shade200,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                                // Lesson Card
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(bottom: 16),
+                                    child: InkWell(
+                                      onTap: isUnlocked
+                                          ? () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) => BlocProvider(
+                                                    create: (_) =>
+                                                        new_bloc.LessonBloc()
+                                                          ..add(
+                                                            new_bloc.StartLesson(
+                                                              lesson,
+                                                            ),
+                                                          ),
+                                                    child:
+                                                        new_lessons.LessonScreen(
+                                                          lesson: lesson,
+                                                        ),
+                                                  ),
+                                                ),
+                                              );
+                                            }
+                                          : null,
+                                      child: Opacity(
+                                        opacity: isUnlocked ? 1.0 : 0.5,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(16),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(
+                                              16,
+                                            ),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.black.withValues(
+                                                  alpha: 0.05,
+                                                ),
+                                                blurRadius: 10,
+                                                offset: const Offset(0, 4),
+                                              ),
+                                            ],
+                                          ),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Expanded(
+                                                    child: Text(
+                                                      lesson.title,
+                                                      maxLines: 1,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      style: const TextStyle(
+                                                        fontSize: 18,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  Row(
+                                                    children: [
+                                                      Text(
+                                                        '+${lesson.xpReward}',
+                                                        style: TextStyle(
+                                                          color: Colors
+                                                              .orange
+                                                              .shade700,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                      ),
+                                                      Icon(
+                                                        Icons.bolt,
+                                                        color: Colors
+                                                            .orange
+                                                            .shade700,
+                                                        size: 16,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                lesson.subtitle,
+                                                style: TextStyle(
+                                                  color: Colors.grey.shade600,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
+                  );
                 }).toList(),
                 if (totalPages > 1) ...[
                   const SizedBox(height: 12),
