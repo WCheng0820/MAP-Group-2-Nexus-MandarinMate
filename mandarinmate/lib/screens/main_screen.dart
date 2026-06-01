@@ -18,6 +18,7 @@ import 'package:mandarinmate/features/lessons/data/mock_lessons.dart';
 import 'package:mandarinmate/features/lessons/bloc/lesson_bloc.dart'
     as new_bloc;
 import 'package:mandarinmate/features/lessons/models/lesson_model.dart';
+import 'dart:math' as math;
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -124,6 +125,7 @@ class _HomeTabState extends State<_HomeTab> {
           );
           final completedLessons = (data['completedLessons'] as List?) ?? [];
           final levelProgress = _progressForXp(xp);
+          final dailyActivity = (data['dailyActivity'] as Map<String, dynamic>?) ?? {};
 
           return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
             stream: FirebaseFirestore.instance
@@ -254,6 +256,12 @@ class _HomeTabState extends State<_HomeTab> {
                             ),
                           ],
                         ),
+                        // ==========================================
+                        // ADD STEP 2 HERE: THE WEEKLY CHART
+                        // ==========================================
+                        const SizedBox(height: 20),
+                        _WeeklyProgressChart(dailyActivity: dailyActivity),
+                        // ==========================================
                         if (starredItems.isNotEmpty) ...[
                           const SizedBox(height: 20),
                           _SectionHeader(
@@ -4029,6 +4037,140 @@ class _CoursePathViewState extends State<_CoursePathView> {
           },
         );
       },
+    );
+  }
+}
+// -----------------------------------------------------
+// WEEKLY PROGRESS CHART COMPONENT
+// -----------------------------------------------------
+
+class _WeeklyProgressChart extends StatelessWidget {
+  final Map<String, dynamic> dailyActivity;
+
+  const _WeeklyProgressChart({required this.dailyActivity});
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final weekdays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    final weeklyData = <Map<String, dynamic>>[];
+
+    // 1. Find the Monday of the CURRENT week
+    final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+
+// 100% REAL DATA FROM FIRESTORE
+    final Map<String, dynamic> dataToUse = dailyActivity;
+
+    // 2. Build the fixed Monday to Sunday chart
+    for (int i = 0; i < 7; i++) {
+      final date = startOfWeek.add(Duration(days: i));
+      final dateString = "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+      final xp = (dataToUse[dateString] as num?)?.toInt() ?? 0;
+
+      // Check if this specific column is "Today"
+      final isToday = date.year == now.year && date.month == now.month && date.day == now.day;
+
+      weeklyData.add({
+        'day': weekdays[i],
+        'xp': xp,
+        'isToday': isToday,
+      });
+    }
+
+    final maxXP = weeklyData.map((d) => (d['xp'] as int).toDouble()).reduce(math.max).clamp(1.0, double.infinity);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFFFE4CF)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0D111827),
+            blurRadius: 12,
+            offset: Offset(0, 7),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Weekly Activity (XP)',
+            style: TextStyle(
+              color: _StudentColors.deep,
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            height: 150,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: weeklyData.map((data) {
+                final double percentage = data['xp'] / maxXP;
+                final bool isToday = data['isToday'] as bool;
+
+                return SizedBox(
+                  width: 32,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        '${data['xp']}',
+                        maxLines: 1,
+                        overflow: TextOverflow.visible,
+                        style: TextStyle(
+                          fontSize: 10,
+                          // Darker orange if it's today, otherwise standard orange
+                          color: isToday ? _StudentColors.red : _StudentColors.orange,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 700),
+                        curve: Curves.easeOutQuart,
+                        width: 18,
+                        height: (90 * percentage).toDouble(),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            // Highlight today's bar slightly differently
+                            colors: isToday
+                                ? [_StudentColors.red, _StudentColors.red]
+                                : [_StudentColors.red, _StudentColors.orange],
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                          ),
+                          // Give today's bar a subtle background so 0 XP days are still visible
+                          color: isToday ? _StudentColors.red.withValues(alpha: 0.1) : Colors.transparent,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      // The fixed M T W T F S S letters
+                      Text(
+                        data['day'],
+                        maxLines: 1,
+                        style: TextStyle(
+                          // Highlight today's letter in red and bold
+                          color: isToday ? _StudentColors.red : _StudentColors.muted,
+                          fontSize: 12,
+                          fontWeight: isToday ? FontWeight.w900 : FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

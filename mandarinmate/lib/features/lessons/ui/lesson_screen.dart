@@ -667,6 +667,10 @@ class _LessonScreenState extends State<LessonScreen> {
                       .collection('users')
                       .doc(user.uid);
 
+                  // 1. Get today's date formatted as YYYY-MM-DD
+                  final now = DateTime.now();
+                  final dateString = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+
                   try {
                     await docRef.set({
                       'xpPoints': FieldValue.increment(state.xpEarned),
@@ -674,6 +678,10 @@ class _LessonScreenState extends State<LessonScreen> {
                       'completedLessons': FieldValue.arrayUnion([
                         state.lesson.id,
                       ]),
+                      // THIS IS THE FIX: Format it as an actual nested map
+                      'dailyActivity': {
+                        dateString: FieldValue.increment(state.xpEarned),
+                      }
                     }, SetOptions(merge: true));
                   } catch (e) {
                     debugPrint('Firebase write error: $e');
@@ -700,7 +708,7 @@ class _LessonScreenState extends State<LessonScreen> {
                       MaterialPageRoute(
                         builder: (context) => BlocProvider(
                           create: (_) =>
-                              LessonBloc()..add(StartLesson(nextLesson!)),
+                          LessonBloc()..add(StartLesson(nextLesson!)),
                           child: LessonScreen(lesson: nextLesson!),
                         ),
                       ),
@@ -772,19 +780,26 @@ class _LessonScreenState extends State<LessonScreen> {
                       final authState = context.read<AuthBloc>().state;
                       if (authState is AuthAuthenticated) {
                         final user = authState.user;
+
+                        // 1. Get today's date formatted as YYYY-MM-DD
+                        final now = DateTime.now();
+                        final dateString = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+
                         try {
                           await FirebaseFirestore.instance
                               .collection('users')
                               .doc(user.uid)
                               .set({
-                                'xpPoints': FieldValue.increment(
-                                  state.xpEarned,
-                                ),
-                                'xp': FieldValue.increment(state.xpEarned),
-                                'completedLessons': FieldValue.arrayUnion([
-                                  state.lesson.id,
-                                ]),
-                              }, SetOptions(merge: true));
+                            'xpPoints': FieldValue.increment(
+                              state.xpEarned,
+                            ),
+                            'xp': FieldValue.increment(state.xpEarned),
+                            'completedLessons': FieldValue.arrayUnion([
+                              state.lesson.id,
+                            ]),
+                            // 2. ADD THIS LINE: Save the XP to today's date!
+                            'dailyActivity.$dateString': FieldValue.increment(state.xpEarned),
+                          }, SetOptions(merge: true));
                         } catch (e) {
                           debugPrint('Firebase write error: $e');
                         }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mandarinmate/auth/presentation/bloc/auth_bloc.dart';
 import 'package:mandarinmate/features/lessons/data/mock_lessons.dart';
+import 'package:mandarinmate/models/user_model.dart';
 import 'package:mandarinmate/services/auth_service.dart';
 import 'package:mandarinmate/utils/app_theme.dart';
 import 'package:mandarinmate/widgets/custom_widgets.dart';
@@ -17,6 +18,25 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   final AuthService _authService = AuthService();
   bool _isLoading = false;
 
+  // Helper function to extract the last 7 days of XP data
+  List<Map<String, dynamic>> _getWeeklyData(Map<String, int> dailyActivity) {
+    final List<Map<String, dynamic>> weeklyData = [];
+    final now = DateTime.now();
+    final weekdays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+    for (int i = 6; i >= 0; i--) {
+      final date = now.subtract(Duration(days: i));
+      // Format as YYYY-MM-DD
+      final dateString =
+          "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+      final xp = dailyActivity[dateString] ?? 0;
+      final dayLabel = weekdays[date.weekday - 1];
+
+      weeklyData.add({'day': dayLabel, 'xp': xp});
+    }
+    return weeklyData;
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<AuthBloc, AuthState>(
@@ -25,7 +45,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
           final profile = state.profile;
           final totalLessons = mockCourseUnits.fold<int>(
             0,
-            (sum, unit) => sum + unit.lessons.length,
+                (sum, unit) => sum + unit.lessons.length,
           );
           final completedCount = profile.completedLessons.length;
           final progressPercent = totalLessons > 0
@@ -90,6 +110,10 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                       ),
                       const SizedBox(height: AppDimensions.lg),
 
+                      // Weekly Progress Chart
+                      _buildWeeklyProgressChart(profile),
+                      const SizedBox(height: AppDimensions.lg),
+
                       // Learning Progress Summary
                       Card(
                         elevation: 4,
@@ -105,7 +129,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                             children: [
                               Row(
                                 mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                                MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     'Overall Progress',
@@ -167,11 +191,11 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   }
 
   Widget _buildStatCard(
-    String label,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
+      String label,
+      String value,
+      IconData icon,
+      Color color,
+      ) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -189,9 +213,87 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
     );
   }
 
+  Widget _buildWeeklyProgressChart(UserProfile profile) {
+    final List<Map<String, dynamic>> weeklyData = _getWeeklyData(profile.dailyActivity);
+
+    // Find the highest XP day to scale the bars dynamically
+    final double maxXP = weeklyData
+        .map((d) => (d['xp'] as int).toDouble())
+        .reduce((a, b) => a > b ? a : b)
+        .clamp(1.0, double.infinity);
+
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppDimensions.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Weekly Activity (XP)',
+              style: AppTextStyles.headlineSmall,
+            ),
+            const SizedBox(height: AppDimensions.xl),
+            SizedBox(
+              height: 120, // Height of the chart area
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: weeklyData.map((data) {
+                  final percentage = data['xp'] / maxXP;
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      // Tooltip equivalent - show value above bar
+                      Text(
+                        '${data['xp']}',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Color(0xFFD40511), // DHL Red
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      // Animated Bar
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 500),
+                        curve: Curves.easeOut,
+                        width: 24,
+                        // 80 is the max physical pixel height of the bar
+                        height: 80 * percentage,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFCC00), // DHL Yellow
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                            color: const Color(0xFFD40511), // Red outline
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      // Day Label
+                      Text(
+                        data['day'],
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: Colors.grey.shade700,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildContinueCard(dynamic profile) {
-    // Logic to find the next lesson to continue
-    // For simplicity, find the first lesson ID that is NOT in completedLessons
     var nextLessonTitle = 'Start your first lesson!';
     var nextLessonSubtitle = 'Unit 1: Basics';
 
@@ -249,7 +351,6 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
             const SizedBox(height: AppDimensions.lg),
             ElevatedButton(
               onPressed: () {
-                // In a real app, this would navigate to the lesson
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Navigating to lesson...')),
                 );
@@ -276,8 +377,6 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
       await _authService.logout();
 
       if (mounted) {
-        // AuthBloc will handle state change and redirection if configured in AppRouter
-        // but explicit navigation is also fine if needed.
         Navigator.pushReplacementNamed(context, '/auth');
         ErrorSnackBar.showSuccess(context, 'Logged out successfully');
       }

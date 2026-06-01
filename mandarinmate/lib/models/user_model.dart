@@ -22,6 +22,7 @@ class UserProfile {
   final int xpPoints;
   final int currentStreak;
   final List<String> completedLessons;
+  final Map<String, int> dailyActivity; // Added to track weekly progress
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -43,6 +44,7 @@ class UserProfile {
     this.xpPoints = 0,
     this.currentStreak = 0,
     this.completedLessons = const [],
+    this.dailyActivity = const {}, // Initialize empty map
     required this.createdAt,
     required this.updatedAt,
   });
@@ -67,6 +69,7 @@ class UserProfile {
       'xpPoints': xpPoints,
       'currentStreak': currentStreak,
       'completedLessons': completedLessons,
+      'dailyActivity': dailyActivity, // Save to Firestore
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
@@ -92,6 +95,7 @@ class UserProfile {
       xpPoints: map['xpPoints'] ?? 0,
       currentStreak: map['currentStreak'] ?? 0,
       completedLessons: List<String>.from(map['completedLessons'] ?? []),
+      dailyActivity: Map<String, int>.from(map['dailyActivity'] ?? {}), // Load from Firestore
       createdAt: _dateTimeFromValue(map['createdAt']) ?? DateTime.now(),
       updatedAt: _dateTimeFromValue(map['updatedAt']) ?? DateTime.now(),
     );
