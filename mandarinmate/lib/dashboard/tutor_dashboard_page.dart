@@ -20,6 +20,22 @@ class TutorDashboardPage extends StatefulWidget {
 class _TutorDashboardPageState extends State<TutorDashboardPage> {
   int _currentIndex = 0;
 
+  void _logout(BuildContext context) {
+    context.read<AuthBloc>().add(AuthLogoutRequested());
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Logout successful'),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginPage()),
+      (_) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
@@ -40,6 +56,9 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
         break;
       case 4:
         body = _buildChatComingSoonTab();
+        break;
+      case 5:
+        body = _buildProfileTab(context, user);
         break;
       default:
         body = _buildHomeTab(context, user);
@@ -74,6 +93,10 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
             icon: Icon(Icons.chat_bubble_rounded),
             label: 'Chat',
           ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.account_circle_rounded),
+            label: 'Profile',
+          ),
         ],
       ),
       body: body,
@@ -100,20 +123,7 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
               children: [
                 _TutorHeader(
                   name: name,
-                  onLogout: () {
-                    context.read<AuthBloc>().add(AuthLogoutRequested());
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Logout successful'),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(builder: (_) => const LoginPage()),
-                      (_) => false,
-                    );
-                  },
+                  onLogout: () => _logout(context),
                 ),
                 const SizedBox(height: 14),
                 StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -240,6 +250,730 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileTab(BuildContext context, User? user) {
+    return _TutorPageFrame(
+      child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+        stream: user == null
+            ? null
+            : FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(user.uid)
+                  .snapshots(),
+        builder: (context, snapshot) {
+          final data = snapshot.data?.data() ?? <String, dynamic>{};
+          final name = _displayName(data);
+          final email = (data['email'] ?? user?.email ?? '').toString();
+
+          return SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // 1. Curved Gradient Header Card using tutor green-to-teal theme
+                Container(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [_TutorColors.green, _TutorColors.teal],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(32),
+                      bottomRight: Radius.circular(32),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Header Row: Title & Actions
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Profile',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.settings_rounded,
+                                  color: Colors.white,
+                                  size: 24,
+                                ),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const mandarinmate_edit_profile.EditProfilePage(
+                                            roleColor: _TutorColors.green,
+                                          ),
+                                    ),
+                                  );
+                                },
+                              ),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.logout_rounded,
+                                  color: Colors.white,
+                                  size: 24,
+                                ),
+                                onPressed: () => _logout(context),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // Avatar & Edit Button
+                      Stack(
+                        children: [
+                          CircleAvatar(
+                            radius: 45,
+                            backgroundColor: const Color(0xFFFFD54F), // Premium Yellow
+                            child: Text(
+                              name.isEmpty ? 'T' : name[0].toUpperCase(),
+                              style: const TextStyle(
+                                color: _TutorColors.green,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 36,
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        const mandarinmate_edit_profile.EditProfilePage(
+                                          roleColor: _TutorColors.green,
+                                        ),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black12,
+                                      blurRadius: 4,
+                                      offset: Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: const Icon(
+                                  Icons.edit_rounded,
+                                  color: _TutorColors.green,
+                                  size: 14,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      // Display Name
+                      Text(
+                        name,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      // Email
+                      Text(
+                        email,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.85),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      // Role Chips
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.16),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: const Row(
+                              children: [
+                                Icon(
+                                  Icons.verified_user_rounded,
+                                  color: Colors.white,
+                                  size: 14,
+                                ),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Lead Educator',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.16),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: const Text(
+                              'UTM Mandarin Club',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                // 2. Body Scrollable Cards
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 20.0,
+                  ),
+                  child: Column(
+                    children: [
+                      // Card 1: Dynamic Teaching Overview & Stats Grid
+                      _buildTutorProfileCard(
+                        title: 'Teaching Overview',
+                        child: StreamBuilder<QuerySnapshot>(
+                          stream: FirebaseFirestore.instance
+                              .collection('users')
+                              .where('role', isEqualTo: 'student')
+                              .snapshots(),
+                          builder: (context, studentSnapshot) {
+                            final studentsCount = studentSnapshot.data?.docs.length ?? 0;
+
+                            return StreamBuilder<QuerySnapshot>(
+                              stream: FirebaseFirestore.instance
+                                  .collection('lessons')
+                                  .snapshots(),
+                              builder: (context, lessonsSnapshot) {
+                                final lessonsCount = lessonsSnapshot.data?.docs.length ?? 0;
+
+                                return StreamBuilder<QuerySnapshot>(
+                                  stream: FirebaseFirestore.instance
+                                      .collection('announcements')
+                                      .snapshots(),
+                                  builder: (context, announcementsSnapshot) {
+                                    final announcementsCount = announcementsSnapshot.data?.docs.length ?? 0;
+
+                                    return GridView.count(
+                                      crossAxisCount: 2,
+                                      shrinkWrap: true,
+                                      physics: const NeverScrollableScrollPhysics(),
+                                      crossAxisSpacing: 12,
+                                      mainAxisSpacing: 12,
+                                      childAspectRatio: 1.25,
+                                      children: [
+                                        _buildTutorStatItem(
+                                          icon: '👥',
+                                          value: '$studentsCount',
+                                          label: 'Students Managed',
+                                          bgColor: const Color(0xFFE8F5E9),
+                                          iconColor: _TutorColors.green,
+                                        ),
+                                        _buildTutorStatItem(
+                                          icon: '📚',
+                                          value: '$lessonsCount',
+                                          label: 'Lessons Published',
+                                          bgColor: const Color(0xFFE3F2FD),
+                                          iconColor: _TutorColors.blue,
+                                        ),
+                                        _buildTutorStatItem(
+                                          icon: '📢',
+                                          value: '$announcementsCount',
+                                          label: 'Announcements',
+                                          bgColor: const Color(0xFFFFF3E0),
+                                          iconColor: _TutorColors.orange,
+                                        ),
+                                        _buildTutorStatItem(
+                                          icon: '⭐',
+                                          value: 'Senior',
+                                          label: 'Verified Tier',
+                                          bgColor: const Color(0xFFF3E5F5),
+                                          iconColor: Colors.purple,
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Card 2: Classroom Assignment Info
+                      _buildTutorProfileCard(
+                        title: 'Classroom Info',
+                        child: Column(
+                          children: [
+                            _buildClassroomRow(
+                              label: 'Academy',
+                              value: 'Universiti Teknologi Malaysia (UTM)',
+                              icon: Icons.school_rounded,
+                            ),
+                            const Divider(height: 1, color: Color(0xFFECEFF1)),
+                            _buildClassroomRow(
+                              label: 'Organization',
+                              value: 'Nexus Mandarin Club',
+                              icon: Icons.group_work_rounded,
+                            ),
+                            const Divider(height: 1, color: Color(0xFFECEFF1)),
+                            _buildClassroomRow(
+                              label: 'Course Code',
+                              value: 'NEXUS-MANDARIN-1',
+                              icon: Icons.badge_rounded,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Card 3: Dynamic Action Log Timeline (Recent Activity)
+                      _buildTutorProfileCard(
+                        title: 'Recent Activity Logs',
+                        child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                          stream: FirebaseFirestore.instance
+                              .collection('announcements')
+                              .orderBy('timestamp', descending: true)
+                              .limit(1)
+                              .snapshots(),
+                          builder: (context, announcementSnapshot) {
+                            final latestAnnDoc = announcementSnapshot.data?.docs.firstOrNull;
+                            final latestAnnTitle = latestAnnDoc?.data()['title']?.toString() ?? 'No announcements broadcasted';
+                            final latestAnnContent = latestAnnDoc?.data()['content']?.toString() ?? '';
+
+                            return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                              stream: FirebaseFirestore.instance
+                                  .collection('lessons')
+                                  .orderBy('order', descending: true)
+                                  .limit(1)
+                                  .snapshots(),
+                              builder: (context, lessonSnapshot) {
+                                final latestLessonDoc = lessonSnapshot.data?.docs.firstOrNull;
+                                final latestLessonTitle = latestLessonDoc?.data()['title']?.toString() ?? 'No lessons published';
+
+                                return Column(
+                                  children: [
+                                    _buildTutorActivityItem(
+                                      icon: '📢',
+                                      title: 'Latest Broadcast Sent',
+                                      detail: latestAnnTitle,
+                                      time: latestAnnContent.isNotEmpty 
+                                          ? (latestAnnContent.length > 30 ? '${latestAnnContent.substring(0, 30)}...' : latestAnnContent)
+                                          : 'Tap Announcements to broadcast',
+                                      bgColor: const Color(0xFFFFF3E0),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    _buildTutorActivityItem(
+                                      icon: '📚',
+                                      title: 'Latest Published Lesson',
+                                      detail: latestLessonTitle,
+                                      time: 'Added to student course path',
+                                      bgColor: const Color(0xFFE3F2FD),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    _buildTutorActivityItem(
+                                      icon: '✅',
+                                      title: 'Class Health Checklist',
+                                      detail: 'All classroom databases online',
+                                      time: 'Nexus Mandarin Club Active',
+                                      bgColor: const Color(0xFFE8F5E9),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Card 4: Navigation menu links
+                      _buildTutorProfileCard(
+                        padding: EdgeInsets.zero,
+                        child: Column(
+                          children: [
+                            _buildTutorNavigationRow(
+                              icon: Icons.edit_rounded,
+                              iconBg: const Color(0xFFE8F5E9),
+                              iconColor: _TutorColors.green,
+                              title: 'Edit Profile Settings',
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        const mandarinmate_edit_profile.EditProfilePage(
+                                          roleColor: _TutorColors.green,
+                                        ),
+                                  ),
+                                );
+                              },
+                            ),
+                            const Divider(height: 1, color: Color(0xFFECEFF1)),
+                            _buildTutorNavigationRow(
+                              icon: Icons.class_rounded,
+                              iconBg: const Color(0xFFE3F2FD),
+                              iconColor: _TutorColors.blue,
+                              title: 'Manage Lessons Hub',
+                              onTap: () {
+                                setState(() => _currentIndex = 1);
+                              },
+                            ),
+                            const Divider(height: 1, color: Color(0xFFECEFF1)),
+                            _buildTutorNavigationRow(
+                              icon: Icons.people_alt_rounded,
+                              iconBg: const Color(0xFFE0F2F1),
+                              iconColor: Colors.teal,
+                              title: 'My Students Progress',
+                              onTap: () {
+                                setState(() => _currentIndex = 2);
+                              },
+                            ),
+                            const Divider(height: 1, color: Color(0xFFECEFF1)),
+                            _buildTutorNavigationRow(
+                              icon: Icons.campaign_rounded,
+                              iconBg: const Color(0xFFFFF3E0),
+                              iconColor: _TutorColors.orange,
+                              title: 'Broadcast Announcement',
+                              onTap: () {
+                                setState(() => _currentIndex = 3);
+                              },
+                            ),
+                            const Divider(height: 1, color: Color(0xFFECEFF1)),
+                            _buildTutorNavigationRow(
+                              icon: Icons.logout_rounded,
+                              iconBg: const Color(0xFFFFF0F0),
+                              iconColor: const Color(0xFFD32F2F),
+                              title: 'Sign Out / Logout',
+                              onTap: () => _logout(context),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildTutorProfileCard({
+    required Widget child,
+    String? title,
+    EdgeInsetsGeometry padding = const EdgeInsets.all(18),
+  }) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE6F3EE)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x08111827),
+            blurRadius: 16,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (title != null) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 0),
+              child: Text(
+                title,
+                style: const TextStyle(
+                  color: _TutorColors.deep,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+          Padding(
+            padding: padding,
+            child: child,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTutorStatItem({
+    required String icon,
+    required String value,
+    required String label,
+    required Color bgColor,
+    required Color iconColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+      decoration: BoxDecoration(
+        color: bgColor.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: bgColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                icon,
+                style: const TextStyle(fontSize: 20),
+              ),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 8,
+                color: iconColor.withValues(alpha: 0.6),
+              ),
+            ],
+          ),
+          const Spacer(),
+          Text(
+            value,
+            style: const TextStyle(
+              color: _TutorColors.deep,
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 1),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: _TutorColors.muted,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildClassroomRow({
+    required String label,
+    required String value,
+    required IconData icon,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0F4F2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, size: 18, color: _TutorColors.green),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: _TutorColors.muted,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    color: _TutorColors.deep,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTutorActivityItem({
+    required String icon,
+    required String title,
+    required String detail,
+    required String time,
+    required Color bgColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: bgColor.withValues(alpha: 0.22),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: bgColor.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 4,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              icon,
+              style: const TextStyle(fontSize: 18),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: _TutorColors.deep,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  detail,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: _TutorColors.deep,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  time,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: _TutorColors.muted,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTutorNavigationRow({
+    required IconData icon,
+    required Color iconBg,
+    required Color iconColor,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: iconBg,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: iconColor, size: 20),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  color: _TutorColors.deep,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: _TutorColors.muted,
+              size: 20,
+            ),
+          ],
         ),
       ),
     );
