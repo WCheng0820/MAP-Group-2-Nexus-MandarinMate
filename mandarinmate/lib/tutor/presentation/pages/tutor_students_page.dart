@@ -262,7 +262,9 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                                       xp: xp,
                                       streak: streak,
                                       level: level,
-                                      completedLessonsCount: completedLessons.length,
+                                      completedLessonsCount: completedLessons
+                                          .where((id) => !id.toString().startsWith('daily_challenge_'))
+                                          .length,
                                       progress: progress,
                                       onTap: () => _showStudentDetails(context, data, overallRank, doc.id),
                                     ),
@@ -703,7 +705,7 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                       _buildDetailStatCard('Experience Points', '$xp XP', Icons.bolt_rounded, Colors.orange),
                       _buildDetailStatCard('Consistency Streak', '$streak Days', Icons.local_fire_department_rounded, Colors.red),
                       _buildDetailStatCard('Dynamic Mastery', 'Level $level', Icons.military_tech_rounded, Colors.blue),
-                      _buildDetailStatCard('Completed Lessons', '${completedLessons.length} units', Icons.task_alt_rounded, Colors.teal),
+                      _buildDetailStatCard('Completed Lessons', '${completedLessons.where((id) => !id.toString().startsWith('daily_challenge_')).length} units', Icons.task_alt_rounded, Colors.teal),
                     ],
                   ),
                   const SizedBox(height: 24),
@@ -873,6 +875,11 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
   }
 
   String _getLessonName(String lessonId) {
+    if (lessonId.startsWith('daily_challenge_')) {
+      final dateStr = lessonId.replaceFirst('daily_challenge_', '');
+      return 'Completed Daily Challenge ($dateStr)';
+    }
+
     for (final unit in mockCourseUnits) {
       for (final lesson in unit.lessons) {
         if (lesson.id == lessonId) {

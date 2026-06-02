@@ -164,7 +164,9 @@ class _HomeTabState extends State<_HomeTab> {
                     0,
                     (total, unit) => total + unit.lessons.length,
                   );
-                  final completedCount = completedLessons.length;
+                  final completedCount = completedLessons
+                      .where((id) => !id.toString().startsWith('daily_challenge_'))
+                      .length;
                   final courseProgress = totalLessons > 0
                       ? completedCount / totalLessons
                       : 0.0;
@@ -1579,7 +1581,10 @@ List<_LeaderboardEntry> _leaderboardEntriesFromDocs(
       data['streak'],
       fallback: _toInt(data['currentStreak'], fallback: 0),
     );
-    final completedLessons = (data['completedLessons'] as List?) ?? [];
+    final completedLessonsRaw = (data['completedLessons'] as List?) ?? [];
+    final curriculumLessons = completedLessonsRaw
+        .where((id) => !id.toString().startsWith('daily_challenge_'))
+        .toList();
 
     return _LeaderboardEntry(
       uid: entry.value.id,
@@ -1587,8 +1592,8 @@ List<_LeaderboardEntry> _leaderboardEntriesFromDocs(
       name: _displayName(data),
       xp: xp,
       level: level,
-      badges: _unlockedBadgesCount(xp, streak, completedLessons, level),
-      completedLessons: completedLessons.length,
+      badges: _unlockedBadgesCount(xp, streak, curriculumLessons, level),
+      completedLessons: curriculumLessons.length,
     );
   }).toList();
 }
@@ -2108,7 +2113,9 @@ class _ProgressSheet extends StatelessWidget {
                   (total, unit) => total + unit.lessons.length,
                 );
                 final courseProgress = totalLessons > 0
-                    ? completedLessons.length / totalLessons
+                    ? completedLessons
+                        .where((id) => !id.toString().startsWith('daily_challenge_'))
+                        .length / totalLessons
                     : 0.0;
 
                 // Find the next incomplete lesson
@@ -2446,12 +2453,15 @@ class _ProfileTabState extends State<_ProfileTab> {
           fallback: _toInt(data['currentStreak'], fallback: 0),
         );
         final completedLessons = (data['completedLessons'] as List?) ?? [];
+        final curriculumLessons = completedLessons
+            .where((id) => !id.toString().startsWith('daily_challenge_'))
+            .toList();
 
         // Count unlocked badges
         final badgesCount = _getUnlockedBadgesCount(
           xp,
           streak,
-          completedLessons,
+          curriculumLessons,
           level,
         );
 
@@ -2740,7 +2750,7 @@ class _ProfileTabState extends State<_ProfileTab> {
                                     builder: (_) => BadgesAchievementsPage(
                                       xp: xp,
                                       streak: streak,
-                                      completedLessons: completedLessons,
+                                      completedLessons: curriculumLessons,
                                       level: level,
                                     ),
                                   ),
@@ -2912,7 +2922,7 @@ class _ProfileTabState extends State<_ProfileTab> {
                                         builder: (_) => BadgesAchievementsPage(
                                           xp: xp,
                                           streak: streak,
-                                          completedLessons: completedLessons,
+                                          completedLessons: curriculumLessons,
                                           level: level,
                                         ),
                                       ),

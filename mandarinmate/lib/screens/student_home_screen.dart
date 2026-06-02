@@ -47,7 +47,9 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
             0,
                 (sum, unit) => sum + unit.lessons.length,
           );
-          final completedCount = profile.completedLessons.length;
+          final completedCount = profile.completedLessons
+              .where((id) => !id.startsWith('daily_challenge_'))
+              .length;
           final progressPercent = totalLessons > 0
               ? completedCount / totalLessons
               : 0.0;
