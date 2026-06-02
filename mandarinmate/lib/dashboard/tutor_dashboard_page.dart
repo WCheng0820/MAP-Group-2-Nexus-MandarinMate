@@ -23,6 +23,28 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
+
+    Widget body;
+    switch (_currentIndex) {
+      case 0:
+        body = _buildHomeTab(context, user);
+        break;
+      case 1:
+        body = const TutorManageLessonsHubPage();
+        break;
+      case 2:
+        body = const TutorStudentsPage();
+        break;
+      case 3:
+        body = const TutorAnnouncementPage();
+        break;
+      case 4:
+        body = _buildChatComingSoonTab();
+        break;
+      default:
+        body = _buildHomeTab(context, user);
+    }
+
     return Scaffold(
       backgroundColor: _TutorColors.paper,
       bottomNavigationBar: BottomNavigationBar(
@@ -54,147 +76,170 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
           ),
         ],
       ),
-      body: _TutorPageFrame(
-        child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-          stream: user == null
-              ? null
-              : FirebaseFirestore.instance
-                    .collection('users')
-                    .doc(user.uid)
-                    .snapshots(),
-          builder: (context, snapshot) {
-            final data = snapshot.data?.data() ?? <String, dynamic>{};
-            final name = _displayName(data);
+      body: body,
+    );
+  }
 
-            return SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 18, 16, 22),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _TutorHeader(
-                    name: name,
-                    onLogout: () {
-                      context.read<AuthBloc>().add(AuthLogoutRequested());
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Logout successful'),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(builder: (_) => const LoginPage()),
-                        (_) => false,
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 14),
-                  StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                    stream: FirebaseFirestore.instance
-                        .collection('users')
-                        .where('role', isEqualTo: 'student')
-                        .snapshots(),
-                    builder: (context, studentSnapshot) {
-                      final studentCount =
-                          studentSnapshot.data?.docs.length ?? 0;
-                      return _TutorHero(
-                        title: 'Tutor Dashboard',
-                        headline: 'Manage All Learning Resources',
-                        subtitle: '$studentCount active students',
-                        actionLabel: 'Manage Lessons',
-                        onAction: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const TutorManageLessonsHubPage(),
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 18),
-                  _SectionHeader(
-                    title: 'Quick actions',
-                    onViewAll: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const TutorManageLessonsHubPage(),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  GridView.count(
-                    crossAxisCount: 2,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                    childAspectRatio: 1.18,
-                    children: [
-                      _TutorActionTile(
-                        icon: Icons.class_rounded,
-                        title: 'Manage Lessons',
-                        subtitle: 'Manage vocab, materials, and flashcards',
-                        color: _TutorColors.green,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const TutorManageLessonsHubPage(),
-                            ),
-                          );
-                        },
+  Widget _buildHomeTab(BuildContext context, User? user) {
+    return _TutorPageFrame(
+      child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+        stream: user == null
+            ? null
+            : FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(user.uid)
+                  .snapshots(),
+        builder: (context, snapshot) {
+          final data = snapshot.data?.data() ?? <String, dynamic>{};
+          final name = _displayName(data);
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 18, 16, 22),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _TutorHeader(
+                  name: name,
+                  onLogout: () {
+                    context.read<AuthBloc>().add(AuthLogoutRequested());
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Logout successful'),
+                        backgroundColor: Colors.green,
                       ),
-                      _TutorActionTile(
-                        icon: Icons.people_alt_rounded,
-                        title: 'Student List',
-                        subtitle: 'View profiles and progress',
-                        color: _TutorColors.teal,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const TutorStudentsPage(),
-                            ),
-                          );
-                        },
-                      ),
-                      _TutorActionTile(
-                        icon: Icons.campaign_rounded,
-                        title: 'Announcements',
-                        subtitle: 'Send updates to students',
-                        color: _TutorColors.orange,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const TutorAnnouncementPage(),
-                            ),
-                          );
-                        },
-                      ),
-                      _TutorActionTile(
-                        icon: Icons.chat_bubble_rounded,
-                        title: 'Chat',
-                        subtitle: 'Chat module coming soon',
-                        color: _TutorColors.blue,
-                        onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Chat module is coming soon.'),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ],
+                    );
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LoginPage()),
+                      (_) => false,
+                    );
+                  },
+                ),
+                const SizedBox(height: 14),
+                StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                  stream: FirebaseFirestore.instance
+                      .collection('users')
+                      .where('role', isEqualTo: 'student')
+                      .snapshots(),
+                  builder: (context, studentSnapshot) {
+                    final studentCount =
+                        studentSnapshot.data?.docs.length ?? 0;
+                    return _TutorHero(
+                      title: 'Tutor Dashboard',
+                      headline: 'Manage All Learning Resources',
+                      subtitle: '$studentCount active students',
+                      actionLabel: 'Manage Lessons',
+                      onAction: () {
+                        setState(() => _currentIndex = 1);
+                      },
+                    );
+                  },
+                ),
+                const SizedBox(height: 18),
+                _SectionHeader(
+                  title: 'Quick actions',
+                  onViewAll: () {
+                    setState(() => _currentIndex = 1);
+                  },
+                ),
+                const SizedBox(height: 10),
+                GridView.count(
+                  crossAxisCount: 2,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  childAspectRatio: 1.18,
+                  children: [
+                    _TutorActionTile(
+                      icon: Icons.class_rounded,
+                      title: 'Manage Lessons',
+                      subtitle: 'Manage vocab, materials, and flashcards',
+                      color: _TutorColors.green,
+                      onTap: () {
+                        setState(() => _currentIndex = 1);
+                      },
+                    ),
+                    _TutorActionTile(
+                      icon: Icons.people_alt_rounded,
+                      title: 'Student List',
+                      subtitle: 'View profiles and progress',
+                      color: _TutorColors.teal,
+                      onTap: () {
+                        setState(() => _currentIndex = 2);
+                      },
+                    ),
+                    _TutorActionTile(
+                      icon: Icons.campaign_rounded,
+                      title: 'Announcements',
+                      subtitle: 'Send updates to students',
+                      color: _TutorColors.orange,
+                      onTap: () {
+                        setState(() => _currentIndex = 3);
+                      },
+                    ),
+                    _TutorActionTile(
+                      icon: Icons.chat_bubble_rounded,
+                      title: 'Chat',
+                      subtitle: 'Direct message student channels',
+                      color: _TutorColors.blue,
+                      onTap: () {
+                        setState(() => _currentIndex = 4);
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildChatComingSoonTab() {
+    return _TutorPageFrame(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: _TutorColors.green.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.chat_bubble_rounded,
+                  color: _TutorColors.green,
+                  size: 40,
+                ),
               ),
-            );
-          },
+              const SizedBox(height: 24),
+              const Text(
+                'Chat Module',
+                style: TextStyle(
+                  color: _TutorColors.deep,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Direct tutor-student messaging and group discussions are currently in active development.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: _TutorColors.muted,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  height: 1.45,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -202,33 +247,6 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
 
   void _onNavTapped(BuildContext context, int index) {
     setState(() => _currentIndex = index);
-    switch (index) {
-      case 0:
-        return;
-      case 1:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const TutorManageLessonsHubPage()),
-        );
-        return;
-      case 2:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const TutorStudentsPage()),
-        );
-        return;
-      case 3:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const TutorAnnouncementPage()),
-        );
-        return;
-      case 4:
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Chat module is coming soon.')),
-        );
-        return;
-    }
   }
 }
 
