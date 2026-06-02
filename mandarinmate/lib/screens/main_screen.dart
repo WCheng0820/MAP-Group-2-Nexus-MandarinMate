@@ -124,7 +124,6 @@ class _HomeTabState extends State<_HomeTab> {
             fallback: _toInt(data['currentStreak'], fallback: 0),
           );
           final completedLessons = (data['completedLessons'] as List?) ?? [];
-          final levelProgress = _progressForXp(xp);
           final dailyActivity = (data['dailyActivity'] as Map<String, dynamic>?) ?? {};
 
           return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -193,7 +192,7 @@ class _HomeTabState extends State<_HomeTab> {
                           subtitle:
                               '${(courseProgress * 100).round()}% Course Completed',
                           xp: xp,
-                          progress: levelProgress,
+                          progress: courseProgress,
                           actionLabel: nextLesson != null
                               ? 'Continue Lesson'
                               : 'Course Completed',
@@ -2090,7 +2089,6 @@ class _ProgressSheet extends StatelessWidget {
           fallback: _toInt(data['xpPoints'], fallback: 0),
         );
         final level = (xp ~/ 250) + 1;
-        final levelProgress = _progressForXp(xp);
         final completedLessons = (data['completedLessons'] as List?) ?? [];
 
         return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -2160,7 +2158,7 @@ class _ProgressSheet extends StatelessWidget {
                         subtitle:
                             '${(courseProgress * 100).round()}% Course Completed',
                         xp: xp,
-                        progress: levelProgress,
+                        progress: courseProgress,
                         actionLabel: nextLesson != null
                             ? 'Continue Lesson'
                             : 'Course Completed',
@@ -2657,28 +2655,31 @@ class _ProfileTab extends StatelessWidget {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Current Level',
-                                      style: TextStyle(
-                                        color: Color(0xFF90A4AE),
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Current Level',
+                                        style: TextStyle(
+                                          color: Color(0xFF90A4AE),
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Level $level · ${_getLevelName(level)}',
-                                      style: const TextStyle(
-                                        color: Color(0xFF263238),
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w900,
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Level $level · ${_getLevelName(level)}',
+                                        style: const TextStyle(
+                                          color: Color(0xFF263238),
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w900,
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
+                                const SizedBox(width: 8),
                                 TextButton(
                                   onPressed: () => _showLevelMilestonesDialog(
                                     context,
@@ -2713,16 +2714,21 @@ class _ProfileTab extends StatelessWidget {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(
-                                  xpNeeded > 0
-                                      ? '$xpNeeded XP needed to reach Level ${level + 1} · ${_getLevelName(level + 1)}'
-                                      : 'Max level progress reached! 🎉',
-                                  style: const TextStyle(
-                                    color: Color(0xFF78909C),
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
+                                Expanded(
+                                  child: Text(
+                                    xpNeeded > 0
+                                        ? '$xpNeeded XP needed to reach Level ${level + 1} · ${_getLevelName(level + 1)}'
+                                        : 'Max level progress reached! 🎉',
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: Color(0xFF78909C),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ),
+                                const SizedBox(width: 8),
                                 Text(
                                   '$xp/$nextLevelXp XP',
                                   style: const TextStyle(
@@ -3487,9 +3493,6 @@ int _toInt(dynamic value, {required int fallback}) {
   return fallback;
 }
 
-double _progressForXp(int xp) {
-  return ((xp % 250) / 250).clamp(0.0, 1.0).toDouble();
-}
 
 int _unlockedBadgesCount(
   int xp,

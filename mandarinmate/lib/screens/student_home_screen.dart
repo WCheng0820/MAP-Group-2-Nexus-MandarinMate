@@ -263,7 +263,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                         curve: Curves.easeOut,
                         width: 24,
                         // 80 is the max physical pixel height of the bar
-                        height: 80 * percentage,
+                        height: (80 * percentage).toDouble(),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFFCC00), // DHL Yellow
                           borderRadius: BorderRadius.circular(4),
