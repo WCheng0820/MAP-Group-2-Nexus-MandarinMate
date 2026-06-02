@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class BadgeItem {
@@ -18,7 +20,7 @@ class BadgeItem {
   });
 }
 
-class BadgesAchievementsPage extends StatelessWidget {
+class BadgesAchievementsPage extends StatefulWidget {
   final int xp;
   final int streak;
   final List<dynamic> completedLessons;
@@ -32,86 +34,294 @@ class BadgesAchievementsPage extends StatelessWidget {
     required this.level,
   });
 
+  @override
+  State<BadgesAchievementsPage> createState() => _BadgesAchievementsPageState();
+}
+
+class _BadgesAchievementsPageState extends State<BadgesAchievementsPage> {
+  bool isAdmin = false;
+  bool isLoading = true;
+  final Map<String, TextEditingController> controllers = {};
+  bool isSaving = false;
+  String? saveMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAdminAndLoad();
+  }
+
+  Future<void> _checkAdminAndLoad() async {
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .get();
+        final role = userDoc.data()?['role'] ?? '';
+
+        if (role == 'admin') {
+          await _loadBadgeConfigsForEditing();
+          if (mounted) {
+            setState(() => isAdmin = true);
+          }
+        }
+      }
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
+    } catch (e) {
+      print('Error checking admin: $e');
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _loadBadgeConfigsForEditing() async {
+    try {
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('badges_config')
+          .get();
+
+      for (var doc in querySnapshot.docs) {
+        final data = doc.data();
+        final badgeId = doc.id;
+        final fields = _getFieldsForBadge(badgeId);
+
+        for (var field in fields) {
+          final key = '${badgeId}_$field';
+          controllers[key] = TextEditingController(
+            text: data[field]?.toString() ?? '',
+          );
+        }
+      }
+    } catch (e) {
+      print('Error loading configs: $e');
+    }
+  }
+
+  List<String> _getFieldsForBadge(String badgeId) {
+    switch (badgeId) {
+      case 'streak_7':
+        return ['streakThreshold'];
+      case 'first_lesson':
+        return ['xpThreshold'];
+      case 'perfect_score':
+      case 'speed_learner':
+      case 'speaker':
+        return ['xpThreshold', 'lessonThreshold'];
+      case 'bookworm':
+        return ['lessonThreshold'];
+      case 'top_learner':
+        return ['xpThreshold'];
+      case 'graduate':
+        return ['lessonThreshold', 'levelThreshold'];
+      default:
+        return [];
+    }
+  }
+
+  Future<void> _saveBadgeConfigs() async {
+    try {
+      setState(() => isSaving = true);
+
+      final badgeIds = [
+        'streak_7',
+        'first_lesson',
+        'perfect_score',
+        'speed_learner',
+        'speaker',
+        'bookworm',
+        'top_learner',
+        'graduate',
+      ];
+
+      for (var badgeId in badgeIds) {
+        final data = <String, dynamic>{};
+        final fields = _getFieldsForBadge(badgeId);
+
+        for (var field in fields) {
+          final key = '${badgeId}_$field';
+          final value = int.tryParse(controllers[key]?.text ?? '0') ?? 0;
+          data[field] = value;
+        }
+
+        await FirebaseFirestore.instance
+            .collection('badges_config')
+            .doc(badgeId)
+            .set(data, SetOptions(merge: true));
+      }
+
+      if (mounted) {
+        setState(() {
+          isSaving = false;
+          saveMessage = '✓ Saved successfully!';
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Badge configurations saved!'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+        Future.delayed(const Duration(seconds: 3), () {
+          if (mounted) {
+            setState(() => saveMessage = null);
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          isSaving = false;
+          saveMessage = '✗ Error: $e';
+        });
+      }
+    }
+  }
+
   List<BadgeItem> _getBadges() {
     return [
       BadgeItem(
         id: 'streak_7',
         title: '7-Day Streak',
         icon: '🔥',
-        description: 'Vibrant focus! Unlocked by keeping up a daily study routine.',
+        description:
+            'Vibrant focus! Unlocked by keeping up a daily study routine.',
         unlockCriteria: 'Maintain a 7-day study streak.',
-        unlocked: streak >= 7,
+        unlocked: widget.streak >= 7,
       ),
       BadgeItem(
         id: 'first_lesson',
         title: 'First Lesson',
         icon: '⭐',
-        description: 'First steps! Unlocked by starting your Mandarin adventure.',
+        description:
+            'First steps! Unlocked by starting your Mandarin adventure.',
         unlockCriteria: 'Complete your first vocabulary lesson.',
-        unlocked: completedLessons.isNotEmpty || xp >= 30,
+        unlocked: widget.completedLessons.isNotEmpty || widget.xp >= 30,
       ),
       BadgeItem(
         id: 'perfect_score',
         title: 'Perfect Score',
         icon: '🎯',
-        description: 'Bullseye! Unlocked by showing complete mastery in your quiz.',
+        description:
+            'Bullseye! Unlocked by showing complete mastery in your quiz.',
         unlockCriteria: 'Earn a 100% score on any lesson quiz.',
-        unlocked: xp >= 100 || completedLessons.length >= 2,
+        unlocked: widget.xp >= 100 || widget.completedLessons.length >= 2,
       ),
       BadgeItem(
         id: 'speed_learner',
         title: 'Speed Learner',
         icon: '⚡',
-        description: 'Lightning fast! Unlocked by practicing vocabulary with high speed.',
+        description:
+            'Lightning fast! Unlocked by practicing vocabulary with high speed.',
         unlockCriteria: 'Complete a vocabulary lesson in under 2 minutes.',
-        unlocked: xp >= 250 || completedLessons.length >= 3,
+        unlocked: widget.xp >= 250 || widget.completedLessons.length >= 3,
       ),
       BadgeItem(
         id: 'speaker',
         title: 'Speaker',
         icon: '🗣️',
-        description: 'Vocal maestro! Unlocked by recording speech and passing pronunciation checkpoints.',
+        description:
+            'Vocal maestro! Unlocked by recording speech and passing pronunciation checkpoints.',
         unlockCriteria: 'Record voice input and pass 5 pronunciation lessons.',
-        unlocked: xp >= 500 || completedLessons.length >= 5,
+        unlocked: widget.xp >= 500 || widget.completedLessons.length >= 5,
       ),
       BadgeItem(
         id: 'bookworm',
         title: 'Bookworm',
         icon: '📚',
-        description: 'Book lover! Unlocked by expanding your knowledge base extensively.',
+        description:
+            'Book lover! Unlocked by expanding your knowledge base extensively.',
         unlockCriteria: 'Complete 8 lessons in your learning path.',
-        unlocked: completedLessons.length >= 8,
+        unlocked: widget.completedLessons.length >= 8,
       ),
       BadgeItem(
         id: 'top_learner',
         title: 'Top Learner',
         icon: '🏆',
-        description: 'Peak performance! Unlocked by climbing to the absolute top.',
+        description:
+            'Peak performance! Unlocked by climbing to the absolute top.',
         unlockCriteria: 'Earn 1,000 XP in total.',
-        unlocked: xp >= 1000,
+        unlocked: widget.xp >= 1000,
       ),
       BadgeItem(
         id: 'graduate',
         title: 'Graduate',
         icon: '🎓',
-        description: 'Milestone achieved! Unlocked by finishing the overall course material.',
+        description:
+            'Milestone achieved! Unlocked by finishing the overall course material.',
         unlockCriteria: 'Complete 12 lessons or reach Level 6.',
-        unlocked: completedLessons.length >= 12 || level >= 6,
+        unlocked: widget.completedLessons.length >= 12 || widget.level >= 6,
       ),
     ];
   }
 
+  String _getFieldLabel(String field) {
+    switch (field) {
+      case 'xpThreshold':
+        return 'XP Required';
+      case 'lessonThreshold':
+        return 'Lessons Required';
+      case 'streakThreshold':
+        return 'Streak Days Required';
+      case 'levelThreshold':
+        return 'Level Required';
+      default:
+        return field;
+    }
+  }
+
+  @override
+  void dispose() {
+    for (var controller in controllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF9FAFC),
+        appBar: AppBar(
+          title: const Text('Badges & Achievements'),
+          flexibleSpace: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFFE93A2F), Color(0xFFFF8A21)],
+              ),
+            ),
+          ),
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
     final badges = _getBadges();
     final unlockedCount = badges.where((b) => b.unlocked).length;
 
+    if (isAdmin) {
+      return _buildAdminView(badges, unlockedCount);
+    } else {
+      return _buildStudentView(badges, unlockedCount);
+    }
+  }
+
+  Widget _buildStudentView(List<BadgeItem> badges, int unlockedCount) {
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFC),
       appBar: AppBar(
         title: const Text(
           'Badges & Achievements',
-          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: Colors.white),
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            fontSize: 20,
+            color: Colors.white,
+          ),
         ),
         flexibleSpace: Container(
           decoration: const BoxDecoration(
@@ -124,13 +334,15 @@ class BadgesAchievementsPage extends StatelessWidget {
         ),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.white,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: Column(
         children: [
-          // Header Card with progress summary
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
@@ -174,7 +386,9 @@ class BadgesAchievementsPage extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: unlockedCount / badges.length,
                     backgroundColor: Colors.white.withOpacity(0.2),
-                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      Colors.white,
+                    ),
                     minHeight: 10,
                   ),
                 ),
@@ -194,7 +408,6 @@ class BadgesAchievementsPage extends StatelessWidget {
               ],
             ),
           ),
-          
           Expanded(
             child: GridView.builder(
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 30),
@@ -234,7 +447,6 @@ class BadgesAchievementsPage extends StatelessWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          // Badge Icon
                           Container(
                             width: 70,
                             height: 70,
@@ -244,7 +456,10 @@ class BadgesAchievementsPage extends StatelessWidget {
                                   : const Color(0xFFF5F5F5),
                               shape: BoxShape.circle,
                               border: badge.unlocked
-                                  ? Border.all(color: const Color(0xFFFFD54F), width: 1.5)
+                                  ? Border.all(
+                                      color: const Color(0xFFFFD54F),
+                                      width: 1.5,
+                                    )
                                   : null,
                             ),
                             child: Center(
@@ -258,7 +473,6 @@ class BadgesAchievementsPage extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 14),
-                          // Badge Title
                           Text(
                             badge.title,
                             textAlign: TextAlign.center,
@@ -271,9 +485,11 @@ class BadgesAchievementsPage extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 6),
-                          // Badge Status Label
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: badge.unlocked
                                   ? const Color(0xFFE8F5E9)
@@ -304,6 +520,201 @@ class BadgesAchievementsPage extends StatelessWidget {
     );
   }
 
+  Widget _buildAdminView(List<BadgeItem> badges, int unlockedCount) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FA),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF7B1FA2),
+        elevation: 0,
+        title: const Text('Badges & Achievements'),
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Badge Unlock Thresholds',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2D3748),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Edit the values below to adjust when badges unlock for students.',
+                    style: TextStyle(fontSize: 14, color: Color(0xFF718096)),
+                  ),
+                  if (saveMessage != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      saveMessage!,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: saveMessage!.startsWith('✓')
+                            ? Colors.green
+                            : Colors.red,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            ..._buildEditFields(badges),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: ElevatedButton(
+                onPressed: isSaving ? null : _saveBadgeConfigs,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF7B1FA2),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: isSaving
+                    ? const SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text(
+                        'Save All Changes',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildEditFields(List<BadgeItem> badges) {
+    return badges.map((badge) {
+      final fields = _getFieldsForBadge(badge.id);
+      return Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(badge.icon, style: const TextStyle(fontSize: 24)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        badge.title,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2D3748),
+                        ),
+                      ),
+                      Text(
+                        badge.description,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF718096),
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ...fields.map((field) {
+              final key = '${badge.id}_$field';
+              final label = _getFieldLabel(field);
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF718096),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: controllers[key],
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        hintText: '0',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE2E8F0),
+                          ),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ],
+        ),
+      );
+    }).toList();
+  }
+
   void _showBadgeDetails(BuildContext context, BadgeItem badge) {
     showModalBottomSheet(
       context: context,
@@ -326,7 +737,6 @@ class BadgesAchievementsPage extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Pull Bar
                     Container(
                       width: 48,
                       height: 5,
@@ -336,7 +746,6 @@ class BadgesAchievementsPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    // Big Icon
                     Container(
                       width: 80,
                       height: 80,
@@ -346,7 +755,10 @@ class BadgesAchievementsPage extends StatelessWidget {
                             : const Color(0xFFF5F5F5),
                         shape: BoxShape.circle,
                         border: badge.unlocked
-                            ? Border.all(color: const Color(0xFFFFD54F), width: 2.5)
+                            ? Border.all(
+                                color: const Color(0xFFFFD54F),
+                                width: 2.5,
+                              )
                             : null,
                       ),
                       child: Center(
@@ -360,7 +772,6 @@ class BadgesAchievementsPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    // Title
                     Text(
                       badge.title,
                       style: const TextStyle(
@@ -370,9 +781,11 @@ class BadgesAchievementsPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    // Status Badge
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: badge.unlocked
                             ? const Color(0xFFE8F5E9)
@@ -391,7 +804,6 @@ class BadgesAchievementsPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    // Description
                     Text(
                       badge.description,
                       textAlign: TextAlign.center,
@@ -403,7 +815,6 @@ class BadgesAchievementsPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 18),
-                    // Unlock Criteria Box
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(14),
@@ -437,7 +848,6 @@ class BadgesAchievementsPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    // Dismiss Button with Premium Gradient
                     ElevatedButton(
                       onPressed: () => Navigator.pop(context),
                       style: ElevatedButton.styleFrom(
