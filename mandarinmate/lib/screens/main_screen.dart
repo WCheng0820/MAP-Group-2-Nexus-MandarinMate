@@ -10,7 +10,7 @@ import 'package:mandarinmate/screens/profile/edit_profile_page.dart'
 import 'package:mandarinmate/screens/profile/badges_achievements_page.dart';
 import 'package:mandarinmate/flashcards/presentation/pages/flashcard_levels_page.dart';
 import 'package:mandarinmate/lessons/presentation/pages/lesson_detail_page.dart';
-import 'package:mandarinmate/lessons/presentation/pages/quiz_page.dart';
+import 'package:mandarinmate/screens/daily_challenge_page.dart';
 import 'package:mandarinmate/lessons/presentation/pages/vocab_lesson_page.dart';
 import 'package:mandarinmate/features/lessons/ui/lesson_screen.dart'
     as new_lessons;
@@ -677,60 +677,44 @@ class _LearnTab extends StatelessWidget {
   }
 
   static Future<void> openDailyChallenge(BuildContext context) async {
-    final unitAndVocab = await _firstUnitAndVocab();
-
-    List<QuizQuestion> questions = [];
-    LessonUnit? unit;
-
-    if (unitAndVocab != null && unitAndVocab.vocab.isNotEmpty) {
-      unit = unitAndVocab.unit;
-      questions = unitAndVocab.vocab.map((item) {
-        return QuizQuestion(
-          question: 'What does "${item.chinese}" mean?',
-          options: [item.malay, item.english, 'Not sure', 'Other phrase']
-            ..shuffle(),
-          correctIndex: 0,
-          type: 'vocab',
-        );
-      }).toList();
-    } else if (mockCourseUnits.isNotEmpty) {
-      // Fallback to mock data
-      final firstLesson = mockCourseUnits.first.lessons.first;
-      unit = LessonUnit(
-        id: 'mock_u1',
-        unitNumber: 1,
-        title: mockCourseUnits.first.title,
-        titleChinese: '',
-        description: mockCourseUnits.first.subtitle,
-        totalLessons: mockCourseUnits.first.lessons.length,
-        xpReward: 30,
-        order: 1,
-        materials: const [],
-      );
-      questions = firstLesson.items
-          .where((i) => i.type == LessonType.vocabulary)
-          .map(
-            (i) => QuizQuestion(
-              question: 'What does "${i.chinese}" mean?',
-              options: [i.english, 'Apple', 'Water', 'Book']..shuffle(),
-              correctIndex: 0,
-              type: 'vocab',
-            ),
-          )
-          .toList();
+    // 1. Get current user's completed lessons from Firestore
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    List<dynamic> completedLessons = [];
+    if (uid != null) {
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      completedLessons = userDoc.data()?['completedLessons'] as List? ?? [];
     }
 
-    if (questions.isEmpty) {
-      if (!context.mounted) return;
-      _showMessage(context, 'No challenge data available yet.');
-      return;
-    }
+    // 2. Fetch vocab units from Firestore (just like in _fetchDynamicUnits)
+    final lessonsSnapshot = await FirebaseFirestore.instance
+        .collection('lessons')
+        .orderBy('order')
+        .get();
 
+    final vocabDocRefs = lessonsSnapshot.docs.where((doc) {
+      final type = doc.data()['type'] as String?;
+      final materialsList = doc.data()['materials'] as List?;
+      final isMaterial =
+          type == 'material' ||
+          (type != 'vocab_unit' &&
+              materialsList != null &&
+              materialsList.isNotEmpty);
+      return !isMaterial; // Only dynamic vocab units
+    }).toList();
+
+    // 3. Compile CourseUnits
+    final dynamicUnits = await _fetchDynamicUnits(vocabDocRefs);
+    final allUnits = [...mockCourseUnits, ...dynamicUnits];
+
+    // 4. Open the DailyChallengePage!
     if (!context.mounted) return;
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => QuizPage(unit: unit!, questions: questions),
+        builder: (_) => DailyChallengePage(
+          completedLessons: completedLessons,
+          allUnits: allUnits,
+        ),
       ),
     );
   }
@@ -2279,11 +2263,42 @@ class _ProfileTab extends StatefulWidget {
 
 class _ProfileTabState extends State<_ProfileTab> {
   Map<String, BadgeConfig>? badgeConfigs;
+  List<CourseUnit>? _allUnits;
 
   @override
   void initState() {
     super.initState();
     _loadBadgeConfigs();
+    _loadUnits();
+  }
+
+  Future<void> _loadUnits() async {
+    try {
+      final lessonsSnapshot = await FirebaseFirestore.instance
+          .collection('lessons')
+          .orderBy('order')
+          .get();
+
+      final vocabDocRefs = lessonsSnapshot.docs.where((doc) {
+        final type = doc.data()['type'] as String?;
+        final materialsList = doc.data()['materials'] as List?;
+        final isMaterial =
+            type == 'material' ||
+            (type != 'vocab_unit' &&
+                materialsList != null &&
+                materialsList.isNotEmpty);
+        return !isMaterial;
+      }).toList();
+
+      final dynamicUnits = await _fetchDynamicUnits(vocabDocRefs);
+      if (mounted) {
+        setState(() {
+          _allUnits = [...mockCourseUnits, ...dynamicUnits];
+        });
+      }
+    } catch (e) {
+      print('Error loading units in profile: $e');
+    }
   }
 
   Future<void> _loadBadgeConfigs() async {
@@ -2440,13 +2455,33 @@ class _ProfileTabState extends State<_ProfileTab> {
           level,
         );
 
-        // Dynamic stats
-        final int lessonsCompleted = completedLessons.length;
-        final int vocabularyLearned =
-            data['vocabularyLearned'] ?? (completedLessons.length * 6);
-        final int quizzesTaken =
-            data['quizzesTaken'] ?? (completedLessons.length * 2);
-        final int studyDays = data['studyDays'] ?? (streak + 3);
+        // 1. Calculate active daily challenges
+        final int dailyChallengesCount = completedLessons
+            .where((id) => id.toString().startsWith('daily_challenge_'))
+            .length;
+
+        // 2. Calculate dynamic unit quizzes completed
+        final int unitQuizzesCount = completedLessons
+            .where((id) =>
+                id.toString().endsWith('_quiz') ||
+                id.toString().endsWith('_quiz_item') ||
+                id.toString().contains('rev_quiz'))
+            .length;
+
+        // 3. Count standard curriculum lessons completed (excluding daily challenges)
+        final int lessonsCompleted = completedLessons
+            .where((id) => !id.toString().startsWith('daily_challenge_'))
+            .length;
+
+        // 4. Calculate total vocabulary learned (each standard lesson averages 5 new vocabulary words)
+        final int vocabularyLearned = lessonsCompleted * 5;
+
+        // 5. Total quizzes taken is the sum of daily challenges and unit quizzes
+        final int quizzesTaken = dailyChallengesCount + unitQuizzesCount;
+
+        // 6. Study days corresponds directly to unique daily activity entries, falling back to streak
+        final int activeDays = (data['dailyActivity'] as Map?)?.length ?? 0;
+        final int studyDays = activeDays > 0 ? activeDays : (streak > 0 ? streak : 1);
 
         final int nextLevelXp = level * 250;
         final int currentLevelStart = (level - 1) * 250;
@@ -2518,18 +2553,16 @@ class _ProfileTabState extends State<_ProfileTab> {
                               ),
                               IconButton(
                                 icon: const Icon(
-                                  Icons.share_rounded,
+                                  Icons.logout_rounded,
                                   color: Colors.white,
                                   size: 24,
                                 ),
-                                onPressed: () {
+                                onPressed: () async {
+                                  context.read<AuthBloc>().add(AuthLogoutRequested());
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
-                                      content: Text(
-                                        'Profile link copied to clipboard! 🔗',
-                                      ),
+                                      content: Text('Logged out successfully'),
                                       behavior: SnackBarBehavior.floating,
-                                      backgroundColor: Color(0xFF2E7D32),
                                     ),
                                   );
                                 },
@@ -2999,35 +3032,83 @@ class _ProfileTabState extends State<_ProfileTab> {
                               ),
                             ),
                             const SizedBox(height: 16),
-                            _buildRecentActivityItem(
-                              icon: '📚',
-                              title:
-                                  'Completed Lesson ${lessonsCompleted > 0 ? lessonsCompleted : "1"}: Greetings',
-                              time: '2h ago',
-                              xp: '+50 XP',
-                              bgColor: const Color(0xFFE3F2FD),
-                            ),
-                            _buildRecentActivityItem(
-                              icon: '🎯',
-                              title: 'Daily Challenge completed',
-                              time: '3h ago',
-                              xp: '+100 XP',
-                              bgColor: const Color(0xFFFFEBEE),
-                            ),
-                            _buildRecentActivityItem(
-                              icon: '⚡',
-                              title: 'Flashcard session: 6 cards',
-                              time: '5h ago',
-                              xp: '+20 XP',
-                              bgColor: const Color(0xFFFFF9C4),
-                            ),
-                            _buildRecentActivityItem(
-                              icon: '💬',
-                              title: 'Posted in Community Forum',
-                              time: '1d ago',
-                              xp: '+5 XP',
-                              bgColor: const Color(0xFFE8F5E9),
-                            ),
+                            ...() {
+                              final List<Widget> recentTiles = [];
+                              final recentIds = completedLessons.reversed.take(4).toList();
+
+                              String getLessonTitle(String id) {
+                                if (_allUnits != null) {
+                                  for (var unit in _allUnits!) {
+                                    for (var lesson in unit.lessons) {
+                                      if (lesson.id == id) {
+                                        return lesson.title;
+                                      }
+                                    }
+                                  }
+                                }
+                                if (id.startsWith('u1_l')) {
+                                  int idx = int.tryParse(id.substring(4)) ?? 1;
+                                  if (idx == 1) return 'Hello - 你好';
+                                  if (idx == 2) return 'Thank You - 谢谢';
+                                  if (idx == 3) return 'Greetings - 早上好';
+                                }
+                                return 'Lesson Progress';
+                              }
+
+                              if (recentIds.isEmpty) {
+                                recentTiles.add(
+                                  GestureDetector(
+                                    onTap: widget.onOpenLearn,
+                                    child: _buildRecentActivityItem(
+                                      icon: '👋',
+                                      title: 'Welcome to MandarinMate! Tap to start your first lesson.',
+                                      time: 'Just now',
+                                      xp: 'Start',
+                                      bgColor: const Color(0xFFE8F5E9),
+                                    ),
+                                  ),
+                                );
+                              } else {
+                                for (var id in recentIds) {
+                                  final idStr = id.toString();
+                                  if (idStr.startsWith('daily_challenge_')) {
+                                    final dateStr = idStr.replaceFirst('daily_challenge_', '');
+                                    recentTiles.add(
+                                      _buildRecentActivityItem(
+                                        icon: '🎯',
+                                        title: 'Completed Daily Challenge',
+                                        time: dateStr,
+                                        xp: '+50 XP',
+                                        bgColor: const Color(0xFFFFEBEE),
+                                      ),
+                                    );
+                                  } else if (idStr.endsWith('_quiz') ||
+                                      idStr.endsWith('_quiz_item') ||
+                                      idStr.contains('rev_quiz')) {
+                                    recentTiles.add(
+                                      _buildRecentActivityItem(
+                                        icon: '📝',
+                                        title: 'Passed Unit Quiz',
+                                        time: 'Completed',
+                                        xp: '+100 XP',
+                                        bgColor: const Color(0xFFFFF3E0),
+                                      ),
+                                    );
+                                  } else {
+                                    recentTiles.add(
+                                      _buildRecentActivityItem(
+                                        icon: '📚',
+                                        title: 'Completed: ${getLessonTitle(idStr)}',
+                                        time: 'Completed',
+                                        xp: '+30 XP',
+                                        bgColor: const Color(0xFFE3F2FD),
+                                      ),
+                                    );
+                                  }
+                                }
+                              }
+                              return recentTiles;
+                            }(),
                           ],
                         ),
                       ),
