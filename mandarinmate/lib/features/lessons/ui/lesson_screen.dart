@@ -44,6 +44,52 @@ class _LessonScreenState extends State<LessonScreen> {
     }
   }
 
+  // -----------------------------------------------------------------
+  // NEW HELPER: Handles all XP, Progress, and Streak logic in one place
+  // -----------------------------------------------------------------
+  Future<void> _saveLessonProgress(User user, int xpEarned, String lessonId) async {
+    final docRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+    final now = DateTime.now();
+
+    final todayString = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+
+    // Calculate exactly what "yesterday" was
+    final yesterday = now.subtract(const Duration(days: 1));
+    final yesterdayString = "${yesterday.year}-${yesterday.month.toString().padLeft(2, '0')}-${yesterday.day.toString().padLeft(2, '0')}";
+
+    try {
+      // 1. Get the current user data to check their streak status
+      final snapshot = await docRef.get();
+      final data = snapshot.data() ?? {};
+
+      final lastActiveDate = data['lastActiveDate'] as String?;
+      int currentStreak = data['currentStreak'] as int? ?? 0;
+
+      // 2. Streak Logic
+      if (lastActiveDate == todayString) {
+        // They already completed a lesson today. Streak is safe, no changes needed.
+      } else if (lastActiveDate == yesterdayString) {
+        // They completed a lesson yesterday. Streak continues!
+        currentStreak += 1;
+      } else {
+        // They missed a day, or this is their very first lesson. Reset to 1.
+        currentStreak = 1;
+      }
+
+      // 3. Update everything in Firestore at once
+      await docRef.update({
+        'xpPoints': FieldValue.increment(xpEarned),
+        'xp': FieldValue.increment(xpEarned),
+        'completedLessons': FieldValue.arrayUnion([lessonId]),
+        'dailyActivity.$todayString': FieldValue.increment(xpEarned),
+        'currentStreak': currentStreak,
+        'lastActiveDate': todayString, // Update last active to today
+      });
+    } catch (e) {
+      debugPrint('Firebase write error: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -123,8 +169,8 @@ class _LessonScreenState extends State<LessonScreen> {
                   onPressed: state.showFeedback
                       ? () => context.read<LessonBloc>().add(NextItem())
                       : (item.type == LessonType.vocabulary
-                            ? () => context.read<LessonBloc>().add(NextItem())
-                            : null),
+                      ? () => context.read<LessonBloc>().add(NextItem())
+                      : null),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red.shade600,
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -146,10 +192,10 @@ class _LessonScreenState extends State<LessonScreen> {
   }
 
   Widget _buildLessonContent(
-    BuildContext context,
-    LessonItem item,
-    LessonActive state,
-  ) {
+      BuildContext context,
+      LessonItem item,
+      LessonActive state,
+      ) {
     switch (item.type) {
       case LessonType.vocabulary:
         return _buildVocabularyView(item);
@@ -261,10 +307,10 @@ class _LessonScreenState extends State<LessonScreen> {
   }
 
   Widget _buildListeningView(
-    BuildContext context,
-    LessonItem item,
-    LessonActive state,
-  ) {
+      BuildContext context,
+      LessonItem item,
+      LessonActive state,
+      ) {
     return Column(
       children: [
         const SizedBox(height: 32),
@@ -293,9 +339,9 @@ class _LessonScreenState extends State<LessonScreen> {
               onTap: state.showFeedback
                   ? null
                   : () {
-                      bool isCorrect = option == item.english;
-                      context.read<LessonBloc>().add(SubmitAnswer(isCorrect));
-                    },
+                bool isCorrect = option == item.english;
+                context.read<LessonBloc>().add(SubmitAnswer(isCorrect));
+              },
               child: Container(
                 width: MediaQuery.of(context).size.width / 2 - 24,
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -321,10 +367,10 @@ class _LessonScreenState extends State<LessonScreen> {
   }
 
   Widget _buildSpeakingView(
-    BuildContext context,
-    LessonItem item,
-    LessonActive state,
-  ) {
+      BuildContext context,
+      LessonItem item,
+      LessonActive state,
+      ) {
     return Column(
       children: [
         const SizedBox(height: 32),
@@ -430,10 +476,10 @@ class _LessonScreenState extends State<LessonScreen> {
   }
 
   Widget _buildMatchingView(
-    BuildContext context,
-    LessonItem item,
-    LessonActive state,
-  ) {
+      BuildContext context,
+      LessonItem item,
+      LessonActive state,
+      ) {
     return Column(
       children: [
         const SizedBox(height: 32),
@@ -453,10 +499,10 @@ class _LessonScreenState extends State<LessonScreen> {
   }
 
   Widget _buildQuizView(
-    BuildContext context,
-    LessonItem item,
-    LessonActive state,
-  ) {
+      BuildContext context,
+      LessonItem item,
+      LessonActive state,
+      ) {
     return Column(
       children: [
         const SizedBox(height: 32),
@@ -479,9 +525,9 @@ class _LessonScreenState extends State<LessonScreen> {
               onTap: state.showFeedback
                   ? null
                   : () {
-                      bool isCorrect = option == item.english;
-                      context.read<LessonBloc>().add(SubmitAnswer(isCorrect));
-                    },
+                bool isCorrect = option == item.english;
+                context.read<LessonBloc>().add(SubmitAnswer(isCorrect));
+              },
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(
@@ -658,44 +704,32 @@ class _LessonScreenState extends State<LessonScreen> {
 
             const Spacer(),
 
+            // ==========================================
+            // NEXT LESSON BUTTON
+            // ==========================================
             ElevatedButton.icon(
               onPressed: () async {
                 final authState = context.read<AuthBloc>().state;
                 if (authState is AuthAuthenticated) {
                   final user = authState.user;
-                  final docRef = FirebaseFirestore.instance
-                      .collection('users')
-                      .doc(user.uid);
 
-                  // 1. Get today's date formatted as YYYY-MM-DD
-                  final now = DateTime.now();
-                  final dateString = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+                  // 1. Save all progress using our new helper
+                  await _saveLessonProgress(user, state.xpEarned, state.lesson.id);
 
-                  try {
-                    await docRef.set({
-                      'xpPoints': FieldValue.increment(state.xpEarned),
-                      'xp': FieldValue.increment(state.xpEarned),
-                      'completedLessons': FieldValue.arrayUnion([
-                        state.lesson.id,
-                      ]),
-                      // THIS IS THE FIX: Format it as an actual nested map
-                      'dailyActivity': {
-                        dateString: FieldValue.increment(state.xpEarned),
-                      }
-                    }, SetOptions(merge: true));
-                  } catch (e) {
-                    debugPrint('Firebase write error: $e');
-                  }
+                  if (!context.mounted) return;
 
-                  bool foundCurrent = false;
+                  // 2. Fetch the updated profile to find the actual NEXT lesson
+                  final docRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+                  final userSnapshot = await docRef.get();
+                  final completedLessons = List<String>.from(userSnapshot.data()?['completedLessons'] ?? []);
+
                   Lesson? nextLesson;
                   for (var unit in mockCourseUnits) {
                     for (var l in unit.lessons) {
-                      if (foundCurrent) {
+                      if (!completedLessons.contains(l.id)) {
                         nextLesson = l;
                         break;
                       }
-                      if (l.id == state.lesson.id) foundCurrent = true;
                     }
                     if (nextLesson != null) break;
                   }
@@ -707,13 +741,15 @@ class _LessonScreenState extends State<LessonScreen> {
                       context,
                       MaterialPageRoute(
                         builder: (context) => BlocProvider(
-                          create: (_) =>
-                          LessonBloc()..add(StartLesson(nextLesson!)),
+                          create: (_) => LessonBloc()..add(StartLesson(nextLesson!)),
                           child: LessonScreen(lesson: nextLesson!),
                         ),
                       ),
                     );
                   } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Course Complete! Amazing job! 🎉')),
+                    );
                     Navigator.of(context).popUntil((route) => route.isFirst);
                   }
                 } else {
@@ -748,7 +784,7 @@ class _LessonScreenState extends State<LessonScreen> {
                         MaterialPageRoute(
                           builder: (context) => BlocProvider(
                             create: (_) =>
-                                LessonBloc()..add(StartLesson(state.lesson)),
+                            LessonBloc()..add(StartLesson(state.lesson)),
                             child: LessonScreen(lesson: state.lesson),
                           ),
                         ),
@@ -774,6 +810,9 @@ class _LessonScreenState extends State<LessonScreen> {
                   ),
                 ),
                 const SizedBox(width: 16),
+                // ==========================================
+                // HOME BUTTON
+                // ==========================================
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () async {
@@ -781,29 +820,10 @@ class _LessonScreenState extends State<LessonScreen> {
                       if (authState is AuthAuthenticated) {
                         final user = authState.user;
 
-                        // 1. Get today's date formatted as YYYY-MM-DD
-                        final now = DateTime.now();
-                        final dateString = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
-
-                        try {
-                          await FirebaseFirestore.instance
-                              .collection('users')
-                              .doc(user.uid)
-                              .set({
-                            'xpPoints': FieldValue.increment(
-                              state.xpEarned,
-                            ),
-                            'xp': FieldValue.increment(state.xpEarned),
-                            'completedLessons': FieldValue.arrayUnion([
-                              state.lesson.id,
-                            ]),
-                            // 2. ADD THIS LINE: Save the XP to today's date!
-                            'dailyActivity.$dateString': FieldValue.increment(state.xpEarned),
-                          }, SetOptions(merge: true));
-                        } catch (e) {
-                          debugPrint('Firebase write error: $e');
-                        }
+                        // 1. Save all progress using our new helper
+                        await _saveLessonProgress(user, state.xpEarned, state.lesson.id);
                       }
+
                       if (!context.mounted) return;
                       Navigator.of(context).popUntil((route) => route.isFirst);
                     },
@@ -835,11 +855,11 @@ class _LessonScreenState extends State<LessonScreen> {
   }
 
   Widget _buildStatCard(
-    String label,
-    String value,
-    IconData icon,
-    Color iconColor,
-  ) {
+      String label,
+      String value,
+      IconData icon,
+      Color iconColor,
+      ) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -936,33 +956,33 @@ class _MatchingGameState extends State<MatchingGame> {
               onTap: isMatched
                   ? null
                   : () {
-                      if (firstSelected == null) {
-                        setState(() {
-                          firstSelected = option;
-                        });
-                      } else if (firstSelected == option) {
-                        setState(() {
-                          firstSelected = null;
-                        });
-                      } else {
-                        // check match
-                        if (pairs[firstSelected!] == option) {
-                          setState(() {
-                            matched.add(firstSelected!);
-                            matched.add(option);
-                            firstSelected = null;
-                          });
-                          if (matched.length == displayItems.length) {
-                            widget.onComplete(true);
-                          }
-                        } else {
-                          setState(() {
-                            firstSelected = null;
-                          }); // reset, maybe show error effect
-                          // Optionally notify for wrong match or reduce lives
-                        }
-                      }
-                    },
+                if (firstSelected == null) {
+                  setState(() {
+                    firstSelected = option;
+                  });
+                } else if (firstSelected == option) {
+                  setState(() {
+                    firstSelected = null;
+                  });
+                } else {
+                  // check match
+                  if (pairs[firstSelected!] == option) {
+                    setState(() {
+                      matched.add(firstSelected!);
+                      matched.add(option);
+                      firstSelected = null;
+                    });
+                    if (matched.length == displayItems.length) {
+                      widget.onComplete(true);
+                    }
+                  } else {
+                    setState(() {
+                      firstSelected = null;
+                    }); // reset, maybe show error effect
+                    // Optionally notify for wrong match or reduce lives
+                  }
+                }
+              },
               child: Opacity(
                 opacity: isMatched ? 0.3 : 1.0,
                 child: Container(
@@ -1034,7 +1054,7 @@ class _VocabStarButton extends StatelessWidget {
             };
             if (isStarred) {
               final toRemove = starredList.firstWhere(
-                (e) => e['title'] == item.chinese,
+                    (e) => e['title'] == item.chinese,
               );
               docRef.update({
                 'starredItems': FieldValue.arrayRemove([toRemove]),
