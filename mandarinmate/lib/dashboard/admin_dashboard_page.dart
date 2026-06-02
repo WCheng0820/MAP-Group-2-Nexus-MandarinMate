@@ -33,6 +33,30 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       );
     }
 
+    Widget body;
+    switch (_currentIndex) {
+      case 0:
+        body = _buildHomeTab(context, user);
+        break;
+      case 1:
+        body = const AdminUsersPage();
+        break;
+      case 2:
+        body = const AdminLessonsPage();
+        break;
+      case 3:
+        body = const AdminAnnouncementsPage();
+        break;
+      case 4:
+        body = const AdminAnalyticsPage();
+        break;
+      case 5:
+        body = const AdminProfilePage();
+        break;
+      default:
+        body = _buildHomeTab(context, user);
+    }
+
     return Scaffold(
       backgroundColor: _AdminDashboardColors.background,
       bottomNavigationBar: BottomNavigationBar(
@@ -72,119 +96,121 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           ),
         ],
       ),
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          SliverAppBar(
-            pinned: true,
-            stretch: true,
-            elevation: 0,
-            backgroundColor: _AdminDashboardColors.headerStart,
-            expandedHeight: 270,
-            titleSpacing: 20,
-            title: const Text(
-              'Admin Dashboard',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            actions: [
-              Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: Row(
-                  children: [
-                    _HeaderActionButton(
-                      icon: Icons.edit_rounded,
-                      tooltip: 'Edit profile',
-                      onTap: _handleEditProfile,
-                    ),
-                    const SizedBox(width: 8),
-                    _HeaderActionButton(
-                      icon: Icons.logout_rounded,
-                      tooltip: 'Logout',
-                      onTap: _handleLogout,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-            flexibleSpace: FlexibleSpaceBar(
-              background: _AdminHeroHeader(
-                uid: user.uid,
-                fallbackEmail: user.email,
-              ),
+      body: body,
+    );
+  }
+
+  Widget _buildHomeTab(BuildContext context, User user) {
+    return CustomScrollView(
+      physics: const BouncingScrollPhysics(),
+      slivers: [
+        SliverAppBar(
+          pinned: true,
+          stretch: true,
+          elevation: 0,
+          backgroundColor: _AdminDashboardColors.headerStart,
+          expandedHeight: 270,
+          titleSpacing: 20,
+          title: const Text(
+            'Admin Dashboard',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
             ),
           ),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                const _SectionTitle(
-                  title: 'Real-time analytics',
-                  subtitle:
-                      'A live view of users currently registered across the platform.',
-                ),
-                const SizedBox(height: 14),
-                const _RealtimeAnalyticsSection(),
-                const SizedBox(height: 28),
-                _SectionTitle(
-                  title: 'Management hub',
-                  subtitle:
-                      'Move quickly between moderation, lesson curation, announcements, and reporting.',
-                  actionLabel: 'Open users',
-                  onAction: () => _openPage(context, const AdminUsersPage()),
-                ),
-                const SizedBox(height: 14),
-                _ManagementGrid(
-                  actions: [
-                    _ManagementActionData(
-                      title: 'Manage Users',
-                      subtitle: 'Roles, accounts, and moderation tools',
-                      icon: Icons.group_rounded,
-                      color: _AdminDashboardColors.students,
-                      onTap: () => _openPage(context, const AdminUsersPage()),
-                    ),
-                    _ManagementActionData(
-                      title: 'Manage Lessons',
-                      subtitle: 'Curriculum, units, and XP rewards',
-                      icon: Icons.menu_book_rounded,
-                      color: _AdminDashboardColors.primaryAction,
-                      onTap: () => _openPage(context, const AdminLessonsPage()),
-                    ),
-                    _ManagementActionData(
-                      title: 'Announcements',
-                      subtitle: 'Publish updates to students and tutors',
-                      icon: Icons.campaign_rounded,
-                      color: _AdminDashboardColors.admins,
-                      onTap: () =>
-                          _openPage(context, const AdminAnnouncementsPage()),
-                    ),
-                    _ManagementActionData(
-                      title: 'Analytics',
-                      subtitle: 'Review activity and learning trends',
-                      icon: Icons.insights_rounded,
-                      color: _AdminDashboardColors.tutors,
-                      onTap: () =>
-                          _openPage(context, const AdminAnalyticsPage()),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 28),
-                _SectionTitle(
-                  title: 'Recent users',
-                  subtitle:
-                      'A quick preview of the newest accounts joining MandarinMate.',
-                  actionLabel: 'View all',
-                  onAction: () => _openPage(context, const AdminUsersPage()),
-                ),
-                const SizedBox(height: 14),
-                const _RecentUsersSection(),
-              ]),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: Row(
+                children: [
+                  _HeaderActionButton(
+                    icon: Icons.edit_rounded,
+                    tooltip: 'Edit profile',
+                    onTap: _handleEditProfile,
+                  ),
+                  const SizedBox(width: 8),
+                  _HeaderActionButton(
+                    icon: Icons.logout_rounded,
+                    tooltip: 'Logout',
+                    onTap: _handleLogout,
+                  ),
+                ],
+              ),
+            ),
+          ],
+          flexibleSpace: FlexibleSpaceBar(
+            background: _AdminHeroHeader(
+              uid: user.uid,
+              fallbackEmail: user.email,
             ),
           ),
-        ],
-      ),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
+          sliver: SliverList(
+            delegate: SliverChildListDelegate([
+              const _SectionTitle(
+                title: 'Real-time analytics',
+                subtitle:
+                    'A live view of users currently registered across the platform.',
+              ),
+              const SizedBox(height: 14),
+              const _RealtimeAnalyticsSection(),
+              const SizedBox(height: 28),
+              _SectionTitle(
+                title: 'Management hub',
+                subtitle:
+                    'Move quickly between moderation, lesson curation, announcements, and reporting.',
+                actionLabel: 'Open users',
+                onAction: () => setState(() => _currentIndex = 1),
+              ),
+              const SizedBox(height: 14),
+              _ManagementGrid(
+                actions: [
+                  _ManagementActionData(
+                    title: 'Manage Users',
+                    subtitle: 'Roles, accounts, and moderation tools',
+                    icon: Icons.group_rounded,
+                    color: _AdminDashboardColors.students,
+                    onTap: () => setState(() => _currentIndex = 1),
+                  ),
+                  _ManagementActionData(
+                    title: 'Manage Lessons',
+                    subtitle: 'Curriculum, units, and XP rewards',
+                    icon: Icons.menu_book_rounded,
+                    color: _AdminDashboardColors.primaryAction,
+                    onTap: () => setState(() => _currentIndex = 2),
+                  ),
+                  _ManagementActionData(
+                    title: 'Announcements',
+                    subtitle: 'Publish updates to students and tutors',
+                    icon: Icons.campaign_rounded,
+                    color: _AdminDashboardColors.admins,
+                    onTap: () => setState(() => _currentIndex = 3),
+                  ),
+                  _ManagementActionData(
+                    title: 'Analytics',
+                    subtitle: 'Review activity and learning trends',
+                    icon: Icons.insights_rounded,
+                    color: _AdminDashboardColors.tutors,
+                    onTap: () => setState(() => _currentIndex = 4),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 28),
+              _SectionTitle(
+                title: 'Recent users',
+                subtitle:
+                    'A quick preview of the newest accounts joining MandarinMate.',
+                actionLabel: 'View all',
+                onAction: () => setState(() => _currentIndex = 1),
+              ),
+              const SizedBox(height: 14),
+              const _RecentUsersSection(),
+            ]),
+          ),
+        ),
+      ],
     );
   }
 
@@ -212,30 +238,6 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
   void _onNavTapped(BuildContext context, int index) {
     setState(() => _currentIndex = index);
-
-    switch (index) {
-      case 0:
-        return;
-      case 1:
-        _openPage(context, const AdminUsersPage());
-        return;
-      case 2:
-        _openPage(context, const AdminLessonsPage());
-        return;
-      case 3:
-        _openPage(context, const AdminAnnouncementsPage());
-        return;
-      case 4:
-        _openPage(context, const AdminAnalyticsPage());
-        return;
-      case 5:
-        _openPage(context, const AdminProfilePage());
-        return;
-    }
-  }
-
-  static void _openPage(BuildContext context, Widget page) {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => page));
   }
 }
 
@@ -271,51 +273,54 @@ class _AdminHeroHeader extends StatelessWidget {
 
           return SafeArea(
             bottom: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 100, 24, 30),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const _GlassBadge(
-                    icon: Icons.shield_rounded,
-                    label: 'Admin Shield',
-                  ),
-                  const Spacer(),
-                  Text(
-                    'Welcome back, $name!',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.5,
+            child: SingleChildScrollView(
+              physics: const NeverScrollableScrollPhysics(),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 88, 24, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const _GlassBadge(
+                      icon: Icons.shield_rounded,
+                      label: 'Admin Shield',
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    email.isEmpty ? 'admin@mandarinmate.app' : email,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Color(0xFFF1E8FF),
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
+                    const SizedBox(height: 16),
+                    Text(
+                      'Welcome back, $name!',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.5,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Track user growth, coordinate teaching operations, and keep content delivery sharp.',
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Color(0xFFE8D9F8),
-                      fontSize: 13,
-                      height: 1.45,
-                      fontWeight: FontWeight.w500,
+                    const SizedBox(height: 8),
+                    Text(
+                      email.isEmpty ? 'admin@mandarinmate.app' : email,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFFF1E8FF),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 12),
+                    Text(
+                      'Track user growth, coordinate teaching operations, and keep content delivery sharp.',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: const Color(0xFFE8D9F8).withValues(alpha: 0.9),
+                        fontSize: 13,
+                        height: 1.45,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           );
@@ -401,7 +406,7 @@ class _RealtimeAnalyticsSection extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const _StatusPanel(
-            height: 126,
+            height: 135,
             child: CircularProgressIndicator(
               color: _AdminDashboardColors.headerStart,
             ),
@@ -461,7 +466,7 @@ class _RealtimeAnalyticsSection extends StatelessWidget {
         ];
 
         return SizedBox(
-          height: 126,
+          height: 135,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: cards.length,
@@ -497,7 +502,7 @@ class _MetricCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 168,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: data.color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(20),
@@ -518,6 +523,8 @@ class _MetricCard extends StatelessWidget {
           const Spacer(),
           Text(
             data.value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: data.color,
               fontSize: 26,
@@ -525,9 +532,11 @@ class _MetricCard extends StatelessWidget {
               letterSpacing: -0.4,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
             data.label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: _AdminDashboardColors.bodyText,
               fontSize: 13,
@@ -550,7 +559,16 @@ class _ManagementGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final crossAxisCount = constraints.maxWidth >= 920 ? 4 : 2;
-        final childAspectRatio = constraints.maxWidth >= 920 ? 1.12 : 0.98;
+        double childAspectRatio;
+        if (constraints.maxWidth >= 920) {
+          childAspectRatio = 1.15;
+        } else if (constraints.maxWidth >= 600) {
+          childAspectRatio = 1.05;
+        } else if (constraints.maxWidth >= 380) {
+          childAspectRatio = 0.85;
+        } else {
+          childAspectRatio = 0.72;
+        }
 
         return GridView.builder(
           itemCount: actions.length,
@@ -606,53 +624,59 @@ class _ManagementCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(18),
           decoration: _AdminDashboardDecorations.cardDecoration,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+          child: ScrollConfiguration(
+            behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+            child: SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 54,
-                    height: 54,
-                    decoration: BoxDecoration(
-                      color: action.color.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(action.icon, color: action.color, size: 28),
+                  Row(
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: action.color.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(action.icon, color: action.color, size: 24),
+                      ),
+                      const Spacer(),
+                      Icon(
+                        Icons.arrow_forward_rounded,
+                        color: action.color.withValues(alpha: 0.78),
+                        size: 18,
+                      ),
+                    ],
                   ),
-                  const Spacer(),
-                  Icon(
-                    Icons.arrow_forward_rounded,
-                    color: action.color.withValues(alpha: 0.78),
-                    size: 20,
+                  const SizedBox(height: 12),
+                  Text(
+                    action.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: _AdminDashboardColors.heading,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    action.subtitle,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: _AdminDashboardColors.bodyText,
+                      fontSize: 12,
+                      height: 1.4,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ],
               ),
-              const Spacer(),
-              Text(
-                action.title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: _AdminDashboardColors.heading,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.2,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                action.subtitle,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: _AdminDashboardColors.bodyText,
-                  fontSize: 13,
-                  height: 1.45,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
