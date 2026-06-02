@@ -8,6 +8,7 @@ import 'package:mandarinmate/dashboard/admin_analytics_page.dart';
 import 'package:mandarinmate/dashboard/admin_announcements_page.dart';
 import 'package:mandarinmate/dashboard/admin_lessons_page.dart';
 import 'package:mandarinmate/dashboard/admin_users_page.dart';
+import 'package:mandarinmate/dashboard/admin_profile_page.dart';
 import 'package:mandarinmate/screens/profile/edit_profile_page.dart'
     as mandarinmate_edit_profile;
 
@@ -64,6 +65,10 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.insights_rounded),
             label: 'Analytics',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_rounded),
+            label: 'Profile',
           ),
         ],
       ),
@@ -222,6 +227,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         return;
       case 4:
         _openPage(context, const AdminAnalyticsPage());
+        return;
+      case 5:
+        _openPage(context, const AdminProfilePage());
         return;
     }
   }

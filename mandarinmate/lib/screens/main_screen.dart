@@ -19,6 +19,7 @@ import 'package:mandarinmate/features/lessons/bloc/lesson_bloc.dart'
     as new_bloc;
 import 'package:mandarinmate/features/lessons/models/lesson_model.dart';
 import 'dart:math' as math;
+import 'package:mandarinmate/models/badge_config_model.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -124,7 +125,8 @@ class _HomeTabState extends State<_HomeTab> {
             fallback: _toInt(data['currentStreak'], fallback: 0),
           );
           final completedLessons = (data['completedLessons'] as List?) ?? [];
-          final dailyActivity = (data['dailyActivity'] as Map<String, dynamic>?) ?? {};
+          final dailyActivity =
+              (data['dailyActivity'] as Map<String, dynamic>?) ?? {};
 
           return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
             stream: FirebaseFirestore.instance
@@ -2267,9 +2269,43 @@ class _ForumTab extends StatelessWidget {
   }
 }
 
-class _ProfileTab extends StatelessWidget {
+class _ProfileTab extends StatefulWidget {
   final VoidCallback onOpenLearn;
   const _ProfileTab({required this.onOpenLearn});
+
+  @override
+  State<_ProfileTab> createState() => _ProfileTabState();
+}
+
+class _ProfileTabState extends State<_ProfileTab> {
+  Map<String, BadgeConfig>? badgeConfigs;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBadgeConfigs();
+  }
+
+  Future<void> _loadBadgeConfigs() async {
+    try {
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('badges_config')
+          .get();
+
+      final configs = <String, BadgeConfig>{};
+      for (var doc in querySnapshot.docs) {
+        configs[doc.id] = BadgeConfig.fromMap({'id': doc.id, ...doc.data()});
+      }
+
+      if (mounted) {
+        setState(() {
+          badgeConfigs = configs;
+        });
+      }
+    } catch (e) {
+      print('Error loading badge configs: $e');
+    }
+  }
 
   String _getLevelName(int lvl) {
     if (lvl <= 2) return 'Beginner';
@@ -2285,15 +2321,89 @@ class _ProfileTab extends StatelessWidget {
     List<dynamic> completedLessons,
     int level,
   ) {
+    // If configs haven't loaded yet, use fallback hardcoded values
+    if (badgeConfigs == null) {
+      int count = 0;
+      if (streak >= 7) count++;
+      if (completedLessons.isNotEmpty || xp >= 30) count++;
+      if (xp >= 100 || completedLessons.length >= 2) count++;
+      if (xp >= 250 || completedLessons.length >= 3) count++;
+      if (xp >= 500 || completedLessons.length >= 5) count++;
+      if (completedLessons.length >= 8) count++;
+      if (xp >= 1000) count++;
+      if (completedLessons.length >= 12 || level >= 6) count++;
+      return count;
+    }
+
+    // Use badge configs from Firestore
     int count = 0;
-    if (streak >= 7) count++;
-    if (completedLessons.isNotEmpty || xp >= 30) count++;
-    if (xp >= 100 || completedLessons.length >= 2) count++;
-    if (xp >= 250 || completedLessons.length >= 3) count++;
-    if (xp >= 500 || completedLessons.length >= 5) count++;
-    if (completedLessons.length >= 8) count++;
-    if (xp >= 1000) count++;
-    if (completedLessons.length >= 12 || level >= 6) count++;
+
+    // streak_7: requires 7-day streak
+    if (badgeConfigs!['streak_7']?.streakThreshold != null &&
+        streak >= badgeConfigs!['streak_7']!.streakThreshold!) {
+      count++;
+    }
+
+    // first_lesson: requires XP or completed lesson
+    if (completedLessons.isNotEmpty ||
+        (badgeConfigs!['first_lesson']?.xpThreshold != null &&
+            xp >= badgeConfigs!['first_lesson']!.xpThreshold!)) {
+      count++;
+    }
+
+    // perfect_score: requires XP or lesson count
+    if (badgeConfigs!['perfect_score'] != null) {
+      final config = badgeConfigs!['perfect_score']!;
+      if ((config.xpThreshold != null && xp >= config.xpThreshold!) ||
+          (config.lessonThreshold != null &&
+              completedLessons.length >= config.lessonThreshold!)) {
+        count++;
+      }
+    }
+
+    // speed_learner: requires XP or lesson count
+    if (badgeConfigs!['speed_learner'] != null) {
+      final config = badgeConfigs!['speed_learner']!;
+      if ((config.xpThreshold != null && xp >= config.xpThreshold!) ||
+          (config.lessonThreshold != null &&
+              completedLessons.length >= config.lessonThreshold!)) {
+        count++;
+      }
+    }
+
+    // speaker: requires XP or lesson count
+    if (badgeConfigs!['speaker'] != null) {
+      final config = badgeConfigs!['speaker']!;
+      if ((config.xpThreshold != null && xp >= config.xpThreshold!) ||
+          (config.lessonThreshold != null &&
+              completedLessons.length >= config.lessonThreshold!)) {
+        count++;
+      }
+    }
+
+    // bookworm: requires lesson count
+    if (badgeConfigs!['bookworm']?.lessonThreshold != null &&
+        completedLessons.length >=
+            badgeConfigs!['bookworm']!.lessonThreshold!) {
+      count++;
+    }
+
+    // top_learner: requires XP
+    if (badgeConfigs!['top_learner']?.xpThreshold != null &&
+        xp >= badgeConfigs!['top_learner']!.xpThreshold!) {
+      count++;
+    }
+
+    // graduate: requires lesson count or level
+    if (badgeConfigs!['graduate'] != null) {
+      final config = badgeConfigs!['graduate']!;
+      if ((config.lessonThreshold != null &&
+              completedLessons.length >= config.lessonThreshold!) ||
+          (config.levelThreshold != null && level >= config.levelThreshold!)) {
+        count++;
+      }
+    }
+
     return count;
   }
 
@@ -2657,7 +2767,8 @@ class _ProfileTab extends StatelessWidget {
                               children: [
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       const Text(
                                         'Current Level',
@@ -2932,7 +3043,7 @@ class _ProfileTab extends StatelessWidget {
                               iconBg: const Color(0xFFFFF3E0),
                               iconColor: _StudentColors.orange,
                               title: 'My Learning Path',
-                              onTap: onOpenLearn,
+                              onTap: widget.onOpenLearn,
                             ),
                             const Divider(height: 1, color: Color(0xFFECEFF1)),
                             _buildNavigationRow(
@@ -3492,7 +3603,6 @@ int _toInt(dynamic value, {required int fallback}) {
   if (value is num) return value.toInt();
   return fallback;
 }
-
 
 int _unlockedBadgesCount(
   int xp,
@@ -4061,26 +4171,29 @@ class _WeeklyProgressChart extends StatelessWidget {
     // 1. Find the Monday of the CURRENT week
     final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
 
-// 100% REAL DATA FROM FIRESTORE
+    // 100% REAL DATA FROM FIRESTORE
     final Map<String, dynamic> dataToUse = dailyActivity;
 
     // 2. Build the fixed Monday to Sunday chart
     for (int i = 0; i < 7; i++) {
       final date = startOfWeek.add(Duration(days: i));
-      final dateString = "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+      final dateString =
+          "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
       final xp = (dataToUse[dateString] as num?)?.toInt() ?? 0;
 
       // Check if this specific column is "Today"
-      final isToday = date.year == now.year && date.month == now.month && date.day == now.day;
+      final isToday =
+          date.year == now.year &&
+          date.month == now.month &&
+          date.day == now.day;
 
-      weeklyData.add({
-        'day': weekdays[i],
-        'xp': xp,
-        'isToday': isToday,
-      });
+      weeklyData.add({'day': weekdays[i], 'xp': xp, 'isToday': isToday});
     }
 
-    final maxXP = weeklyData.map((d) => (d['xp'] as int).toDouble()).reduce(math.max).clamp(1.0, double.infinity);
+    final maxXP = weeklyData
+        .map((d) => (d['xp'] as int).toDouble())
+        .reduce(math.max)
+        .clamp(1.0, double.infinity);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -4130,7 +4243,9 @@ class _WeeklyProgressChart extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 10,
                           // Darker orange if it's today, otherwise standard orange
-                          color: isToday ? _StudentColors.red : _StudentColors.orange,
+                          color: isToday
+                              ? _StudentColors.red
+                              : _StudentColors.orange,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -4150,7 +4265,9 @@ class _WeeklyProgressChart extends StatelessWidget {
                             end: Alignment.topCenter,
                           ),
                           // Give today's bar a subtle background so 0 XP days are still visible
-                          color: isToday ? _StudentColors.red.withValues(alpha: 0.1) : Colors.transparent,
+                          color: isToday
+                              ? _StudentColors.red.withValues(alpha: 0.1)
+                              : Colors.transparent,
                           borderRadius: BorderRadius.circular(6),
                         ),
                       ),
@@ -4161,9 +4278,13 @@ class _WeeklyProgressChart extends StatelessWidget {
                         maxLines: 1,
                         style: TextStyle(
                           // Highlight today's letter in red and bold
-                          color: isToday ? _StudentColors.red : _StudentColors.muted,
+                          color: isToday
+                              ? _StudentColors.red
+                              : _StudentColors.muted,
                           fontSize: 12,
-                          fontWeight: isToday ? FontWeight.w900 : FontWeight.w800,
+                          fontWeight: isToday
+                              ? FontWeight.w900
+                              : FontWeight.w800,
                         ),
                       ),
                     ],
