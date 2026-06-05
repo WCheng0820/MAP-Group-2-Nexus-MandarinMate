@@ -42,6 +42,8 @@ class _TutorEditFlashcardsPageState extends State<TutorEditFlashcardsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
     return Scaffold(
       backgroundColor: const Color(0xFFFFF9F5),
       appBar: AppBar(

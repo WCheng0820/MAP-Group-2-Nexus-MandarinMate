@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:mandarinmate/lessons/domain/lesson_model.dart';
+import 'package:mandarinmate/features/lessons/domain/lesson_model.dart';
 
 class LessonRepository {
   final FirebaseFirestore _firestore;

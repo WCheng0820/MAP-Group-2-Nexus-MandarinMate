@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mandarinmate/auth/presentation/bloc/auth_bloc.dart';
-import 'package:mandarinmate/lessons/data/mock_lessons.dart';
+import 'package:mandarinmate/features/lessons/data/mock_lessons.dart';
 import 'package:mandarinmate/models/user_model.dart';
 import 'package:mandarinmate/services/auth_service.dart';
 import 'package:mandarinmate/utils/app_theme.dart';

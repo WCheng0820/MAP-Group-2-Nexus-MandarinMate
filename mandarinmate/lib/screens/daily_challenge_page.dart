@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
-import 'package:mandarinmate/lessons/domain/active_lesson_model.dart';
+import 'package:mandarinmate/features/lessons/models/lesson_model.dart';
 
 // Helper class for curated vocab pool
 class ChallengeVocab {

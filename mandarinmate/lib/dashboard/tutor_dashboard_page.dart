@@ -2,13 +2,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mandarinmate/auth/presentation/bloc/auth_bloc.dart';
-import 'package:mandarinmate/auth/presentation/pages/login_page.dart';
+import 'package:mandarinmate/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:mandarinmate/features/auth/presentation/pages/login_page.dart';
 import 'package:mandarinmate/screens/profile/edit_profile_page.dart'
     as mandarinmate_edit_profile;
-import 'package:mandarinmate/tutor/presentation/pages/tutor_announcement_page.dart';
+import 'package:mandarinmate/features/tutor/presentation/pages/tutor_announcement_page.dart';
 import 'package:mandarinmate/tutor/presentation/pages/tutor_manage_lessons_hub_page.dart';
-import 'package:mandarinmate/tutor/presentation/pages/tutor_students_page.dart';
+import 'package:mandarinmate/features/tutor/presentation/pages/tutor_students_page.dart';
 
 class TutorDashboardPage extends StatefulWidget {
   const TutorDashboardPage({super.key});

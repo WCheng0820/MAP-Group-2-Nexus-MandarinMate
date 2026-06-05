@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mandarinmate/lessons/data/lesson_repository.dart';
-import 'package:mandarinmate/lessons/presentation/bloc/lesson_bloc.dart';
-import 'package:mandarinmate/lessons/domain/lesson_model.dart';
-import 'package:mandarinmate/lessons/presentation/pages/lesson_detail_page.dart';
+import 'package:mandarinmate/features/lessons/data/lesson_repository.dart';
+import 'package:mandarinmate/features/lessons/presentation/bloc/lesson_bloc.dart';
+import 'package:mandarinmate/features/lessons/domain/lesson_model.dart';
+import 'package:mandarinmate/features/lessons/presentation/pages/lesson_detail_page.dart';
 
 class LessonsPage extends StatelessWidget {
   const LessonsPage({super.key});

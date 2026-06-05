@@ -2,8 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:mandarinmate/lessons/domain/lesson_model.dart';
-import 'package:mandarinmate/tutor/presentation/pages/tutor_create_lesson_page.dart';
+import 'package:mandarinmate/features/lessons/domain/lesson_model.dart';
+import 'package:mandarinmate/features/tutor/presentation/pages/tutor_create_learning_materials_page.dart';
 
 
 class TutorLessonsPage extends StatefulWidget {

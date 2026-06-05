@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../domain/active_lesson_model.dart';
+import '../models/lesson_model.dart';
 
 List<LessonItem> generateItemsForVocab(
   String chinese,
@@ -164,7 +164,7 @@ final List<CourseUnit> mockCourseUnits = [
           '时间',
           'Shí jiān',
           'Time',
-          '现场是什么时间？', // preserved original typo/characters exactly
+          '现在是什么时间？',
           'What time is it now?',
         ),
       ),

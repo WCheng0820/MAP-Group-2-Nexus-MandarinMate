@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
-import 'package:mandarinmate/lessons/domain/lesson_model.dart';
+import 'package:mandarinmate/features/lessons/domain/lesson_model.dart';
 
 class VocabLessonPage extends StatefulWidget {
   final LessonUnit unit;

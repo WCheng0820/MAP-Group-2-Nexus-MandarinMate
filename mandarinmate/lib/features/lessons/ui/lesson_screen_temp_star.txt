@@ -1,0 +1,44 @@
+class _VocabStarButton extends StatelessWidget {
+  final LessonItem item;
+
+  const _VocabStarButton({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return const SizedBox();
+
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance.collection('users').doc(user.uid).snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const SizedBox();
+        final data = snapshot.data!.data() as Map<String, dynamic>? ?? {};
+        final List<dynamic> starredList = data['starredItems'] ?? [];
+        
+        bool isStarred = starredList.any((e) => e['title'] == item.chinese);
+
+        return IconButton(
+          icon: Icon(
+            isStarred ? Icons.star : Icons.star_border,
+            color: isStarred ? Colors.amber : Colors.grey,
+            size: 32,
+          ),
+          onPressed: () {
+            final docRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+            final itemMap = {
+              'title': item.chinese,
+              'type': item.type == LessonType.vocabulary ? 'Vocab' : 'Phrase',
+              'english': item.english,
+            };
+            if (isStarred) {
+              final toRemove = starredList.firstWhere((e) => e['title'] == item.chinese);
+              docRef.update({'starredItems': FieldValue.arrayRemove([toRemove])});
+            } else {
+              docRef.update({'starredItems': FieldValue.arrayUnion([itemMap])});
+            }
+          },
+        );
+      },
+    );
+  }
+}
