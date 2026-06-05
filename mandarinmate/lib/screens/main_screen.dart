@@ -4229,25 +4229,27 @@ class _WeeklyProgressChart extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 6),
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 700),
-                        curve: Curves.easeOutQuart,
+                      Container(
                         width: 18,
-                        height: (90 * percentage).toDouble(),
+                        height: 90,
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            // Highlight today's bar slightly differently
-                            colors: isToday
-                                ? [_StudentColors.red, _StudentColors.red]
-                                : [_StudentColors.red, _StudentColors.orange],
-                            begin: Alignment.bottomCenter,
-                            end: Alignment.topCenter,
-                          ),
-                          // Give today's bar a subtle background so 0 XP days are still visible
                           color: isToday
-                              ? _StudentColors.red.withValues(alpha: 0.1)
-                              : Colors.transparent,
+                              ? _StudentColors.red.withValues(alpha: 0.08)
+                              : const Color(0xFFF1F5F9),
                           borderRadius: BorderRadius.circular(6),
+                        ),
+                        alignment: Alignment.bottomCenter,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 700),
+                          curve: Curves.easeOutQuart,
+                          width: 18,
+                          height: (90 * percentage).toDouble(),
+                          decoration: BoxDecoration(
+                            color: isToday
+                                ? _StudentColors.red
+                                : _StudentColors.orange,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 8),
