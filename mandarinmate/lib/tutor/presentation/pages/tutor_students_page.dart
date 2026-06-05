@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:mandarinmate/features/lessons/data/mock_lessons.dart';
-import 'package:mandarinmate/features/lessons/models/lesson_model.dart';
+import 'package:mandarinmate/lessons/data/mock_lessons.dart';
+import 'package:mandarinmate/lessons/domain/active_lesson_model.dart';
 
 class TutorStudentsPage extends StatefulWidget {
   const TutorStudentsPage({super.key});

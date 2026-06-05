@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:mandarinmate/features/lessons/data/lesson_repository.dart';
-import 'package:mandarinmate/features/lessons/domain/lesson_model.dart';
+import 'package:mandarinmate/lessons/data/lesson_repository.dart';
+import 'package:mandarinmate/lessons/domain/lesson_model.dart';
 
 abstract class LessonEvent extends Equatable {
   const LessonEvent();

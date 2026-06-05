@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mandarinmate/features/lessons/data/mock_lessons.dart';
+import 'package:mandarinmate/lessons/data/mock_lessons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
@@ -7,8 +7,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 
-import '../bloc/lesson_bloc.dart';
-import '../models/lesson_model.dart';
+import '../bloc/active_lesson_bloc.dart';
+import '../../domain/active_lesson_model.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 
 class LessonScreen extends StatefulWidget {
