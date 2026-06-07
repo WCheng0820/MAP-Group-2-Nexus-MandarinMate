@@ -1,5 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../models/lesson_model.dart';
+import '../../domain/active_lesson_model.dart';
 import '../../../models/user_model.dart';
 
 // EVENTS

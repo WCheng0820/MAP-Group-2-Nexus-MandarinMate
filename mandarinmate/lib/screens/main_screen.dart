@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mandarinmate/features/lessons/domain/lesson_model.dart';
+import 'package:mandarinmate/lessons/domain/lesson_model.dart';
 import 'package:mandarinmate/auth/presentation/bloc/auth_bloc.dart';
 import 'package:mandarinmate/models/user_model.dart';
 import 'package:mandarinmate/screens/profile/edit_profile_page.dart'
@@ -12,12 +12,12 @@ import 'package:mandarinmate/flashcards/presentation/pages/flashcard_levels_page
 import 'package:mandarinmate/lessons/presentation/pages/lesson_detail_page.dart';
 import 'package:mandarinmate/screens/daily_challenge_page.dart';
 import 'package:mandarinmate/lessons/presentation/pages/vocab_lesson_page.dart';
-import 'package:mandarinmate/features/lessons/ui/lesson_screen.dart'
+import 'package:mandarinmate/lessons/presentation/pages/active_lesson_screen.dart'
     as new_lessons;
-import 'package:mandarinmate/features/lessons/data/mock_lessons.dart';
-import 'package:mandarinmate/features/lessons/bloc/lesson_bloc.dart'
+import 'package:mandarinmate/lessons/data/mock_lessons.dart';
+import 'package:mandarinmate/lessons/presentation/bloc/active_lesson_bloc.dart'
     as new_bloc;
-import 'package:mandarinmate/features/lessons/models/lesson_model.dart';
+import 'package:mandarinmate/lessons/domain/active_lesson_model.dart';
 import 'dart:math' as math;
 import 'package:mandarinmate/models/badge_config_model.dart';
 
@@ -3537,96 +3537,6 @@ class _ProfileTabState extends State<_ProfileTab> {
   }
 }
 
-class _HeroBadgeDark extends StatelessWidget {
-  const _HeroBadgeDark({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-      decoration: BoxDecoration(
-        color: _StudentColors.orange.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: _StudentColors.orange,
-          fontWeight: FontWeight.w900,
-        ),
-      ),
-    );
-  }
-}
-
-class _MembershipStatusCard extends StatelessWidget {
-  const _MembershipStatusCard({required this.status});
-
-  final MembershipStatus status;
-
-  @override
-  Widget build(BuildContext context) {
-    late final String title;
-    late final String subtitle;
-    late final Color color;
-    switch (status) {
-      case MembershipStatus.approved:
-        title = 'Membership Approved';
-        subtitle =
-            'Your account has been approved and is active in the system.';
-        color = const Color(0xFF15803D);
-        break;
-      case MembershipStatus.rejected:
-        title = 'Membership Rejected';
-        subtitle =
-            'Your registration needs admin review before it can be considered valid.';
-        color = const Color(0xFFB91C1C);
-        break;
-      case MembershipStatus.pending:
-        title = 'Membership Pending';
-        subtitle =
-            'Your registration has been submitted and is waiting for admin approval.';
-        color = _StudentColors.orange;
-        break;
-    }
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: color.withValues(alpha: 0.18)),
-      ),
-      child: Column(
-        children: [
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.w900,
-              fontSize: 16,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            subtitle,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: _StudentColors.muted,
-              fontWeight: FontWeight.w600,
-              height: 1.4,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _CenteredTab extends StatelessWidget {
   const _CenteredTab({
     required this.icon,
@@ -3723,28 +3633,6 @@ String _displayName(Map<String, dynamic> data) {
   if (fullName.isNotEmpty) return fullName;
 
   return 'Student';
-}
-
-MembershipStatus _membershipStatusFromData(Map<String, dynamic> data) {
-  final status = (data['membershipStatus'] ?? 'approved')
-      .toString()
-      .toLowerCase()
-      .split('.')
-      .last;
-  switch (status) {
-    case 'pending':
-      return MembershipStatus.pending;
-    case 'rejected':
-      return MembershipStatus.rejected;
-    case 'approved':
-    default:
-      return MembershipStatus.approved;
-  }
-}
-
-void _showMessage(BuildContext context, String message) {
-  if (!context.mounted) return;
-  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 }
 
 Future<List<CourseUnit>> _fetchDynamicUnits(
@@ -4341,25 +4229,27 @@ class _WeeklyProgressChart extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 6),
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 700),
-                        curve: Curves.easeOutQuart,
+                      Container(
                         width: 18,
-                        height: (90 * percentage).toDouble(),
+                        height: 90,
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            // Highlight today's bar slightly differently
-                            colors: isToday
-                                ? [_StudentColors.red, _StudentColors.red]
-                                : [_StudentColors.red, _StudentColors.orange],
-                            begin: Alignment.bottomCenter,
-                            end: Alignment.topCenter,
-                          ),
-                          // Give today's bar a subtle background so 0 XP days are still visible
                           color: isToday
-                              ? _StudentColors.red.withValues(alpha: 0.1)
-                              : Colors.transparent,
+                              ? _StudentColors.red.withValues(alpha: 0.08)
+                              : const Color(0xFFF1F5F9),
                           borderRadius: BorderRadius.circular(6),
+                        ),
+                        alignment: Alignment.bottomCenter,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 700),
+                          curve: Curves.easeOutQuart,
+                          width: 18,
+                          height: (90 * percentage).toDouble(),
+                          decoration: BoxDecoration(
+                            color: isToday
+                                ? _StudentColors.red
+                                : _StudentColors.orange,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 8),
