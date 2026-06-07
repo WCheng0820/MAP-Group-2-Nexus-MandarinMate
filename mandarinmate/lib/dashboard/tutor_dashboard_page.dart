@@ -9,6 +9,7 @@ import 'package:mandarinmate/screens/profile/edit_profile_page.dart'
 import 'package:mandarinmate/tutor/presentation/pages/tutor_announcement_page.dart';
 import 'package:mandarinmate/tutor/presentation/pages/tutor_manage_lessons_hub_page.dart';
 import 'package:mandarinmate/tutor/presentation/pages/tutor_students_page.dart';
+import 'package:mandarinmate/forum/presentation/pages/forum_page.dart';
 
 class TutorDashboardPage extends StatefulWidget {
   const TutorDashboardPage({super.key});
@@ -195,6 +196,22 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                           color: _TutorColors.blue,
                           onTap: () {
                             setState(() => _currentIndex = 4);
+                          },
+                        ),
+                        _TutorActionTile(
+                          icon: Icons.forum_rounded,
+                          title: 'Community Forum',
+                          subtitle: 'Discuss Mandarin topics & guide students',
+                          color: const Color(0xFF673AB7),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const ForumPage(
+                                  themeColor: _TutorColors.green,
+                                ),
+                              ),
+                            );
                           },
                         ),
                       ],
@@ -689,6 +706,23 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                               title: 'Broadcast Announcement',
                               onTap: () {
                                 setState(() => _currentIndex = 3);
+                              },
+                            ),
+                            const Divider(height: 1, color: Color(0xFFECEFF1)),
+                            _buildTutorNavigationRow(
+                              icon: Icons.forum_rounded,
+                              iconBg: const Color(0xFFF3E5F5),
+                              iconColor: const Color(0xFF9C27B0),
+                              title: 'Community Forum Feed',
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const ForumPage(
+                                      themeColor: _TutorColors.green,
+                                    ),
+                                  ),
+                                );
                               },
                             ),
                             const Divider(height: 1, color: Color(0xFFECEFF1)),
