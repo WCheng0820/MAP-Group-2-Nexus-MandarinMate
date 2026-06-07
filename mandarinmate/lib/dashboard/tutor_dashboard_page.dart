@@ -153,54 +153,58 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                   },
                 ),
                 const SizedBox(height: 10),
-                GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10,
-                  childAspectRatio: 1.18,
-                  children: [
-                    _TutorActionTile(
-                      icon: Icons.class_rounded,
-                      title: 'Manage Lessons',
-                      subtitle: 'Manage vocab, materials, and flashcards',
-                      color: _TutorColors.green,
-                      onTap: () {
-                        setState(() => _currentIndex = 1);
-                      },
+                    GridView.count(
+                      crossAxisCount: 2,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
+                      childAspectRatio: 1.18,
+                      children: [
+                        _TutorActionTile(
+                          icon: Icons.class_rounded,
+                          title: 'Manage Lessons',
+                          subtitle: 'Manage vocab, materials, and flashcards',
+                          color: _TutorColors.green,
+                          onTap: () {
+                            setState(() => _currentIndex = 1);
+                          },
+                        ),
+                        _TutorActionTile(
+                          icon: Icons.people_alt_rounded,
+                          title: 'Student List',
+                          subtitle: 'View profiles and progress',
+                          color: _TutorColors.teal,
+                          onTap: () {
+                            setState(() => _currentIndex = 2);
+                          },
+                        ),
+                        _TutorActionTile(
+                          icon: Icons.campaign_rounded,
+                          title: 'Announcements',
+                          subtitle: 'Send updates to students',
+                          color: _TutorColors.orange,
+                          onTap: () {
+                            setState(() => _currentIndex = 3);
+                          },
+                        ),
+                        _TutorActionTile(
+                          icon: Icons.chat_bubble_rounded,
+                          title: 'Chat',
+                          subtitle: 'Direct message student channels',
+                          color: _TutorColors.blue,
+                          onTap: () {
+                            setState(() => _currentIndex = 4);
+                          },
+                        ),
+                      ],
                     ),
-                    _TutorActionTile(
-                      icon: Icons.people_alt_rounded,
-                      title: 'Student List',
-                      subtitle: 'View profiles and progress',
-                      color: _TutorColors.teal,
-                      onTap: () {
-                        setState(() => _currentIndex = 2);
-                      },
-                    ),
-                    _TutorActionTile(
-                      icon: Icons.campaign_rounded,
-                      title: 'Announcements',
-                      subtitle: 'Send updates to students',
-                      color: _TutorColors.orange,
-                      onTap: () {
-                        setState(() => _currentIndex = 3);
-                      },
-                    ),
-                    _TutorActionTile(
-                      icon: Icons.chat_bubble_rounded,
-                      title: 'Chat',
-                      subtitle: 'Direct message student channels',
-                      color: _TutorColors.blue,
-                      onTap: () {
-                        setState(() => _currentIndex = 4);
-                      },
-                    ),
+                    const SizedBox(height: 20),
+                    const _TutorClassroomOverview(),
+                    const SizedBox(height: 20),
+                    const _TutorChecklistPanel(),
                   ],
                 ),
-              ],
-            ),
           );
         },
       ),
@@ -581,7 +585,7 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                         child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                           stream: FirebaseFirestore.instance
                               .collection('announcements')
-                              .orderBy('timestamp', descending: true)
+                              .orderBy('createdAt', descending: true)
                               .limit(1)
                               .snapshots(),
                           builder: (context, announcementSnapshot) {
@@ -1361,4 +1365,203 @@ String _displayName(Map<String, dynamic> data) {
   if (fullName.isNotEmpty) return fullName;
 
   return 'Tutor';
+}
+
+// -----------------------------------------------------
+// TUTOR CLASSROOM STATS OVERVIEW COMPONENT
+// -----------------------------------------------------
+
+class _TutorClassroomOverview extends StatelessWidget {
+  const _TutorClassroomOverview();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE6F3EE)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x08111827),
+            blurRadius: 16,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: _TutorColors.green.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.school_rounded, color: _TutorColors.green, size: 20),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                'Classroom Stats • UTM Nexus',
+                style: TextStyle(
+                  color: _TutorColors.deep,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildInfoItem(
+                  icon: Icons.cloud_done_rounded,
+                  iconColor: Colors.green,
+                  label: 'Server Status',
+                  value: 'Online',
+                ),
+              ),
+              Expanded(
+                child: _buildInfoItem(
+                  icon: Icons.gpp_good_rounded,
+                  iconColor: Colors.teal,
+                  label: 'Firestore DB',
+                  value: 'Secure',
+                ),
+              ),
+              Expanded(
+                child: _buildInfoItem(
+                  icon: Icons.code_rounded,
+                  iconColor: Colors.blue,
+                  label: 'App Version',
+                  value: 'v1.2.0',
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoItem({
+    required IconData icon,
+    required Color iconColor,
+    required String label,
+    required String value,
+  }) {
+    return Column(
+      children: [
+        Icon(icon, color: iconColor, size: 24),
+        const SizedBox(height: 6),
+        Text(
+          label,
+          style: const TextStyle(color: _TutorColors.muted, fontSize: 11, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: const TextStyle(color: _TutorColors.deep, fontSize: 13, fontWeight: FontWeight.bold),
+        ),
+      ],
+    );
+  }
+}
+
+// -----------------------------------------------------
+// TUTOR CHECKLIST COMPONENT
+// -----------------------------------------------------
+
+class _TutorChecklistPanel extends StatefulWidget {
+  const _TutorChecklistPanel();
+
+  @override
+  State<_TutorChecklistPanel> createState() => _TutorChecklistPanelState();
+}
+
+class _TutorChecklistPanelState extends State<_TutorChecklistPanel> {
+  final List<Map<String, dynamic>> _tasks = [
+    {'title': 'Publish new vocabulary unit', 'done': false},
+    {'title': 'Broadcast weekly test reminder', 'done': true},
+    {'title': 'Review student forum submissions', 'done': false},
+    {'title': 'Audit course badges configuration', 'done': false},
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE6F3EE)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x08111827),
+            blurRadius: 16,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: _TutorColors.teal.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.assignment_turned_in_rounded, color: _TutorColors.teal, size: 20),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                'Weekly Teaching Tasks',
+                style: TextStyle(
+                  color: _TutorColors.deep,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _tasks.length,
+            itemBuilder: (context, index) {
+              final task = _tasks[index];
+              return CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  task['title']!,
+                  style: TextStyle(
+                    color: task['done'] ? _TutorColors.muted : _TutorColors.deep,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    decoration: task['done'] ? TextDecoration.lineThrough : null,
+                  ),
+                ),
+                value: task['done'],
+                activeColor: _TutorColors.green,
+                dense: true,
+                onChanged: (val) {
+                  setState(() {
+                    _tasks[index]['done'] = val ?? false;
+                  });
+                },
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
 }

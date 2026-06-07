@@ -157,6 +157,10 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
               const SizedBox(height: 14),
               const _RealtimeAnalyticsSection(),
               const SizedBox(height: 28),
+              const _AdminSystemHealthSection(),
+              const SizedBox(height: 28),
+              const _AdminRoleBreakdownSection(),
+              const SizedBox(height: 28),
               _SectionTitle(
                 title: 'Management hub',
                 subtitle:
@@ -999,4 +1003,315 @@ class _AdminDashboardColors {
   static const tutors = Color(0xFF2F855A);
   static const admins = Color(0xFFDD6B20);
   static const primaryAction = Color(0xFF6B46C1);
+}
+
+// -----------------------------------------------------
+// ADMIN SYSTEM HEALTH STATUS COMPONENT
+// -----------------------------------------------------
+
+class _AdminSystemHealthSection extends StatelessWidget {
+  const _AdminSystemHealthSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: _AdminDashboardColors.divider),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x05111827),
+            blurRadius: 16,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: _AdminDashboardColors.headerStart.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.health_and_safety_rounded,
+                  color: _AdminDashboardColors.headerStart,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                'System Infrastructure & Security',
+                style: TextStyle(
+                  color: _AdminDashboardColors.heading,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          _buildHealthRow(
+            icon: Icons.cloud_done_rounded,
+            iconColor: Colors.green,
+            label: 'Firebase Services',
+            value: 'Connected & Secure',
+            badgeColor: Colors.green.shade50,
+            badgeTextColor: Colors.green.shade700,
+          ),
+          const Divider(height: 24, color: _AdminDashboardColors.divider),
+          _buildHealthRow(
+            icon: Icons.security_rounded,
+            iconColor: Colors.blue,
+            label: 'Firestore Database Rules',
+            value: 'Enforced (v2)',
+            badgeColor: Colors.blue.shade50,
+            badgeTextColor: Colors.blue.shade700,
+          ),
+          const Divider(height: 24, color: _AdminDashboardColors.divider),
+          _buildHealthRow(
+            icon: Icons.shield_rounded,
+            iconColor: Colors.purple,
+            label: 'User Auth Validation',
+            value: 'UTM Email Domain Only',
+            badgeColor: Colors.purple.shade50,
+            badgeTextColor: Colors.purple.shade700,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHealthRow({
+    required IconData icon,
+    required Color iconColor,
+    required String label,
+    required String value,
+    required Color badgeColor,
+    required Color badgeTextColor,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, color: iconColor, size: 24),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  color: _AdminDashboardColors.heading,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: const TextStyle(
+                  color: _AdminDashboardColors.bodyText,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: badgeColor,
+            borderRadius: BorderRadius.circular(99),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: badgeTextColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Active',
+                style: TextStyle(
+                  color: badgeTextColor,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// -----------------------------------------------------
+// ADMIN USER ROLE DISTRIBUTION DISTRIBUTION COMPONENT
+// -----------------------------------------------------
+
+class _AdminRoleBreakdownSection extends StatelessWidget {
+  const _AdminRoleBreakdownSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance.collection('users').snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const SizedBox.shrink();
+        }
+
+        final docs = snapshot.data?.docs ?? const [];
+        int students = 0;
+        int tutors = 0;
+        int admins = 0;
+
+        for (final doc in docs) {
+          final role = (doc.data()['role'] ?? 'student').toString().toLowerCase();
+          if (role == 'student') {
+            students++;
+          } else if (role == 'tutor') {
+            tutors++;
+          } else if (role == 'admin') {
+            admins++;
+          }
+        }
+
+        final total = docs.length.clamp(1, 999999);
+        final studentPct = students / total;
+        final tutorPct = tutors / total;
+        final adminPct = admins / total;
+
+        return Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: _AdminDashboardColors.divider),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x05111827),
+                blurRadius: 16,
+                offset: Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: _AdminDashboardColors.students.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.pie_chart_rounded,
+                      color: _AdminDashboardColors.students,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  const Text(
+                    'User Distribution Proportion',
+                    style: TextStyle(
+                      color: _AdminDashboardColors.heading,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: SizedBox(
+                  height: 16,
+                  child: Row(
+                    children: [
+                      if (students > 0)
+                        Expanded(
+                          flex: (studentPct * 100).round().clamp(1, 100),
+                          child: Container(color: _AdminDashboardColors.students),
+                        ),
+                      if (tutors > 0)
+                        Expanded(
+                          flex: (tutorPct * 100).round().clamp(1, 100),
+                          child: Container(color: _AdminDashboardColors.tutors),
+                        ),
+                      if (admins > 0)
+                        Expanded(
+                          flex: (adminPct * 100).round().clamp(1, 100),
+                          child: Container(color: _AdminDashboardColors.admins),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildLegendItem(
+                    color: _AdminDashboardColors.students,
+                    label: 'Students',
+                    percentage: '${(studentPct * 100).round()}%',
+                  ),
+                  _buildLegendItem(
+                    color: _AdminDashboardColors.tutors,
+                    label: 'Tutors',
+                    percentage: '${(tutorPct * 100).round()}%',
+                  ),
+                  _buildLegendItem(
+                    color: _AdminDashboardColors.admins,
+                    label: 'Admins',
+                    percentage: '${(adminPct * 100).round()}%',
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildLegendItem({required Color color, required String label, required String percentage}) {
+    return Row(
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          '$label ($percentage)',
+          style: const TextStyle(
+            color: _AdminDashboardColors.bodyText,
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
 }

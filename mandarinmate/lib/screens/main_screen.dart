@@ -220,6 +220,8 @@ class _HomeTabState extends State<_HomeTab> {
                               : widget.onOpenLearn,
                         ),
                         const SizedBox(height: 16),
+                        const _WordOfTheDayCard(),
+                        const SizedBox(height: 16),
                         GridView.count(
                           crossAxisCount: 2,
                           shrinkWrap: true,
@@ -259,12 +261,10 @@ class _HomeTabState extends State<_HomeTab> {
                             ),
                           ],
                         ),
-                        // ==========================================
-                        // ADD STEP 2 HERE: THE WEEKLY CHART
-                        // ==========================================
                         const SizedBox(height: 20),
                         _WeeklyProgressChart(dailyActivity: dailyActivity),
-                        // ==========================================
+                        const _StudentAnnouncementsSection(),
+                        const _StudentLeaderboardPreview(),
                         if (starredItems.isNotEmpty) ...[
                           const SizedBox(height: 20),
                           _SectionHeader(
@@ -4386,6 +4386,499 @@ class _WeeklyProgressChart extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// -----------------------------------------------------
+// WORD OF THE DAY COMPONENT
+// -----------------------------------------------------
+
+class _WordOfTheDayCard extends StatefulWidget {
+  const _WordOfTheDayCard();
+
+  @override
+  State<_WordOfTheDayCard> createState() => _WordOfTheDayCardState();
+}
+
+class _WordOfTheDayCardState extends State<_WordOfTheDayCard> {
+  bool _isPlaying = false;
+
+  final List<Map<String, String>> _quotes = const [
+    {
+      'chinese': '千里之行，始于足下。',
+      'pinyin': 'Qiānlǐ zhī xíng, shǐ yú zú xià.',
+      'english': 'A journey of a thousand miles begins with a single step.',
+      'meaning': 'Focus on daily small wins!'
+    },
+    {
+      'chinese': '学而不思则罔，思而不学则殆。',
+      'pinyin': 'Xué ér bù sī zé wǎng, sī ér bù xué zé dài.',
+      'english': 'Learning without thought is labor lost; thought without learning is perilous.',
+      'meaning': 'Active learning is key.'
+    },
+    {
+      'chinese': '温故而知新，可以为师矣。',
+      'pinyin': 'Wēn gù ér zhī xīn, kěyǐ wéi shī yǐ.',
+      'english': 'Reviewing what you have learned and learning new things makes you wise.',
+      'meaning': 'Revise flashcards daily!'
+    },
+    {
+      'chinese': '世上无难事，只怕有心人。',
+      'pinyin': 'Shìshàng wú nánshì, zhǐ pà yǒuxīnrén.',
+      'english': 'Nothing in the world is difficult for one who sets their mind to it.',
+      'meaning': 'Stay persistent!'
+    },
+    {
+      'chinese': '书山有路勤为径，学海无涯苦作舟。',
+      'pinyin': 'Shū shān yǒu lù qín wéi jìng, xué hǎi wú yá kǔ zuò zhōu.',
+      'english': 'The mountain of books has a path of diligence; the sea of learning has no limit.',
+      'meaning': 'Keep expanding your vocabulary!'
+    }
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final dayOfYear = DateTime.now().difference(DateTime(DateTime.now().year, 1, 1)).inDays;
+    final quote = _quotes[dayOfYear % _quotes.length];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFFFDFC2), width: 1.5),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0D111827),
+            blurRadius: 16,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF0E0),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFFFD5B0)),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.lightbulb_outline_rounded, color: _StudentColors.orange, size: 16),
+                    SizedBox(width: 4),
+                    Text(
+                      'Word of the Day • 每日一词',
+                      style: TextStyle(
+                        color: _StudentColors.orange,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Spacer(),
+              IconButton(
+                icon: Icon(
+                  _isPlaying ? Icons.volume_up_rounded : Icons.volume_mute_rounded,
+                  color: _StudentColors.orange,
+                  size: 20,
+                ),
+                onPressed: () {
+                  setState(() => _isPlaying = true);
+                  Future.delayed(const Duration(seconds: 2), () {
+                    if (mounted) setState(() => _isPlaying = false);
+                  });
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            quote['chinese']!,
+            style: const TextStyle(
+              color: _StudentColors.deep,
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+              fontFamily: 'serif',
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            quote['pinyin']!,
+            style: const TextStyle(
+              color: _StudentColors.muted,
+              fontSize: 13,
+              fontStyle: FontStyle.italic,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 10),
+          const Divider(color: Color(0xFFF2F4F7)),
+          const SizedBox(height: 6),
+          Text(
+            quote['english']!,
+            style: const TextStyle(
+              color: _StudentColors.deep,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '💡 Hint: ${quote['meaning']}',
+            style: const TextStyle(
+              color: Color(0xFF2E7D32),
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// -----------------------------------------------------
+// STUDENT ANNOUNCEMENTS COMPONENT
+// -----------------------------------------------------
+
+class _StudentAnnouncementsSection extends StatelessWidget {
+  const _StudentAnnouncementsSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('announcements')
+          .orderBy('createdAt', descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox(
+            height: 100,
+            child: Center(child: CircularProgressIndicator(color: _StudentColors.red)),
+          );
+        }
+
+        final docs = snapshot.data?.docs ?? [];
+        final filteredDocs = docs.where((doc) {
+          final target = (doc.data()['targetRole'] ?? 'all').toString().toLowerCase();
+          return target == 'all' || target == 'student';
+        }).take(3).toList();
+
+        if (filteredDocs.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 20),
+            const Row(
+              children: [
+                Icon(Icons.campaign_rounded, color: _StudentColors.red, size: 22),
+                SizedBox(width: 8),
+                Text(
+                  'Announcements',
+                  style: TextStyle(
+                    color: _StudentColors.deep,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 120,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                itemCount: filteredDocs.length,
+                separatorBuilder: (context, index) => const SizedBox(width: 12),
+                itemBuilder: (context, index) {
+                  final data = filteredDocs[index].data();
+                  final title = data['title'] ?? 'Announcement';
+                  final body = data['body'] ?? '';
+                  final createdByName = data['createdByName'] ?? 'Instructor';
+                  final createdAt = data['createdAt'] is Timestamp
+                      ? (data['createdAt'] as Timestamp).toDate()
+                      : null;
+
+                  return Container(
+                    width: 280,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: const Color(0xFFFFE4CF)),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x0A111827),
+                          blurRadius: 12,
+                          offset: Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: _StudentColors.deep,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                            if (createdAt != null)
+                              Text(
+                                '${createdAt.day}/${createdAt.month}',
+                                style: const TextStyle(
+                                  color: _StudentColors.muted,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Expanded(
+                          child: Text(
+                            body,
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: _StudentColors.muted,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              height: 1.35,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            const Icon(Icons.person_outline_rounded, size: 12, color: _StudentColors.orange),
+                            const SizedBox(width: 4),
+                            Text(
+                              createdByName,
+                              style: const TextStyle(
+                                color: _StudentColors.orange,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+// -----------------------------------------------------
+// STUDENT LEADERBOARD PREVIEW COMPONENT
+// -----------------------------------------------------
+
+class _StudentLeaderboardPreview extends StatelessWidget {
+  const _StudentLeaderboardPreview();
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .where('role', isEqualTo: 'student')
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox(
+            height: 120,
+            child: Center(child: CircularProgressIndicator(color: _StudentColors.orange)),
+          );
+        }
+
+        final docs = snapshot.data?.docs ?? const [];
+        if (docs.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        final entries = _leaderboardEntriesFromDocs(docs);
+        final top3 = entries.take(3).toList();
+
+        return Container(
+          padding: const EdgeInsets.all(16),
+          margin: const EdgeInsets.only(top: 20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFFFE4CF)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x0D111827),
+                blurRadius: 12,
+                offset: Offset(0, 7),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.emoji_events_rounded, color: Colors.amber, size: 22),
+                  SizedBox(width: 8),
+                  Text(
+                    'Top Performers Spotlight',
+                    style: TextStyle(
+                      color: _StudentColors.deep,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  if (top3.length > 1)
+                    _buildPodiumColumn(
+                      context: context,
+                      entry: top3[1],
+                      rank: 2,
+                      height: 70,
+                      color: const Color(0xFFB0BEC5),
+                      badgeIcon: Icons.star_border_purple500_rounded,
+                    ),
+                  if (top3.isNotEmpty)
+                    _buildPodiumColumn(
+                      context: context,
+                      entry: top3[0],
+                      rank: 1,
+                      height: 95,
+                      color: const Color(0xFFFFD54F),
+                      badgeIcon: Icons.workspace_premium_rounded,
+                    ),
+                  if (top3.length > 2)
+                    _buildPodiumColumn(
+                      context: context,
+                      entry: top3[2],
+                      rank: 3,
+                      height: 55,
+                      color: const Color(0xFFFFAB91),
+                      badgeIcon: Icons.military_tech_rounded,
+                    ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPodiumColumn({
+    required BuildContext context,
+    required _LeaderboardEntry entry,
+    required int rank,
+    required double height,
+    required Color color,
+    required IconData badgeIcon,
+  }) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        CircleAvatar(
+          radius: rank == 1 ? 22 : 18,
+          backgroundColor: color.withOpacity(0.2),
+          child: Text(
+            entry.name.isEmpty ? '?' : entry.name[0].toUpperCase(),
+            style: TextStyle(
+              color: _StudentColors.deep,
+              fontWeight: FontWeight.bold,
+              fontSize: rank == 1 ? 16 : 14,
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          entry.name,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: _StudentColors.deep,
+            fontWeight: rank == 1 ? FontWeight.w900 : FontWeight.w700,
+            fontSize: rank == 1 ? 12 : 11,
+          ),
+        ),
+        Text(
+          '${entry.xp} XP',
+          style: const TextStyle(
+            color: _StudentColors.muted,
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Container(
+          width: 65,
+          height: height,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [color, color.withOpacity(0.75)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(12),
+              topRight: Radius.circular(12),
+            ),
+          ),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(badgeIcon, color: Colors.white, size: rank == 1 ? 20 : 16),
+                const SizedBox(height: 2),
+                Text(
+                  '#$rank',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: rank == 1 ? 14 : 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
