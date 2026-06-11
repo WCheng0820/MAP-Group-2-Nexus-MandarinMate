@@ -20,6 +20,7 @@ import 'package:mandarinmate/lessons/presentation/bloc/active_lesson_bloc.dart'
 import 'package:mandarinmate/lessons/domain/active_lesson_model.dart';
 import 'dart:math' as math;
 import 'package:mandarinmate/models/badge_config_model.dart';
+import 'package:mandarinmate/screens/chat_list_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -2239,11 +2240,7 @@ class _ChatTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const _CenteredTab(
-      icon: Icons.chat_bubble_rounded,
-      title: 'Chat',
-      subtitle: 'Mandarin conversation practice coming soon.',
-    );
+    return const ChatListScreen();
   }
 }
 
