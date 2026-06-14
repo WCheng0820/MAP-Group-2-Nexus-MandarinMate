@@ -2240,7 +2240,7 @@ class _ChatTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const ChatListScreen();
+    return const ChatListScreen(role: 'student');
   }
 }
 
