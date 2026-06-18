@@ -9,6 +9,7 @@ import 'package:mandarinmate/screens/profile/edit_profile_page.dart'
 import 'package:mandarinmate/tutor/presentation/pages/tutor_announcement_page.dart';
 import 'package:mandarinmate/tutor/presentation/pages/tutor_manage_lessons_hub_page.dart';
 import 'package:mandarinmate/tutor/presentation/pages/tutor_students_page.dart';
+import 'package:mandarinmate/screens/chat_list_screen.dart';
 
 class TutorDashboardPage extends StatefulWidget {
   const TutorDashboardPage({super.key});
@@ -212,51 +213,7 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
   }
 
   Widget _buildChatComingSoonTab() {
-    return _TutorPageFrame(
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: _TutorColors.green.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.chat_bubble_rounded,
-                  color: _TutorColors.green,
-                  size: 40,
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Chat Module',
-                style: TextStyle(
-                  color: _TutorColors.deep,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'Direct tutor-student messaging and group discussions are currently in active development.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: _TutorColors.muted,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  height: 1.45,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+  return const ChatListScreen(role: 'tutor');
   }
 
   Widget _buildProfileTab(BuildContext context, User? user) {

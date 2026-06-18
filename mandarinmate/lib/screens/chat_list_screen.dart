@@ -4,7 +4,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mandarinmate/screens/chat_screen.dart';
 
 class ChatListScreen extends StatefulWidget {
-  const ChatListScreen({super.key});
+  final String role;
+
+  const ChatListScreen({
+    super.key,
+    required this.role,
+  });
 
   @override
   State<ChatListScreen> createState() => _ChatListScreenState();
@@ -14,7 +19,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   Future<String> getOrCreateChat(String tutorId) async {
   final currentUser = FirebaseAuth.instance.currentUser!;
-
+  
   final query = await FirebaseFirestore.instance
       .collection('chats')
       .where('participants', arrayContains: currentUser.uid)
@@ -239,7 +244,8 @@ final otherUid = participants.firstWhere(
   },
 ),
 
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: widget.role == 'student'
+    ? FloatingActionButton(
         child: const Icon(Icons.add),
         onPressed: () {
           showModalBottomSheet(
@@ -307,7 +313,7 @@ final otherUid = participants.firstWhere(
             },
           );
         },
-      ),
+      ) : null,
     );
   }
 }
