@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../services/chat_attachment_service.dart';
 
 class ChatScreen extends StatefulWidget {
   final String chatId;
@@ -47,6 +48,27 @@ class _ChatScreenState extends State<ChatScreen> {
     });
 
     _messageController.clear();
+  }
+  Future<void> sendAttachment() async {
+
+  final result =
+      await ChatAttachmentService
+          .pickAndUploadFile();
+
+  if (result == null) return;
+
+  await FirebaseFirestore.instance
+      .collection('chats')
+      .doc(widget.chatId)
+      .collection('messages')
+      .add({
+    'senderId': currentUser.uid,
+    'messageType': 'file',
+    'fileName': result['fileName'],
+    'fileUrl': result['fileUrl'],
+    'timestamp':
+        FieldValue.serverTimestamp(),
+  });
   }
 
   @override
@@ -158,7 +180,10 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
 
                   const SizedBox(width: 8),
-
+                  IconButton(
+                    icon: const Icon(Icons.attach_file),
+                    onPressed: sendAttachment,
+                    ),
                   IconButton(
                     icon: const Icon(Icons.send),
 
