@@ -130,6 +130,160 @@ class _ChatScreenState extends State<ChatScreen> {
     // ------------------------------------------------------------------
   }
 
+  Future<void> sendImage() async {
+
+  final result =
+      await ChatAttachmentService.uploadImage();
+
+  if (result == null) return;
+
+  await FirebaseFirestore.instance
+      .collection('chats')
+      .doc(widget.chatId)
+      .collection('messages')
+      .add({
+    'senderId': currentUser.uid,
+    'messageType': 'image',
+    'fileUrl': result['fileUrl'],
+    'fileName': result['fileName'],
+    'timestamp': FieldValue.serverTimestamp(),
+  });
+}
+
+
+  Future<void> showAttachmentMenu() async {
+    showModalBottomSheet(
+      context: context,
+      builder: (_) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.image),
+                title: const Text('Image'),
+                onTap: () {
+                  Navigator.pop(context);
+                  sendImage();
+                },
+              ),
+
+              ListTile(
+                leading: const Icon(Icons.insert_drive_file),
+                title: const Text('Document'),
+                onTap: () {
+                  Navigator.pop(context);
+                  sendAttachment();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  IconData _getFileIcon(String fileName) {
+    final lower = fileName.toLowerCase();
+
+    if (lower.endsWith('.pdf')) {
+      return Icons.picture_as_pdf;
+    }
+
+    if (lower.endsWith('.doc') || lower.endsWith('.docx')) {
+      return Icons.description;
+    }
+
+    if (lower.endsWith('.ppt') || lower.endsWith('.pptx')) {
+      return Icons.slideshow;
+    }
+
+    return Icons.insert_drive_file;
+  }
+
+  Future<void> sendAttachment() async {
+    final result = await ChatAttachmentService.uploadFile();
+
+    if (result == null) return;
+
+    await FirebaseFirestore.instance
+        .collection('chats')
+        .doc(widget.chatId)
+        .collection('messages')
+        .add({
+          'senderId': currentUser.uid,
+          'messageType': 'file',
+          'fileName': result['fileName'],
+          'fileUrl': result['fileUrl'],
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+  }
+  Widget _buildImageMessage(
+  Map<String, dynamic> message,
+) {
+  return GestureDetector(
+    onTap: () {
+      showDialog(
+        context: context,
+        builder: (_) => Dialog(
+          child: InteractiveViewer(
+            child: Image.network(
+              message['fileUrl'],
+            ),
+          ),
+        ),
+      );
+    },
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Image.network(
+        message['fileUrl'],
+        width: 200,
+        height: 200,
+        fit: BoxFit.cover,
+      ),
+    ),
+  );
+}
+
+  Widget _buildFileMessage(Map<String, dynamic> message) {
+    return InkWell(
+      onTap: () async {
+        final url = message['fileUrl'];
+
+        await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      },
+      child: Container(
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: Colors.grey.shade100,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(
+        color: Colors.grey.shade300,
+      ),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          _getFileIcon(
+            message['fileName'] ?? '',
+          ),
+          color: Colors.blue,
+        ),
+        const SizedBox(width: 10),
+        Flexible(
+          child: Text(
+            message['fileName'] ?? 'Attachment',
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    ),
+  ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -172,10 +326,12 @@ class _ChatScreenState extends State<ChatScreen> {
                           color: isMe ? Colors.blue : Colors.grey.shade300,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Text(
-                          message['text'] ?? '',
-                          style: TextStyle(color: isMe ? Colors.white : Colors.black),
-                        ),
+
+                        child: messageType == 'text'
+                        ? Text(message['text'] ?? '')
+                        : messageType == 'image'
+                          ? _buildImageMessage(message)
+                        : _buildFileMessage(message),
                       ),
                     );
                   },
@@ -199,7 +355,12 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   const SizedBox(width: 8),
                   IconButton(
+                    icon: const Icon(Icons.attach_file),
+                    onPressed: showAttachmentMenu,
+                  ),
+                  IconButton(
                     icon: const Icon(Icons.send),
+
                     onPressed: sendMessage,
                   ),
                 ],

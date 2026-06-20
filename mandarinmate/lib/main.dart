@@ -28,7 +28,7 @@ Future<void> main() async {
 
   await Supabase.initialize(
     url: 'https://nigwphcqqfrvhmnxyppj.supabase.co',
-    anonKey: 'sb_publishable_gD-lXnpHovmnU6VBdKwWZg_aoTBZIo9',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5pZ3dwaGNxcWZydmhtbnh5cHBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1NjczMDAsImV4cCI6MjA5NDE0MzMwMH0.iLdHrAPkCBVZ5oC_i7ZQCwsK5CG-_DNkEXnY_rtIIqA',
   );
 
   if (_supportsFirebaseOnCurrentPlatform) {
