@@ -62,6 +62,7 @@ dependencies:
   supabase_flutter: ^2.12.4
   http: ^1.6.0
   flutter_dotenv: ^5.0.2
+  flutter_local_notifications: ^22.0.1
 
 dev_dependencies:
   flutter_test:

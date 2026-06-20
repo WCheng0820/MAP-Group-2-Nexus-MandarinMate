@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:mandarinmate/services/chat_attachment_service.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart'; // [NEW] For system tray
 
 class ChatScreen extends StatefulWidget {
   final String chatId;
@@ -31,7 +32,11 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    // Your unread-read logic
+
+    // Instantly clear system tray pop-ups!
+    _clearSystemNotifications();
+
+    // Instantly mark messages as read if we are looking at the screen
     _chatSubscription = FirebaseFirestore.instance
         .collection('chats')
         .doc(widget.chatId)
@@ -55,36 +60,37 @@ class _ChatScreenState extends State<ChatScreen> {
     super.dispose();
   }
 
-  Future<void> sendMessage() async {
-    final text = _messageController.text.trim();
-    if (text.isEmpty) return;
+  // ------------------------------------------------------------------
+  // [NEW] Helper to wipe the system notifications
+  // ------------------------------------------------------------------
+  Future<void> _clearSystemNotifications() async {
+    try {
+      // Swipes away the notifications in the phone's drop-down system tray.
+      // (On Android, dismissing the tray notifications automatically clears the app icon badge too!)
+      final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+      await flutterLocalNotificationsPlugin.cancelAll();
+    } catch (e) {
+      debugPrint('Could not clear notifications: $e');
+    }
+  }
 
-    // 1. Save message to Firestore
-    await FirebaseFirestore.instance
-        .collection('chats')
-        .doc(widget.chatId)
-        .collection('messages')
-        .add({
-      'senderId': currentUser.uid,
-      'text': text,
-      'messageType': 'text',
-      'timestamp': FieldValue.serverTimestamp(),
-    });
-
-    // 2. Update the latest message snippet and read status
+  // ------------------------------------------------------------------
+  // THE MASTER HELPER FUNCTION!
+  // This updates the chat list, triggers the red dot, AND sends the notification.
+  // ------------------------------------------------------------------
+  Future<void> _updateSnippetAndNotify(String notificationBody) async {
+    // 1. Update Chat List & Trigger Red Dot
     await FirebaseFirestore.instance
         .collection('chats')
         .doc(widget.chatId)
         .update({
-      'lastMessage': text,
+      'lastMessage': notificationBody,
       'lastMessageTime': FieldValue.serverTimestamp(),
       'lastMessageSenderId': currentUser.uid,
       'isLastMessageRead': false,
     });
 
-    _messageController.clear();
-
-    // 3. Notification Logic
+    // 2. Trigger Supabase Notification
     try {
       final userDoc = await FirebaseFirestore.instance.collection('users').doc(widget.receiverId).get();
       final String? targetToken = userDoc.data()?['fcmToken'];
@@ -98,7 +104,7 @@ class _ChatScreenState extends State<ChatScreen> {
           body: {
             'fcmToken': targetToken,
             'title': 'New message from $senderName',
-            'body': text,
+            'body': notificationBody,
             'chatId': widget.chatId,
             'senderId': currentUser.uid,
             'senderName': senderName,
@@ -110,9 +116,37 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  // ------------------------------------------------------------------
+  // MESSAGE SENDING FUNCTIONS
+  // ------------------------------------------------------------------
+
+  Future<void> sendMessage() async {
+    final text = _messageController.text.trim();
+    if (text.isEmpty) return;
+
+    _messageController.clear(); // Clear instantly for better UX
+
+    // Save message
+    await FirebaseFirestore.instance
+        .collection('chats')
+        .doc(widget.chatId)
+        .collection('messages')
+        .add({
+      'senderId': currentUser.uid,
+      'text': text,
+      'messageType': 'text',
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+
+    // Call our new helper function
+    await _updateSnippetAndNotify(text);
+  }
+
   Future<void> sendImage() async {
     final result = await ChatAttachmentService.uploadImage();
     if (result == null) return;
+
+    // Save Image
     await FirebaseFirestore.instance.collection('chats').doc(widget.chatId).collection('messages').add({
       'senderId': currentUser.uid,
       'messageType': 'image',
@@ -120,11 +154,16 @@ class _ChatScreenState extends State<ChatScreen> {
       'fileName': result['fileName'],
       'timestamp': FieldValue.serverTimestamp(),
     });
+
+    // Call our helper with a custom image message!
+    await _updateSnippetAndNotify('📷 Photo');
   }
 
   Future<void> sendAttachment() async {
     final result = await ChatAttachmentService.uploadFile();
     if (result == null) return;
+
+    // Save File
     await FirebaseFirestore.instance.collection('chats').doc(widget.chatId).collection('messages').add({
       'senderId': currentUser.uid,
       'messageType': 'file',
@@ -132,6 +171,9 @@ class _ChatScreenState extends State<ChatScreen> {
       'fileUrl': result['fileUrl'],
       'timestamp': FieldValue.serverTimestamp(),
     });
+
+    // Call our helper with a custom file message!
+    await _updateSnippetAndNotify('📄 ${result['fileName']}');
   }
 
   Future<void> showAttachmentMenu() async {
@@ -148,6 +190,10 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
     );
   }
+
+  // ------------------------------------------------------------------
+  // UI BUILDERS
+  // ------------------------------------------------------------------
 
   Widget _buildImageMessage(Map<String, dynamic> message) {
     return GestureDetector(
