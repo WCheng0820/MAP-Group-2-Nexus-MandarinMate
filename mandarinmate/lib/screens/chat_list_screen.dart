@@ -16,7 +16,6 @@ class ChatListScreen extends StatefulWidget {
 }
 
 class _ChatListScreenState extends State<ChatListScreen> {
-
   Future<String> getOrCreateChat(String tutorId) async {
     final currentUser = FirebaseAuth.instance.currentUser!;
 
@@ -33,9 +32,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       }
     }
 
-    final newChat = await FirebaseFirestore.instance
-        .collection('chats')
-        .add({
+    final newChat = await FirebaseFirestore.instance.collection('chats').add({
       'participants': [
         currentUser.uid,
         tutorId,
@@ -68,6 +65,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final currentUserId = FirebaseAuth.instance.currentUser!.uid; // Grab ID once
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Chats'),
@@ -75,14 +74,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('chats')
-            .where(
-          'participants',
-          arrayContains: FirebaseAuth.instance.currentUser!.uid,
-        )
+            .where('participants', arrayContains: currentUserId)
             .orderBy('lastMessageTime', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
-
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
               child: CircularProgressIndicator(),
@@ -100,18 +95,21 @@ class _ChatListScreenState extends State<ChatListScreen> {
           return ListView.builder(
             itemCount: chats.length,
             itemBuilder: (context, index) {
-
               final chat = chats[index].data() as Map<String, dynamic>;
               final participants = List<String>.from(chat['participants']);
-              final otherUid = participants.firstWhere(
-                    (uid) => uid != FirebaseAuth.instance.currentUser!.uid,
-              );
+              final otherUid = participants.firstWhere((uid) => uid != currentUserId);
+
+              // --- [NEW] UNREAD LOGIC ---
+              // Check if the last message was sent by someone else AND is marked as unread
+              final bool isUnreadForMe =
+                  chat['lastMessageSenderId'] != currentUserId &&
+                      chat['isLastMessageRead'] == false;
 
               return Container(
                 margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: isUnreadForMe ? const Color(0xFFFFFDF5) : Colors.white, // Subtle warm tint for unread
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
@@ -138,7 +136,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                         builder: (_) => ChatScreen(
                           chatId: chats[index].id,
                           receiverName: '${user['firstName']} ${user['lastName']}',
-                          receiverId: otherUid, // Passed required parameter
+                          receiverId: otherUid,
                         ),
                       ),
                     );
@@ -158,6 +156,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                         ),
                       ),
                       const SizedBox(width: 12),
+
                       // Middle content
                       Expanded(
                         child: FutureBuilder<DocumentSnapshot>(
@@ -179,19 +178,24 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                 // Name
                                 Text(
                                   name,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 16,
-                                    fontWeight: FontWeight.bold,
+                                    // [NEW] Thicker name if unread
+                                    fontWeight: isUnreadForMe ? FontWeight.w900 : FontWeight.bold,
+                                    color: Colors.black87,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
+
                                 // Last message
                                 Text(
                                   chat['lastMessage'] ?? '',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    color: Colors.grey.shade600,
+                                    // [NEW] Solid black and semi-bold if unread
+                                    color: isUnreadForMe ? Colors.black87 : Colors.grey.shade600,
+                                    fontWeight: isUnreadForMe ? FontWeight.w700 : FontWeight.normal,
                                   ),
                                 ),
                               ],
@@ -199,25 +203,41 @@ class _ChatListScreenState extends State<ChatListScreen> {
                           },
                         ),
                       ),
+
                       // Right side
                       Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
                             _formatTime(chat['lastMessageTime']),
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.orange.shade300,
+                              // [NEW] Stronger time color if unread
+                              color: isUnreadForMe ? const Color(0xFFD40511) : Colors.grey.shade400,
+                              fontWeight: isUnreadForMe ? FontWeight.bold : FontWeight.normal,
                             ),
                           ),
                           const SizedBox(height: 6),
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: const BoxDecoration(
-                              color: Colors.yellow,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
+
+                          // [NEW] The Alert Dot
+                          if (isUnreadForMe)
+                            Container(
+                              width: 10,
+                              height: 10,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFD40511), // Strong bold red to pop against the UI
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFFD40511).withOpacity(0.3),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                            )
+                          else
+                            const SizedBox(height: 10), // Empty space so the layout doesn't jump around
                         ],
                       ),
                     ],
@@ -241,7 +261,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     .where('role', isEqualTo: 'tutor')
                     .snapshots(),
                 builder: (context, snapshot) {
-
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(
                       child: CircularProgressIndicator(),
@@ -259,7 +278,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   return ListView.builder(
                     itemCount: tutors.length,
                     itemBuilder: (context, index) {
-
                       final tutor = tutors[index].data() as Map<String, dynamic>;
 
                       return ListTile(
@@ -279,7 +297,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                               builder: (_) => ChatScreen(
                                 chatId: chatId,
                                 receiverName: '${tutor['firstName']} ${tutor['lastName']}',
-                                receiverId: tutors[index].id, // Passed required parameter
+                                receiverId: tutors[index].id,
                               ),
                             ),
                           );

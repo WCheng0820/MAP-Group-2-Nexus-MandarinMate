@@ -78,71 +78,71 @@ class _TutorCreateLearningMaterialsPageState extends State<TutorCreateLearningMa
       body: user == null
           ? const Center(child: Text('Please log in again to continue.'))
           : Form(
-              key: _formKey,
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  _buildNumberField(
-                    controller: _unitNumberController,
-                    label: 'Material Set Number',
+        key: _formKey,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            _buildNumberField(
+              controller: _unitNumberController,
+              label: 'Material Set Number',
+            ),
+            const SizedBox(height: 12),
+            _buildNumberField(
+              controller: _orderController,
+              label: 'Order',
+            ),
+            const SizedBox(height: 12),
+            _buildTextField(controller: _titleController, label: 'Title'),
+            const SizedBox(height: 12),
+            _buildTextField(
+              controller: _titleChineseController,
+              label: 'Title Chinese',
+            ),
+            const SizedBox(height: 12),
+            _buildTextField(
+              controller: _descriptionController,
+              label: 'Description',
+              maxLines: 4,
+            ),
+            const SizedBox(height: 12),
+            _buildNumberField(
+              controller: _totalLessonsController,
+              label: 'Total Materials',
+            ),
+            const SizedBox(height: 12),
+            _buildNumberField(
+              controller: _xpRewardController,
+              label: 'XP Reward',
+            ),
+            const SizedBox(height: 20),
+            _buildMaterialsSection(),
+            const SizedBox(height: 24),
+            SizedBox(
+              height: 52,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _purple,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                  const SizedBox(height: 12),
-                  _buildNumberField(
-                    controller: _orderController,
-                    label: 'Order',
+                ),
+                onPressed: _isLoading ? null : _saveLesson,
+                child: _isLoading
+                    ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.4,
+                    color: Colors.white,
                   ),
-                  const SizedBox(height: 12),
-                  _buildTextField(controller: _titleController, label: 'Title'),
-                  const SizedBox(height: 12),
-                  _buildTextField(
-                    controller: _titleChineseController,
-                    label: 'Title Chinese',
-                  ),
-                  const SizedBox(height: 12),
-                  _buildTextField(
-                    controller: _descriptionController,
-                    label: 'Description',
-                    maxLines: 4,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildNumberField(
-                    controller: _totalLessonsController,
-                    label: 'Total Materials',
-                  ),
-                  const SizedBox(height: 12),
-                  _buildNumberField(
-                    controller: _xpRewardController,
-                    label: 'XP Reward',
-                  ),
-                  const SizedBox(height: 20),
-                  _buildMaterialsSection(),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    height: 52,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _purple,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      onPressed: _isLoading ? null : _saveLesson,
-                      child: _isLoading
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.4,
-                                color: Colors.white,
-                              ),
-                            )
-                          : Text(_isEditMode ? 'Update Materials' : 'Save Materials'),
-                    ),
-                  ),
-                ],
+                )
+                    : Text(_isEditMode ? 'Update Materials' : 'Save Materials'),
               ),
             ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -605,6 +605,45 @@ class _TutorCreateLearningMaterialsPageState extends State<TutorCreateLearningMa
           'createdAt': FieldValue.serverTimestamp(),
           'createdBy': user.uid,
         });
+
+        // ------------------------------------------------------------------
+        // [NEW] NOTIFICATION BLAST TO ALL STUDENTS
+        // ------------------------------------------------------------------
+        try {
+          // 1. Get the tutor's name for the notification
+          final tutorDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+          final String tutorName = '${tutorDoc.data()?['firstName'] ?? 'A'} ${tutorDoc.data()?['lastName'] ?? 'Tutor'}'.trim();
+          final materialTitle = _titleController.text.trim();
+
+          // 2. Fetch all students from Firestore
+          final studentsSnapshot = await FirebaseFirestore.instance
+              .collection('users')
+              .where('role', isEqualTo: 'student')
+              .get();
+
+          // 3. Loop through students and send the notification!
+          for (var doc in studentsSnapshot.docs) {
+            final String? targetToken = doc.data()['fcmToken'];
+
+            if (targetToken != null && targetToken.isNotEmpty) {
+              await Supabase.instance.client.functions.invoke(
+                'send-chat-notification', // Reusing your existing edge function
+                body: {
+                  'fcmToken': targetToken,
+                  'title': '📚 New Material Uploaded!',
+                  'body': '$tutorName has uploaded: $materialTitle',
+                  'chatId': 'system_blast', // Dummy ID so it doesn't break chat logic
+                  'senderId': user.uid,
+                  'senderName': tutorName,
+                },
+              );
+            }
+          }
+          debugPrint('Successfully blasted notifications to all students!');
+        } catch (e) {
+          debugPrint('Notification blast error: $e');
+        }
+        // ------------------------------------------------------------------
       }
 
       await _deleteRemovedStorageObjects();
@@ -655,31 +694,31 @@ class _TutorCreateLearningMaterialsPageState extends State<TutorCreateLearningMa
         materialId: material.id,
         fileName: material.fileName,
       );
-  
-        await Supabase.instance.client.storage
-            .from('lesson_materials')
-            .uploadBinary(
-              storagePath,
-              material.bytes!,
-              fileOptions: FileOptions(
-                contentType: _contentTypeFor(material),
-                upsert: true,
-              ),
-            );
-            
-        final url = Supabase.instance.client.storage
-            .from('lesson_materials')
-            .getPublicUrl(storagePath);
-  
-        materials.add(
-          material
-              .copyWith(url: url, storagePath: storagePath)
-              .toLearningMaterial(),
-        );
-      }
-      
-      return materials;
+
+      await Supabase.instance.client.storage
+          .from('lesson_materials')
+          .uploadBinary(
+        storagePath,
+        material.bytes!,
+        fileOptions: FileOptions(
+          contentType: _contentTypeFor(material),
+          upsert: true,
+        ),
+      );
+
+      final url = Supabase.instance.client.storage
+          .from('lesson_materials')
+          .getPublicUrl(storagePath);
+
+      materials.add(
+        material
+            .copyWith(url: url, storagePath: storagePath)
+            .toLearningMaterial(),
+      );
     }
+
+    return materials;
+  }
 
   Future<void> _deleteRemovedStorageObjects() async {
     for (final storagePath in _storagePathsMarkedForDeletion) {
@@ -689,8 +728,8 @@ class _TutorCreateLearningMaterialsPageState extends State<TutorCreateLearningMa
 
       try {
         await Supabase.instance.client.storage
-              .from('lesson_materials')
-              .remove([storagePath]);
+            .from('lesson_materials')
+            .remove([storagePath]);
       } catch (_) {
         // Ignore cleanup failures so learning material changes can still be saved.
       }
@@ -705,9 +744,9 @@ class _TutorCreateLearningMaterialsPageState extends State<TutorCreateLearningMa
     return rawMaterials
         .map(
           (item) => item is Map
-              ? _DraftMaterial.fromStoredMap(Map<String, dynamic>.from(item))
-              : null,
-        )
+          ? _DraftMaterial.fromStoredMap(Map<String, dynamic>.from(item))
+          : null,
+    )
         .whereType<_DraftMaterial>()
         .toList();
   }
