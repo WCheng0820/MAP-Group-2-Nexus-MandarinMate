@@ -1,53 +1,71 @@
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ChatAttachmentService {
 
-  static Future<Map<String, dynamic>?> pickAndUploadFile() async {
+  static Future<Map<String, dynamic>?> uploadFile() async {
 
     FilePickerResult? result =
-        await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: [
-        'pdf',
-        'doc',
-        'docx',
-        'ppt',
-        'pptx',
-      ],
-    );
+        await FilePicker.platform.pickFiles();
 
-    if (result == null) {
-      return null;
-    }
+    if (result == null) return null;
 
     final file =
         File(result.files.single.path!);
 
     final fileName =
-        result.files.single.name;
+        '${DateTime.now().millisecondsSinceEpoch}_${result.files.single.name}';
 
-    final storageRef =
-        FirebaseStorage.instance
-            .ref()
-            .child('chat_files')
-            .child(
-              DateTime.now()
-                  .millisecondsSinceEpoch
-                  .toString(),
-            )
-            .child(fileName);
+    await Supabase.instance.client.storage
+        .from('chat-files')
+        .upload(fileName, file);
 
-    await storageRef.putFile(file);
-
-    final downloadUrl =
-        await storageRef.getDownloadURL();
+    final url =
+        Supabase.instance.client.storage
+            .from('chat-files')
+            .getPublicUrl(fileName);
 
     return {
-      'fileName': fileName,
-      'fileUrl': downloadUrl,
+      'fileName': result.files.single.name,
+      'fileUrl': url,
     };
   }
+
+  static Future<Map<String, dynamic>?> uploadImage() async {
+
+  final picker = ImagePicker();
+
+  final XFile? image = await picker.pickImage(
+    source: ImageSource.gallery,
+    imageQuality: 80,
+  );
+
+  if (image == null) {
+    return null;
+  }
+
+  final file = File(image.path);
+
+  final fileName =
+      '${DateTime.now().millisecondsSinceEpoch}.jpg';
+
+  await Supabase.instance.client.storage
+      .from('chat-files')
+      .upload(fileName, file);
+
+  final url =
+      Supabase.instance.client.storage
+          .from('chat-files')
+          .getPublicUrl(fileName);
+
+  return {
+    'fileName': fileName,
+    'fileUrl': url,
+  };
+}
+
+  
 }
