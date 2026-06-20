@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mandarinmate/auth/presentation/bloc/auth_bloc.dart';
 import 'package:mandarinmate/models/user_model.dart';
 import 'package:mandarinmate/screens/profile/edit_profile_page.dart'
-    as mandarinmate_edit_profile;
+as mandarinmate_edit_profile;
 import 'package:mandarinmate/dashboard/admin_dashboard_page.dart';
 import 'package:mandarinmate/dashboard/tutor_dashboard_page.dart';
 import 'package:mandarinmate/screens/auth/auth_screen.dart';
@@ -14,6 +14,7 @@ import 'package:mandarinmate/screens/gamified_showcase_page.dart';
 import 'package:mandarinmate/screens/main_screen.dart';
 import 'package:mandarinmate/screens/home_screen.dart';
 import 'package:mandarinmate/screens/splash_screen.dart';
+import 'package:mandarinmate/screens/chat_screen.dart';
 
 class GoRouterRefreshBloc extends ChangeNotifier {
   GoRouterRefreshBloc(AuthBloc bloc) {
@@ -38,65 +39,51 @@ GoRouter buildAppRouter(AuthBloc authBloc) {
     redirect: (context, state) {
       final authState = authBloc.state;
       final location = state.matchedLocation;
-      final isAuthRoute =
-          location == '/auth' ||
-          location == '/login' ||
-          location == '/forgot-password' ||
-          location == '/';
-      final isProtectedRoute =
-          location == '/main' ||
-          location == '/home' ||
-          location == '/tutor-dashboard' ||
-          location == '/admin-dashboard';
-      final isPublicRoute =
-          location == '/splash' || location == '/ui-gamified' || isAuthRoute;
 
-      if (location == '/splash') {
+      final isAuthRoute = location == '/auth' || location == '/login' || location == '/forgot-password' || location == '/';
+
+      // --- THE ULTIMATE ROUTING LOGIC ---
+
+      // 1. If we are still checking Firebase (Loading), stay exactly where we are
+      // (This prevents the app from breaking the Chat deep link!)
+      if (authState is AuthInitial || authState is AuthLoading) {
         return null;
       }
 
-      if (authState is AuthUnauthenticated && !isPublicRoute) {
+      // 2. If the user is completely logged out
+      if (authState is AuthUnauthenticated) {
+        // Allow them to sit on the login screens or gamified UI
+        if (isAuthRoute || location == '/ui-gamified') {
+          return null;
+        }
+        // If they are anywhere else (like Splash or Dashboard), kick them to Login
         return '/auth';
       }
 
-      // --- THE FIX IS HERE ---
+      // 3. If the user IS logged in successfully
       if (authState is AuthAuthenticated) {
         final profile = authState.profile;
         final role = profile.role;
 
         // Force profile setup if missing
-        if (!profile.isProfileComplete &&
-            location != '/edit-profile-onboarding') {
+        if (!profile.isProfileComplete && location != '/edit-profile-onboarding') {
           return '/edit-profile-onboarding';
         }
 
-        // 1. If they are already logged in but sitting on the Login/Register screen,
-        // immediately redirect them to their specific dashboard.
-        if (isAuthRoute ||
-            (profile.isProfileComplete &&
-                location == '/edit-profile-onboarding')) {
+        // If they are on the Splash Screen OR a Login Screen, push them straight to their Dashboard!
+        if (location == '/splash' || isAuthRoute || (profile.isProfileComplete && location == '/edit-profile-onboarding')) {
           if (role == UserRole.student) return '/main';
           if (role == UserRole.tutor) return '/tutor-dashboard';
           if (role == UserRole.admin) return '/admin-dashboard';
         }
 
-        // 2. If they are trying to access the WRONG dashboard for their role,
-        // redirect them to the correct one.
-        if (isProtectedRoute && profile.isProfileComplete) {
-          if (role == UserRole.student && location != '/main') {
-            return '/main';
-          }
-          if (role == UserRole.tutor && location != '/tutor-dashboard') {
-            return '/tutor-dashboard';
-          }
-          if (role == UserRole.admin && location != '/admin-dashboard') {
-            return '/admin-dashboard';
-          }
-        }
+        // Protect dashboards from the wrong roles
+        if (location == '/main' && role != UserRole.student) return '/tutor-dashboard';
+        if (location == '/tutor-dashboard' && role != UserRole.tutor) return '/main';
       }
 
-      return null;
-    }, // End of redirect
+      return null; // Allows deep links (like /chat) to pass through safely!
+    },
 
     routes: [
       GoRoute(
@@ -122,16 +109,25 @@ GoRouter buildAppRouter(AuthBloc authBloc) {
       GoRoute(
         path: '/edit-profile-onboarding',
         builder: (context, state) =>
-            const mandarinmate_edit_profile.EditProfilePage(
-              roleColor: Color(
-                0xFFD32F2F,
-              ), // Generic red, the page can override it based on the actual profile
-              isFirstTime: true,
-            ),
+        const mandarinmate_edit_profile.EditProfilePage(
+          roleColor: Color(0xFFD32F2F),
+          isFirstTime: true,
+        ),
       ),
       GoRoute(
         path: '/ui-gamified',
         builder: (context, state) => const GamifiedShowcasePage(),
+      ),
+      GoRoute(
+        path: '/chat',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          return ChatScreen(
+            chatId: extra['chatId'] ?? '',
+            receiverName: extra['receiverName'] ?? 'User',
+            receiverId: extra['receiverId'] ?? '',
+          );
+        },
       ),
     ],
   );

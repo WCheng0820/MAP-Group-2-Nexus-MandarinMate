@@ -6,17 +6,17 @@ import 'package:mandarinmate/lessons/domain/lesson_model.dart';
 import 'package:mandarinmate/auth/presentation/bloc/auth_bloc.dart';
 import 'package:mandarinmate/models/user_model.dart';
 import 'package:mandarinmate/screens/profile/edit_profile_page.dart'
-    as mandarinmate_edit_profile;
+as mandarinmate_edit_profile;
 import 'package:mandarinmate/screens/profile/badges_achievements_page.dart';
 import 'package:mandarinmate/flashcards/presentation/pages/flashcard_levels_page.dart';
 import 'package:mandarinmate/lessons/presentation/pages/lesson_detail_page.dart';
 import 'package:mandarinmate/screens/daily_challenge_page.dart';
 import 'package:mandarinmate/lessons/presentation/pages/vocab_lesson_page.dart';
 import 'package:mandarinmate/lessons/presentation/pages/active_lesson_screen.dart'
-    as new_lessons;
+as new_lessons;
 import 'package:mandarinmate/lessons/data/mock_lessons.dart';
 import 'package:mandarinmate/lessons/presentation/bloc/active_lesson_bloc.dart'
-    as new_bloc;
+as new_bloc;
 import 'package:mandarinmate/lessons/domain/active_lesson_model.dart';
 import 'dart:math' as math;
 import 'package:mandarinmate/models/badge_config_model.dart';
@@ -66,9 +66,9 @@ class _MainScreenState extends State<MainScreen> {
             label: 'Learn',
           ),
           NavigationDestination(
-            icon: Icon(Icons.chat_bubble_rounded),
-            selectedIcon: Icon(
-              Icons.chat_bubble_rounded,
+            icon: _ChatBadgeIcon(iconData: Icons.chat_bubble_rounded),
+            selectedIcon: _ChatBadgeIcon(
+              iconData: Icons.chat_bubble_rounded,
               color: _StudentColors.red,
             ),
             label: 'Chat',
@@ -109,9 +109,9 @@ class _HomeTabState extends State<_HomeTab> {
         stream: uid == null
             ? null
             : FirebaseFirestore.instance
-                  .collection('users')
-                  .doc(uid)
-                  .snapshots(),
+            .collection('users')
+            .doc(uid)
+            .snapshots(),
         builder: (context, userSnapshot) {
           final data = userSnapshot.data?.data() ?? <String, dynamic>{};
           final name = _displayName(data);
@@ -136,16 +136,16 @@ class _HomeTabState extends State<_HomeTab> {
                 .snapshots(),
             builder: (context, lessonsSnapshot) {
               List<QueryDocumentSnapshot<Map<String, dynamic>>> vocabDocRefs =
-                  [];
+              [];
               if (lessonsSnapshot.hasData) {
                 vocabDocRefs = lessonsSnapshot.data!.docs.where((doc) {
                   final type = doc.data()['type'] as String?;
                   final materialsList = doc.data()['materials'] as List?;
                   final isMaterial =
                       type == 'material' ||
-                      (type != 'vocab_unit' &&
-                          materialsList != null &&
-                          materialsList.isNotEmpty);
+                          (type != 'vocab_unit' &&
+                              materialsList != null &&
+                              materialsList.isNotEmpty);
                   return !isMaterial; // Only dynamic vocab units
                 }).toList();
               }
@@ -163,7 +163,7 @@ class _HomeTabState extends State<_HomeTab> {
 
                   final totalLessons = allUnits.fold<int>(
                     0,
-                    (total, unit) => total + unit.lessons.length,
+                        (total, unit) => total + unit.lessons.length,
                   );
                   final completedCount = completedLessons
                       .where((id) => !id.toString().startsWith('daily_challenge_'))
@@ -195,7 +195,7 @@ class _HomeTabState extends State<_HomeTab> {
                           title: 'Learning Dashboard',
                           headline: 'Level $level Mandarin',
                           subtitle:
-                              '${(courseProgress * 100).round()}% Course Completed',
+                          '${(courseProgress * 100).round()}% Course Completed',
                           xp: xp,
                           progress: courseProgress,
                           actionLabel: nextLesson != null
@@ -203,21 +203,21 @@ class _HomeTabState extends State<_HomeTab> {
                               : 'Course Completed',
                           onAction: nextLesson != null
                               ? () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => BlocProvider(
-                                        create: (_) => new_bloc.LessonBloc()
-                                          ..add(
-                                            new_bloc.StartLesson(nextLesson!),
-                                          ),
-                                        child: new_lessons.LessonScreen(
-                                          lesson: nextLesson!,
-                                        ),
-                                      ),
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => BlocProvider(
+                                  create: (_) => new_bloc.LessonBloc()
+                                    ..add(
+                                      new_bloc.StartLesson(nextLesson!),
                                     ),
-                                  );
-                                }
+                                  child: new_lessons.LessonScreen(
+                                    lesson: nextLesson!,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
                               : widget.onOpenLearn,
                         ),
                         const SizedBox(height: 16),
@@ -358,7 +358,7 @@ class _HomeContinueLessonCard extends StatelessWidget {
           MaterialPageRoute(
             builder: (context) => BlocProvider(
               create: (_) =>
-                  new_bloc.LessonBloc()..add(new_bloc.StartLesson(nextLesson!)),
+              new_bloc.LessonBloc()..add(new_bloc.StartLesson(nextLesson!)),
               child: new_lessons.LessonScreen(lesson: nextLesson!),
             ),
           ),
@@ -385,7 +385,7 @@ class _HomeContinueLessonCard extends StatelessWidget {
               height: 50,
               decoration: BoxDecoration(
                 color:
-                    targetUnit?.color.withValues(alpha: 0.1) ??
+                targetUnit?.color.withValues(alpha: 0.1) ??
                     _StudentColors.red.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -644,12 +644,12 @@ class _LearnTab extends StatelessWidget {
             .where((i) => i.type == LessonType.vocabulary)
             .map(
               (i) => VocabItem(
-                chinese: i.chinese,
-                pinyin: i.pinyin,
-                english: i.english,
-                malay: i.english, // Fallback
-              ),
-            )
+            chinese: i.chinese,
+            pinyin: i.pinyin,
+            english: i.english,
+            malay: i.english, // Fallback
+          ),
+        )
             .toList();
 
         if (!context.mounted) return;
@@ -699,9 +699,9 @@ class _LearnTab extends StatelessWidget {
       final materialsList = doc.data()['materials'] as List?;
       final isMaterial =
           type == 'material' ||
-          (type != 'vocab_unit' &&
-              materialsList != null &&
-              materialsList.isNotEmpty);
+              (type != 'vocab_unit' &&
+                  materialsList != null &&
+                  materialsList.isNotEmpty);
       return !isMaterial; // Only dynamic vocab units
     }).toList();
 
@@ -723,10 +723,10 @@ class _LearnTab extends StatelessWidget {
   }
 
   static Future<void> openUnitDetail(
-    BuildContext context,
-    LessonUnit unit,
-    bool isCompleted,
-  ) async {
+      BuildContext context,
+      LessonUnit unit,
+      bool isCompleted,
+      ) async {
     final vocabSnapshot = await FirebaseFirestore.instance
         .collection('lessons')
         .doc(unit.id)
@@ -803,9 +803,9 @@ class _LearnTab extends StatelessWidget {
         stream: uid == null
             ? null
             : FirebaseFirestore.instance
-                  .collection('users')
-                  .doc(uid)
-                  .snapshots(),
+            .collection('users')
+            .doc(uid)
+            .snapshots(),
         builder: (context, userSnapshot) {
           final data = userSnapshot.data?.data() ?? <String, dynamic>{};
           final xp = _toInt(
@@ -889,10 +889,10 @@ class _LessonsList extends StatelessWidget {
   });
 
   final Future<void> Function(
-    BuildContext context,
-    LessonUnit unit,
-    bool isCompleted,
-  )
+      BuildContext context,
+      LessonUnit unit,
+      bool isCompleted,
+      )
   onOpenUnit;
   final List<String> completedLessons;
 
@@ -924,9 +924,9 @@ class _LessonsList extends StatelessWidget {
 
           final isMaterial =
               type == 'material' ||
-              (type != 'vocab_unit' &&
-                  materialsList != null &&
-                  materialsList.isNotEmpty);
+                  (type != 'vocab_unit' &&
+                      materialsList != null &&
+                      materialsList.isNotEmpty);
 
           if (isMaterial) {
             communityUnits.add(LessonUnit.fromFirestore(data, doc.id));
@@ -1311,10 +1311,10 @@ class _LessonCard extends StatelessWidget {
 
   final LessonUnit unit;
   final Future<void> Function(
-    BuildContext context,
-    LessonUnit unit,
-    bool isCompleted,
-  )
+      BuildContext context,
+      LessonUnit unit,
+      bool isCompleted,
+      )
   onTap;
   final bool isCompleted;
 
@@ -1468,7 +1468,7 @@ class _LeaderboardSheet extends StatelessWidget {
 
         final entries = _leaderboardEntriesFromDocs(docs);
         final currentIndex = entries.indexWhere(
-          (entry) => entry.uid == currentUid,
+              (entry) => entry.uid == currentUid,
         );
         final currentEntry = currentIndex >= 0 ? entries[currentIndex] : null;
         final nextEntry = currentIndex > 0 ? entries[currentIndex - 1] : null;
@@ -1520,7 +1520,7 @@ class _LeaderboardSheet extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               ...displayEntries.map(
-                (entry) => _LeaderboardRankTile(
+                    (entry) => _LeaderboardRankTile(
                   entry: entry,
                   isCurrentUser: entry.uid == currentUid,
                 ),
@@ -1554,8 +1554,8 @@ class _LeaderboardEntry {
 }
 
 List<_LeaderboardEntry> _leaderboardEntriesFromDocs(
-  List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
-) {
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+    ) {
   final sortedDocs = [...docs]
     ..sort((a, b) {
       final aData = a.data();
@@ -1857,7 +1857,7 @@ class _LeaderboardSummaryCard extends StatelessWidget {
             ? _leaderboardEntriesFromDocs(snapshot.data!.docs)
             : const <_LeaderboardEntry>[];
         final rankIndex = entries.indexWhere(
-          (entry) => entry.uid == currentUid,
+              (entry) => entry.uid == currentUid,
         );
         final rankText = rankIndex >= 0 ? '#${rankIndex + 1}' : '--';
         final totalStudents = entries.length;
@@ -2096,9 +2096,9 @@ class _ProgressSheet extends StatelessWidget {
                 final materialsList = doc.data()['materials'] as List?;
                 final isMaterial =
                     type == 'material' ||
-                    (type != 'vocab_unit' &&
-                        materialsList != null &&
-                        materialsList.isNotEmpty);
+                        (type != 'vocab_unit' &&
+                            materialsList != null &&
+                            materialsList.isNotEmpty);
                 return !isMaterial; // Only dynamic vocab units
               }).toList();
             }
@@ -2111,12 +2111,12 @@ class _ProgressSheet extends StatelessWidget {
 
                 final totalLessons = allUnits.fold<int>(
                   0,
-                  (total, unit) => total + unit.lessons.length,
+                      (total, unit) => total + unit.lessons.length,
                 );
                 final courseProgress = totalLessons > 0
                     ? completedLessons
-                        .where((id) => !id.toString().startsWith('daily_challenge_'))
-                        .length / totalLessons
+                    .where((id) => !id.toString().startsWith('daily_challenge_'))
+                    .length / totalLessons
                     : 0.0;
 
                 // Find the next incomplete lesson
@@ -2150,7 +2150,7 @@ class _ProgressSheet extends StatelessWidget {
                         title: 'Current Level',
                         headline: 'Level $level',
                         subtitle:
-                            '${(courseProgress * 100).round()}% Course Completed',
+                        '${(courseProgress * 100).round()}% Course Completed',
                         xp: xp,
                         progress: courseProgress,
                         actionLabel: nextLesson != null
@@ -2158,22 +2158,22 @@ class _ProgressSheet extends StatelessWidget {
                             : 'Course Completed',
                         onAction: nextLesson != null
                             ? () {
-                                Navigator.pop(context); // Close sheet
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => BlocProvider(
-                                      create: (_) => new_bloc.LessonBloc()
-                                        ..add(
-                                          new_bloc.StartLesson(nextLesson!),
-                                        ),
-                                      child: new_lessons.LessonScreen(
-                                        lesson: nextLesson!,
-                                      ),
-                                    ),
+                          Navigator.pop(context); // Close sheet
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => BlocProvider(
+                                create: (_) => new_bloc.LessonBloc()
+                                  ..add(
+                                    new_bloc.StartLesson(nextLesson!),
                                   ),
-                                );
-                              }
+                                child: new_lessons.LessonScreen(
+                                  lesson: nextLesson!,
+                                ),
+                              ),
+                            ),
+                          );
+                        }
                             : () => Navigator.pop(context),
                       ),
                     ],
@@ -2288,9 +2288,9 @@ class _ProfileTabState extends State<_ProfileTab> {
         final materialsList = doc.data()['materials'] as List?;
         final isMaterial =
             type == 'material' ||
-            (type != 'vocab_unit' &&
-                materialsList != null &&
-                materialsList.isNotEmpty);
+                (type != 'vocab_unit' &&
+                    materialsList != null &&
+                    materialsList.isNotEmpty);
         return !isMaterial;
       }).toList();
 
@@ -2335,11 +2335,11 @@ class _ProfileTabState extends State<_ProfileTab> {
   }
 
   int _getUnlockedBadgesCount(
-    int xp,
-    int streak,
-    List<dynamic> completedLessons,
-    int level,
-  ) {
+      int xp,
+      int streak,
+      List<dynamic> completedLessons,
+      int level,
+      ) {
     // If configs haven't loaded yet, use fallback hardcoded values
     if (badgeConfigs == null) {
       int count = 0;
@@ -2417,7 +2417,7 @@ class _ProfileTabState extends State<_ProfileTab> {
     if (badgeConfigs!['graduate'] != null) {
       final config = badgeConfigs!['graduate']!;
       if ((config.lessonThreshold != null &&
-              completedLessons.length >= config.lessonThreshold!) ||
+          completedLessons.length >= config.lessonThreshold!) ||
           (config.levelThreshold != null && level >= config.levelThreshold!)) {
         count++;
       }
@@ -2438,8 +2438,8 @@ class _ProfileTabState extends State<_ProfileTab> {
         final data = snapshot.data?.data() ?? <String, dynamic>{};
         final name = _displayName(data);
         final email =
-            (data['email'] ?? FirebaseAuth.instance.currentUser?.email ?? '')
-                .toString();
+        (data['email'] ?? FirebaseAuth.instance.currentUser?.email ?? '')
+            .toString();
         final xp = _toInt(
           data['xp'],
           fallback: _toInt(data['xpPoints'], fallback: 0),
@@ -2470,9 +2470,9 @@ class _ProfileTabState extends State<_ProfileTab> {
         // 2. Calculate dynamic unit quizzes completed
         final int unitQuizzesCount = completedLessons
             .where((id) =>
-                id.toString().endsWith('_quiz') ||
-                id.toString().endsWith('_quiz_item') ||
-                id.toString().contains('rev_quiz'))
+        id.toString().endsWith('_quiz') ||
+            id.toString().endsWith('_quiz_item') ||
+            id.toString().contains('rev_quiz'))
             .length;
 
         // 3. Count standard curriculum lessons completed (excluding daily challenges)
@@ -2551,9 +2551,9 @@ class _ProfileTabState extends State<_ProfileTab> {
                                     context,
                                     MaterialPageRoute(
                                       builder: (_) =>
-                                          const mandarinmate_edit_profile.EditProfilePage(
-                                            roleColor: _StudentColors.orange,
-                                          ),
+                                      const mandarinmate_edit_profile.EditProfilePage(
+                                        roleColor: _StudentColors.orange,
+                                      ),
                                     ),
                                   );
                                 },
@@ -2605,9 +2605,9 @@ class _ProfileTabState extends State<_ProfileTab> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (_) =>
-                                        const mandarinmate_edit_profile.EditProfilePage(
-                                          roleColor: _StudentColors.orange,
-                                        ),
+                                    const mandarinmate_edit_profile.EditProfilePage(
+                                      roleColor: _StudentColors.orange,
+                                    ),
                                   ),
                                 );
                               },
@@ -2808,7 +2808,7 @@ class _ProfileTabState extends State<_ProfileTab> {
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    CrossAxisAlignment.start,
                                     children: [
                                       const Text(
                                         'Current Level',
@@ -3163,9 +3163,9 @@ class _ProfileTabState extends State<_ProfileTab> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (_) =>
-                                        const mandarinmate_edit_profile.EditProfilePage(
-                                          roleColor: _StudentColors.orange,
-                                        ),
+                                    const mandarinmate_edit_profile.EditProfilePage(
+                                      roleColor: _StudentColors.orange,
+                                    ),
                                   ),
                                 );
                               },
@@ -3603,11 +3603,11 @@ int _toInt(dynamic value, {required int fallback}) {
 }
 
 int _unlockedBadgesCount(
-  int xp,
-  int streak,
-  List<dynamic> completedLessons,
-  int level,
-) {
+    int xp,
+    int streak,
+    List<dynamic> completedLessons,
+    int level,
+    ) {
   int count = 0;
   if (streak >= 7) count++;
   if (completedLessons.isNotEmpty || xp >= 30) count++;
@@ -3633,8 +3633,8 @@ String _displayName(Map<String, dynamic> data) {
 }
 
 Future<List<CourseUnit>> _fetchDynamicUnits(
-  List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
-) async {
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+    ) async {
   final list = <CourseUnit>[];
   for (int dIndex = 0; dIndex < docs.length; dIndex++) {
     final doc = docs[dIndex];
@@ -3707,8 +3707,8 @@ Future<List<CourseUnit>> _fetchDynamicUnits(
         id: doc.id,
         title: 'Unit $uNum: ${data['title'] ?? 'Unit'}',
         subtitle:
-            (data['titleChinese'] != null &&
-                data['titleChinese'].toString().trim().isNotEmpty)
+        (data['titleChinese'] != null &&
+            data['titleChinese'].toString().trim().isNotEmpty)
             ? data['titleChinese'].toString().trim()
             : (data['description'] ?? 'Vocabulary'),
         color: color,
@@ -3751,9 +3751,9 @@ class _CoursePathViewState extends State<_CoursePathView> {
             final materialsList = doc.data()['materials'] as List?;
             final isMaterial =
                 type == 'material' ||
-                (type != 'vocab_unit' &&
-                    materialsList != null &&
-                    materialsList.isNotEmpty);
+                    (type != 'vocab_unit' &&
+                        materialsList != null &&
+                        materialsList.isNotEmpty);
             return !isMaterial; // Only dynamic vocab units
           }).toList();
         }
@@ -3868,47 +3868,47 @@ class _CoursePathViewState extends State<_CoursePathView> {
                                           color: isCompleted
                                               ? unit.color
                                               : (isUnlocked
-                                                    ? unit.color.withValues(
-                                                        alpha: 0.5,
-                                                      )
-                                                    : Colors.grey.shade300),
+                                              ? unit.color.withValues(
+                                            alpha: 0.5,
+                                          )
+                                              : Colors.grey.shade300),
                                           shape: BoxShape.circle,
                                           border: isCompleted
                                               ? null
                                               : Border.all(
-                                                  color: isUnlocked
-                                                      ? unit.color
-                                                      : Colors.grey.shade400,
-                                                  width: 3,
-                                                ),
+                                            color: isUnlocked
+                                                ? unit.color
+                                                : Colors.grey.shade400,
+                                            width: 3,
+                                          ),
                                         ),
                                         child: isCompleted
                                             ? const Icon(
-                                                Icons.check,
-                                                color: Colors.white,
-                                                size: 20,
-                                              )
+                                          Icons.check,
+                                          color: Colors.white,
+                                          size: 20,
+                                        )
                                             : (isUnlocked
-                                                  ? const Icon(
-                                                      Icons.play_arrow,
-                                                      color: Colors.white,
-                                                      size: 18,
-                                                    )
-                                                  : const Icon(
-                                                      Icons.lock,
-                                                      color: Colors.grey,
-                                                      size: 16,
-                                                    )),
+                                            ? const Icon(
+                                          Icons.play_arrow,
+                                          color: Colors.white,
+                                          size: 18,
+                                        )
+                                            : const Icon(
+                                          Icons.lock,
+                                          color: Colors.grey,
+                                          size: 16,
+                                        )),
                                       ),
                                       if (!isLast)
                                         Expanded(
                                           child: Container(
                                             width: 4,
                                             color:
-                                                widget.completedLessons
-                                                    .contains(
-                                                      unit.lessons[index].id,
-                                                    )
+                                            widget.completedLessons
+                                                .contains(
+                                              unit.lessons[index].id,
+                                            )
                                                 ? unit.color
                                                 : Colors.grey.shade200,
                                           ),
@@ -3923,25 +3923,25 @@ class _CoursePathViewState extends State<_CoursePathView> {
                                     child: InkWell(
                                       onTap: isUnlocked
                                           ? () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) => BlocProvider(
-                                                    create: (_) =>
-                                                        new_bloc.LessonBloc()
-                                                          ..add(
-                                                            new_bloc.StartLesson(
-                                                              lesson,
-                                                            ),
-                                                          ),
-                                                    child:
-                                                        new_lessons.LessonScreen(
-                                                          lesson: lesson,
-                                                        ),
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => BlocProvider(
+                                              create: (_) =>
+                                              new_bloc.LessonBloc()
+                                                ..add(
+                                                  new_bloc.StartLesson(
+                                                    lesson,
                                                   ),
                                                 ),
-                                              );
-                                            }
+                                              child:
+                                              new_lessons.LessonScreen(
+                                                lesson: lesson,
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      }
                                           : null,
                                       child: Opacity(
                                         opacity: isUnlocked ? 1.0 : 0.5,
@@ -3964,23 +3964,23 @@ class _CoursePathViewState extends State<_CoursePathView> {
                                           ),
                                           child: Column(
                                             crossAxisAlignment:
-                                                CrossAxisAlignment.start,
+                                            CrossAxisAlignment.start,
                                             children: [
                                               Row(
                                                 mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceBetween,
+                                                MainAxisAlignment
+                                                    .spaceBetween,
                                                 children: [
                                                   Expanded(
                                                     child: Text(
                                                       lesson.title,
                                                       maxLines: 1,
                                                       overflow:
-                                                          TextOverflow.ellipsis,
+                                                      TextOverflow.ellipsis,
                                                       style: const TextStyle(
                                                         fontSize: 18,
                                                         fontWeight:
-                                                            FontWeight.bold,
+                                                        FontWeight.bold,
                                                       ),
                                                     ),
                                                   ),
@@ -3994,7 +3994,7 @@ class _CoursePathViewState extends State<_CoursePathView> {
                                                               .orange
                                                               .shade700,
                                                           fontWeight:
-                                                              FontWeight.bold,
+                                                          FontWeight.bold,
                                                         ),
                                                       ),
                                                       Icon(
@@ -4129,6 +4129,51 @@ class _CoursePathViewState extends State<_CoursePathView> {
     );
   }
 }
+
+// -----------------------------------------------------
+// SMART CHAT BADGE COMPONENT
+// -----------------------------------------------------
+class _ChatBadgeIcon extends StatelessWidget {
+  final IconData iconData;
+  final Color? color;
+
+  const _ChatBadgeIcon({required this.iconData, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return Icon(iconData, color: color);
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('chats').snapshots(),
+      builder: (context, snapshot) {
+        int unreadCount = 0;
+
+        if (snapshot.hasData) {
+          for (var doc in snapshot.data!.docs) {
+            final data = doc.data() as Map<String, dynamic>;
+
+            // If the message is NOT from us, is unread, and we are part of this chat
+            if (data['lastMessageSenderId'] != currentUser.uid &&
+                data['isLastMessageRead'] == false &&
+                doc.id.contains(currentUser.uid)) {
+              unreadCount++;
+            }
+          }
+        }
+
+        return Badge(
+          isLabelVisible: unreadCount > 0,
+          backgroundColor: Colors.red,
+          // Uncomment the line below if you want a number inside the dot!
+          // label: Text('$unreadCount', style: const TextStyle(color: Colors.white, fontSize: 10)),
+          child: Icon(iconData, color: color),
+        );
+      },
+    );
+  }
+}
+
 // -----------------------------------------------------
 // WEEKLY PROGRESS CHART COMPONENT
 // -----------------------------------------------------
@@ -4160,8 +4205,8 @@ class _WeeklyProgressChart extends StatelessWidget {
       // Check if this specific column is "Today"
       final isToday =
           date.year == now.year &&
-          date.month == now.month &&
-          date.day == now.day;
+              date.month == now.month &&
+              date.day == now.day;
 
       weeklyData.add({'day': weekdays[i], 'xp': xp, 'isToday': isToday});
     }
@@ -4218,7 +4263,6 @@ class _WeeklyProgressChart extends StatelessWidget {
                         overflow: TextOverflow.visible,
                         style: TextStyle(
                           fontSize: 10,
-                          // Darker orange if it's today, otherwise standard orange
                           color: isToday
                               ? _StudentColors.red
                               : _StudentColors.orange,
@@ -4250,12 +4294,10 @@ class _WeeklyProgressChart extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      // The fixed M T W T F S S letters
                       Text(
                         data['day'],
                         maxLines: 1,
                         style: TextStyle(
-                          // Highlight today's letter in red and bold
                           color: isToday
                               ? _StudentColors.red
                               : _StudentColors.muted,
