@@ -25,9 +25,20 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
   final currentUser = FirebaseAuth.instance.currentUser!;
 
   StreamSubscription<DocumentSnapshot>? _chatSubscription;
+  StreamSubscription<QuerySnapshot>? _unreadMessagesSubscription;
+  Map<String, dynamic>? _receiverData;
+
+  bool _isSearching = false;
+  String _searchQuery = '';
+
+  final ScrollController _scrollController = ScrollController();
+  bool _showScrollToBottom = false;
+  bool _firstScrollDone = false;
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -36,6 +47,20 @@ class _ChatScreenState extends State<ChatScreen> {
     // Instantly clear system tray pop-ups!
     _clearSystemNotifications();
 
+    _loadReceiverData();
+
+    _scrollController.addListener(() {
+      if (!_scrollController.hasClients) return;
+      final maxScroll = _scrollController.position.maxScrollExtent;
+      final offset = _scrollController.offset;
+      final show = offset < maxScroll - 200;
+      if (show != _showScrollToBottom) {
+        setState(() {
+          _showScrollToBottom = show;
+        });
+      }
+    });
+
     // Instantly mark messages as read if we are looking at the screen
     _chatSubscription = FirebaseFirestore.instance
         .collection('chats')
@@ -43,7 +68,7 @@ class _ChatScreenState extends State<ChatScreen> {
         .snapshots()
         .listen((snapshot) {
       if (snapshot.exists) {
-        final data = snapshot.data() as Map<String, dynamic>?;
+        final data = snapshot.data();
         if (data != null &&
             data['lastMessageSenderId'] != currentUser.uid &&
             data['isLastMessageRead'] == false) {
@@ -51,12 +76,46 @@ class _ChatScreenState extends State<ChatScreen> {
         }
       }
     });
+
+    // Subscriptions to messages to mark them as read instantly
+    _unreadMessagesSubscription = FirebaseFirestore.instance
+        .collection('chats')
+        .doc(widget.chatId)
+        .collection('messages')
+        .where('senderId', isEqualTo: widget.receiverId)
+        .where('isRead', isEqualTo: false)
+        .snapshots()
+        .listen((snapshot) {
+      if (snapshot.docs.isNotEmpty) {
+        final batch = FirebaseFirestore.instance.batch();
+        for (var doc in snapshot.docs) {
+          batch.update(doc.reference, {'isRead': true});
+        }
+        batch.commit();
+      }
+    });
+  }
+
+  Future<void> _loadReceiverData() async {
+    try {
+      final doc = await FirebaseFirestore.instance.collection('users').doc(widget.receiverId).get();
+      if (mounted) {
+        setState(() {
+          _receiverData = doc.data();
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading receiver profile: $e');
+    }
   }
 
   @override
   void dispose() {
     _chatSubscription?.cancel();
+    _unreadMessagesSubscription?.cancel();
     _messageController.dispose();
+    _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -121,10 +180,11 @@ class _ChatScreenState extends State<ChatScreen> {
   // ------------------------------------------------------------------
 
   Future<void> sendMessage() async {
-    final text = _messageController.text.trim();
-    if (text.isEmpty) return;
+    if (!_formKey.currentState!.validate()) return;
 
+    final text = _messageController.text.trim();
     _messageController.clear(); // Clear instantly for better UX
+    _formKey.currentState!.reset(); // Reset validation state
 
     // Save message
     await FirebaseFirestore.instance
@@ -136,10 +196,12 @@ class _ChatScreenState extends State<ChatScreen> {
       'text': text,
       'messageType': 'text',
       'timestamp': FieldValue.serverTimestamp(),
+      'isRead': false,
     });
 
     // Call our new helper function
     await _updateSnippetAndNotify(text);
+    _scrollToBottom();
   }
 
   Future<void> sendImage() async {
@@ -153,10 +215,12 @@ class _ChatScreenState extends State<ChatScreen> {
       'fileUrl': result['fileUrl'],
       'fileName': result['fileName'],
       'timestamp': FieldValue.serverTimestamp(),
+      'isRead': false,
     });
 
     // Call our helper with a custom image message!
     await _updateSnippetAndNotify('📷 Photo');
+    _scrollToBottom();
   }
 
   Future<void> sendAttachment() async {
@@ -170,10 +234,12 @@ class _ChatScreenState extends State<ChatScreen> {
       'fileName': result['fileName'],
       'fileUrl': result['fileUrl'],
       'timestamp': FieldValue.serverTimestamp(),
+      'isRead': false,
     });
 
     // Call our helper with a custom file message!
     await _updateSnippetAndNotify('📄 ${result['fileName']}');
+    _scrollToBottom();
   }
 
   Future<void> showAttachmentMenu() async {
@@ -220,60 +286,406 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  DateTime _getDateTimeOfMessage(Map<String, dynamic> message) {
+    final ts = message['timestamp'] as Timestamp?;
+    return ts != null ? ts.toDate() : DateTime.now();
+  }
+
+  String _formatDateHeader(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final msgDate = DateTime(date.year, date.month, date.day);
+
+    if (msgDate == today) {
+      return 'Today';
+    } else if (msgDate == yesterday) {
+      return 'Yesterday';
+    } else {
+      final months = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+      ];
+      return '${months[date.month - 1]} ${date.day}, ${date.year}';
+    }
+  }
+
+  Widget _buildDateHeader(DateTime date) {
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade200,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Text(
+          _formatDateHeader(date),
+          style: TextStyle(
+            color: Colors.grey.shade600,
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatTime(Timestamp? timestamp) {
+    if (timestamp == null) return '';
+    final date = timestamp.toDate();
+    final hour24 = date.hour;
+    final hour = hour24 == 0 ? 12 : (hour24 > 12 ? hour24 - 12 : hour24);
+    final minute = date.minute.toString().padLeft(2, '0');
+    final amPm = hour24 >= 12 ? 'PM' : 'AM';
+    return '$hour:$minute $amPm';
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  void _scrollToUnreadOrBottom(List<QueryDocumentSnapshot> messages) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scrollController.hasClients) return;
+      
+      int firstUnreadIndex = -1;
+      for (int i = 0; i < messages.length; i++) {
+        final data = messages[i].data() as Map<String, dynamic>;
+        final isMe = data['senderId'] == currentUser.uid;
+        final isRead = data['isRead'] as bool? ?? true;
+        if (!isMe && !isRead) {
+          firstUnreadIndex = i;
+          break;
+        }
+      }
+      
+      if (firstUnreadIndex != -1) {
+        // Estimate scroll position: 85.0 average height per message item
+        double targetOffset = firstUnreadIndex * 85.0;
+        final maxScroll = _scrollController.position.maxScrollExtent;
+        if (targetOffset > maxScroll) {
+          targetOffset = maxScroll;
+        }
+        _scrollController.jumpTo(targetOffset);
+      } else {
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.receiverName)),
+      appBar: AppBar(
+        titleSpacing: 0,
+        title: _isSearching
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                style: const TextStyle(color: Colors.blue, fontSize: 16),
+                cursorColor: Colors.blue,
+                decoration: const InputDecoration(
+                  hintText: 'Search messages...',
+                  hintStyle: TextStyle(color: Colors.blueGrey),
+                  border: InputBorder.none,
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value;
+                  });
+                },
+              )
+            : Row(
+                children: [
+                  CircleAvatar(
+                    radius: 18,
+                    backgroundColor: Colors.orange.shade200,
+                    backgroundImage: (_receiverData?['profileImageUrl'] != null &&
+                            (_receiverData!['profileImageUrl'] as String).isNotEmpty)
+                        ? NetworkImage(_receiverData!['profileImageUrl'])
+                        : null,
+                    child: (_receiverData?['profileImageUrl'] == null ||
+                            (_receiverData!['profileImageUrl'] as String).isEmpty)
+                        ? Text(
+                            widget.receiverName.isNotEmpty ? widget.receiverName[0].toUpperCase() : 'U',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          )
+                        : null,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _receiverData != null
+                          ? '${_receiverData!['firstName']} ${_receiverData!['lastName']}'
+                          : widget.receiverName,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+        actions: [
+          if (_isSearching)
+            IconButton(
+              icon: const Icon(Icons.close, color: Colors.blue),
+              onPressed: () {
+                setState(() {
+                  _isSearching = false;
+                  _searchQuery = '';
+                  _searchController.clear();
+                });
+              },
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.search, color: Colors.blue),
+              onPressed: () {
+                setState(() {
+                  _isSearching = true;
+                });
+              },
+            ),
+        ],
+      ),
       body: Column(
         children: [
           Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance.collection('chats').doc(widget.chatId).collection('messages').orderBy('timestamp').snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-                final messages = snapshot.data!.docs;
-                return ListView.builder(
-                  itemCount: messages.length,
-                  itemBuilder: (context, index) {
-                    final message = messages[index].data() as Map<String, dynamic>;
-                    final isMe = message['senderId'] == currentUser.uid;
-                    final String msgType = message['messageType'] ?? 'text';
+            child: Stack(
+              children: [
+                StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance.collection('chats').doc(widget.chatId).collection('messages').orderBy('timestamp').snapshots(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                    
+                    var messages = snapshot.data!.docs;
+                    
+                    if (!_firstScrollDone && messages.isNotEmpty && _searchQuery.trim().isEmpty) {
+                      _firstScrollDone = true;
+                      _scrollToUnreadOrBottom(messages);
+                    }
 
-                    return Align(
-                      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: isMe ? Colors.blue : Colors.grey.shade300,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: msgType == 'text'
-                            ? Text(message['text'] ?? '', style: TextStyle(color: isMe ? Colors.white : Colors.black))
-                            : msgType == 'image'
-                            ? _buildImageMessage(message)
-                            : _buildFileMessage(message),
-                      ),
+                    // Search filtering logic
+                    if (_searchQuery.trim().isNotEmpty) {
+                      messages = messages.where((doc) {
+                        final message = doc.data() as Map<String, dynamic>;
+                        final msgType = message['messageType'] ?? 'text';
+                        if (msgType == 'text') {
+                          final text = (message['text'] as String? ?? '').toLowerCase();
+                          return text.contains(_searchQuery.toLowerCase());
+                        } else {
+                          final fileName = (message['fileName'] as String? ?? '').toLowerCase();
+                          return fileName.contains(_searchQuery.toLowerCase());
+                        }
+                      }).toList();
+                    }
+
+                    final receiverImageUrl = _receiverData?['profileImageUrl'] as String? ?? '';
+                    final receiverInitial = widget.receiverName.isNotEmpty ? widget.receiverName[0].toUpperCase() : 'U';
+
+                    return ListView.builder(
+                      controller: _scrollController,
+                      itemCount: messages.length,
+                      itemBuilder: (context, index) {
+                        final message = messages[index].data() as Map<String, dynamic>;
+                        final isMe = message['senderId'] == currentUser.uid;
+                        final String msgType = message['messageType'] ?? 'text';
+                        final bool isRead = message['isRead'] as bool? ?? true;
+
+                        // Date divider logic
+                        final currentMsgDate = _getDateTimeOfMessage(message);
+                        bool showDateHeader = false;
+                        if (index == 0) {
+                          showDateHeader = true;
+                        } else {
+                          final prevMessage = messages[index - 1].data() as Map<String, dynamic>;
+                          final prevMsgDate = _getDateTimeOfMessage(prevMessage);
+                          if (currentMsgDate.year != prevMsgDate.year ||
+                              currentMsgDate.month != prevMsgDate.month ||
+                              currentMsgDate.day != prevMsgDate.day) {
+                            showDateHeader = true;
+                          }
+                        }
+
+                        final msgBubble = Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: isMe ? Colors.blue : Colors.grey.shade300,
+                            borderRadius: BorderRadius.only(
+                              topLeft: const Radius.circular(16),
+                              topRight: const Radius.circular(16),
+                              bottomLeft: isMe ? const Radius.circular(16) : Radius.zero,
+                              bottomRight: isMe ? Radius.zero : const Radius.circular(16),
+                            ),
+                          ),
+                          child: msgType == 'text'
+                              ? Text(
+                                  message['text'] ?? '',
+                                  style: TextStyle(color: isMe ? Colors.white : Colors.black),
+                                )
+                              : msgType == 'image'
+                                  ? _buildImageMessage(message)
+                                  : _buildFileMessage(message),
+                        );
+
+                        final msgWidget = Align(
+                          alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            child: Row(
+                              mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                if (!isMe) ...[
+                                  CircleAvatar(
+                                    radius: 16,
+                                    backgroundColor: Colors.orange.shade200,
+                                    backgroundImage: receiverImageUrl.isNotEmpty
+                                        ? NetworkImage(receiverImageUrl)
+                                        : null,
+                                    child: receiverImageUrl.isEmpty
+                                        ? Text(
+                                            receiverInitial,
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          )
+                                        : null,
+                                  ),
+                                  const SizedBox(width: 8),
+                                ],
+                                Flexible(
+                                  child: Column(
+                                    crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      msgBubble,
+                                      const SizedBox(height: 4),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              _formatTime(message['timestamp'] as Timestamp?),
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                color: Colors.grey.shade600,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            if (isMe) ...[
+                                              const SizedBox(width: 4),
+                                              Icon(
+                                                isRead ? Icons.done_all : Icons.done,
+                                                size: 14,
+                                                color: isRead ? Colors.blue : Colors.grey,
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+
+                        if (showDateHeader) {
+                          return Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _buildDateHeader(currentMsgDate),
+                              msgWidget,
+                            ],
+                          );
+                        }
+                        return msgWidget;
+                      },
                     );
                   },
-                );
-              },
+                ),
+                if (_showScrollToBottom)
+                  Positioned(
+                    right: 16,
+                    bottom: 16,
+                    child: SizedBox(
+                      width: 40,
+                      height: 40,
+                      child: FloatingActionButton(
+                        mini: true,
+                        onPressed: () {
+                          if (_scrollController.hasClients) {
+                            _scrollController.animateTo(
+                              _scrollController.position.maxScrollExtent,
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeOut,
+                            );
+                          }
+                        },
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                        child: const Icon(Icons.keyboard_arrow_down),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _messageController,
-                      decoration: const InputDecoration(hintText: 'Type a message...', border: OutlineInputBorder()),
+              child: Form(
+                key: _formKey,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _messageController,
+                        decoration: const InputDecoration(
+                          hintText: 'Type a message...',
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        ),
+                        onFieldSubmitted: (_) => sendMessage(),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Please enter a message';
+                          }
+                          return null;
+                        },
+                      ),
                     ),
-                  ),
-                  IconButton(icon: const Icon(Icons.attach_file), onPressed: showAttachmentMenu),
-                  IconButton(icon: const Icon(Icons.send), onPressed: sendMessage),
-                ],
+                    const SizedBox(width: 4),
+                    IconButton(
+                      icon: const Icon(Icons.attach_file),
+                      onPressed: showAttachmentMenu,
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.send),
+                      onPressed: sendMessage,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

@@ -2426,6 +2426,7 @@ class _ProfileTabState extends State<_ProfileTab> {
       builder: (context, snapshot) {
         final data = snapshot.data?.data() ?? <String, dynamic>{};
         final name = _displayName(data);
+        final String profileImageUrl = data['profileImageUrl'] ?? '';
         final email =
         (data['email'] ?? FirebaseAuth.instance.currentUser?.email ?? '')
             .toString();
@@ -2576,14 +2577,19 @@ class _ProfileTabState extends State<_ProfileTab> {
                             backgroundColor: const Color(
                               0xFFFFD54F,
                             ), // Premium Yellow
-                            child: Text(
-                              name.isEmpty ? 'S' : name[0].toUpperCase(),
-                              style: const TextStyle(
-                                color: _StudentColors.orange, // Gradient Red
-                                fontWeight: FontWeight.w900,
-                                fontSize: 36,
-                              ),
-                            ),
+                            backgroundImage: profileImageUrl.isNotEmpty
+                                ? NetworkImage(profileImageUrl)
+                                : null,
+                            child: profileImageUrl.isEmpty
+                                ? Text(
+                                    name.isEmpty ? 'S' : name[0].toUpperCase(),
+                                    style: const TextStyle(
+                                      color: _StudentColors.orange, // Gradient Red
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 36,
+                                    ),
+                                  )
+                                : null,
                           ),
                           Positioned(
                             bottom: 0,

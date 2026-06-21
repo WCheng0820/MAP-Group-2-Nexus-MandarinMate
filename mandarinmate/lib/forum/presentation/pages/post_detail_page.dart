@@ -400,15 +400,20 @@ Check it out on MandarinMate! 🍊
                                 CircleAvatar(
                                   radius: 20,
                                   backgroundColor: _getRoleColor(post.authorRole).withOpacity(0.1),
-                                  child: Text(
-                                    post.authorName.isNotEmpty
-                                        ? post.authorName[0].toUpperCase()
-                                        : 'A',
-                                    style: TextStyle(
-                                      color: _getRoleColor(post.authorRole),
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
+                                  backgroundImage: post.authorPhotoUrl.isNotEmpty
+                                      ? NetworkImage(post.authorPhotoUrl)
+                                      : null,
+                                  child: post.authorPhotoUrl.isEmpty
+                                      ? Text(
+                                          post.authorName.isNotEmpty
+                                              ? post.authorName[0].toUpperCase()
+                                              : 'A',
+                                          style: TextStyle(
+                                            color: _getRoleColor(post.authorRole),
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        )
+                                      : null,
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
@@ -629,16 +634,21 @@ Check it out on MandarinMate! 🍊
                                         CircleAvatar(
                                           radius: 14,
                                           backgroundColor: _getRoleColor(comment.authorRole).withOpacity(0.1),
-                                          child: Text(
-                                            comment.authorName.isNotEmpty
-                                                ? comment.authorName[0].toUpperCase()
-                                                : 'A',
-                                            style: TextStyle(
-                                              color: _getRoleColor(comment.authorRole),
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
+                                          backgroundImage: comment.authorPhotoUrl.isNotEmpty
+                                              ? NetworkImage(comment.authorPhotoUrl)
+                                              : null,
+                                          child: comment.authorPhotoUrl.isEmpty
+                                              ? Text(
+                                                  comment.authorName.isNotEmpty
+                                                      ? comment.authorName[0].toUpperCase()
+                                                      : 'A',
+                                                  style: TextStyle(
+                                                    color: _getRoleColor(comment.authorRole),
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                )
+                                              : null,
                                         ),
                                         const SizedBox(width: 8),
                                         Expanded(

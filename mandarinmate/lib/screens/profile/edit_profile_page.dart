@@ -6,7 +6,7 @@ import 'package:mandarinmate/auth/presentation/bloc/auth_bloc.dart';
 import 'package:mandarinmate/models/user_model.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 
 class EditProfilePage extends StatefulWidget {
@@ -83,8 +83,27 @@ class _EditProfilePageState extends State<EditProfilePage> {
     );
 
     if (pickedFile != null) {
+      final file = File(pickedFile.path);
+      try {
+        final fileSize = await file.length();
+        const limitSize = 2 * 1024 * 1024; // 2MB
+        if (fileSize > limitSize) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Selected image exceeds the 2MB size limit.'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
+      } catch (e) {
+        debugPrint('Error reading file size: $e');
+      }
+
       setState(() {
-        _imageFile = File(pickedFile.path);
+        _imageFile = file;
       });
     }
   }
@@ -92,13 +111,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
   Future<String?> _uploadImage(String uid) async {
     if (_imageFile == null) return null;
     try {
-      final ref = FirebaseStorage.instance
-          .ref()
-          .child('profiles')
-          .child('$uid.jpg');
-      await ref.putFile(_imageFile!);
-      return await ref.getDownloadURL();
+      final fileName = 'profiles/${uid}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      await Supabase.instance.client.storage
+          .from('chat-files')
+          .upload(fileName, _imageFile!);
+      return Supabase.instance.client.storage.from('chat-files').getPublicUrl(fileName);
     } catch (e) {
+      debugPrint('Error uploading image to Supabase: $e');
       return null;
     }
   }
@@ -107,6 +126,34 @@ class _EditProfilePageState extends State<EditProfilePage> {
     if (!_formKey.currentState!.validate()) return;
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
+
+    if (_imageFile != null) {
+      try {
+        final fileSize = await _imageFile!.length();
+        const limitSize = 2 * 1024 * 1024; // 2MB
+        if (fileSize > limitSize) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Profile picture exceeds the 2MB size limit.'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error validating image size: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+    }
 
     setState(() => _isLoading = true);
     try {

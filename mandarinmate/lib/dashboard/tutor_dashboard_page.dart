@@ -245,6 +245,7 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
         builder: (context, snapshot) {
           final data = snapshot.data?.data() ?? <String, dynamic>{};
           final name = _displayName(data);
+          final String profileImageUrl = data['profileImageUrl'] ?? '';
           final email = (data['email'] ?? user?.email ?? '').toString();
 
           return SingleChildScrollView(
@@ -319,14 +320,19 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                           CircleAvatar(
                             radius: 45,
                             backgroundColor: const Color(0xFFFFD54F), // Premium Yellow
-                            child: Text(
-                              name.isEmpty ? 'T' : name[0].toUpperCase(),
-                              style: const TextStyle(
-                                color: _TutorColors.green,
-                                fontWeight: FontWeight.w900,
-                                fontSize: 36,
-                              ),
-                            ),
+                            backgroundImage: profileImageUrl.isNotEmpty
+                                ? NetworkImage(profileImageUrl)
+                                : null,
+                            child: profileImageUrl.isEmpty
+                                ? Text(
+                                    name.isEmpty ? 'T' : name[0].toUpperCase(),
+                                    style: const TextStyle(
+                                      color: _TutorColors.green,
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 36,
+                                    ),
+                                  )
+                                : null,
                           ),
                           Positioned(
                             bottom: 0,

@@ -141,38 +141,54 @@ class _ChatListScreenState extends State<ChatListScreen> {
                       ),
                     );
                   },
-                  child: Row(
-                    children: [
-                      // Avatar
-                      CircleAvatar(
-                        radius: 26,
-                        backgroundColor: Colors.orange.shade200,
-                        child: const Text(
-                          'U',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                  child: FutureBuilder<DocumentSnapshot>(
+                    future: FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(otherUid)
+                        .get(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return const Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 26,
+                              child: CircularProgressIndicator(),
+                            ),
+                            SizedBox(width: 12),
+                            Text('Loading chat...'),
+                          ],
+                        );
+                      }
+
+                      final user = snapshot.data!.data() as Map<String, dynamic>? ?? {};
+                      final String imageUrl = user['profileImageUrl'] ?? '';
+                      final firstName = user['firstName'] ?? '';
+                      final lastName = user['lastName'] ?? '';
+                      final name = '$firstName $lastName'.trim();
+                      final String initial = name.isNotEmpty ? name[0].toUpperCase() : 'U';
+
+                      return Row(
+                        children: [
+                          // Avatar
+                          CircleAvatar(
+                            radius: 26,
+                            backgroundColor: Colors.orange.shade200,
+                            backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
+                            child: imageUrl.isEmpty
+                                ? Text(
+                                    initial,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  )
+                                : null,
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
+                          const SizedBox(width: 12),
 
-                      // Middle content
-                      Expanded(
-                        child: FutureBuilder<DocumentSnapshot>(
-                          future: FirebaseFirestore.instance
-                              .collection('users')
-                              .doc(otherUid)
-                              .get(),
-                          builder: (context, snapshot) {
-                            if (!snapshot.hasData) {
-                              return const Text('Loading...');
-                            }
-
-                            final user = snapshot.data!.data() as Map<String, dynamic>;
-                            final name = '${user['firstName']} ${user['lastName']}';
-
-                            return Column(
+                          // Middle content
+                          Expanded(
+                            child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 // Name
@@ -180,7 +196,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                   name,
                                   style: TextStyle(
                                     fontSize: 16,
-                                    // [NEW] Thicker name if unread
                                     fontWeight: isUnreadForMe ? FontWeight.w900 : FontWeight.bold,
                                     color: Colors.black87,
                                   ),
@@ -193,54 +208,52 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    // [NEW] Solid black and semi-bold if unread
                                     color: isUnreadForMe ? Colors.black87 : Colors.grey.shade600,
                                     fontWeight: isUnreadForMe ? FontWeight.w700 : FontWeight.normal,
                                   ),
                                 ),
                               ],
-                            );
-                          },
-                        ),
-                      ),
-
-                      // Right side
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            _formatTime(chat['lastMessageTime']),
-                            style: TextStyle(
-                              fontSize: 12,
-                              // [NEW] Stronger time color if unread
-                              color: isUnreadForMe ? const Color(0xFFD40511) : Colors.grey.shade400,
-                              fontWeight: isUnreadForMe ? FontWeight.bold : FontWeight.normal,
                             ),
                           ),
-                          const SizedBox(height: 6),
 
-                          // [NEW] The Alert Dot
-                          if (isUnreadForMe)
-                            Container(
-                              width: 10,
-                              height: 10,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFD40511), // Strong bold red to pop against the UI
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(0xFFD40511).withOpacity(0.3),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
+                          // Right side
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                _formatTime(chat['lastMessageTime']),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: isUnreadForMe ? const Color(0xFFD40511) : Colors.grey.shade400,
+                                  fontWeight: isUnreadForMe ? FontWeight.bold : FontWeight.normal,
+                                ),
                               ),
-                            )
-                          else
-                            const SizedBox(height: 10), // Empty space so the layout doesn't jump around
+                              const SizedBox(height: 6),
+
+                              // The Alert Dot
+                              if (isUnreadForMe)
+                                Container(
+                                  width: 10,
+                                  height: 10,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFD40511),
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0xFFD40511).withOpacity(0.3),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              else
+                                const SizedBox(height: 10),
+                            ],
+                          ),
                         ],
-                      ),
-                    ],
+                      );
+                    },
                   ),
                 ),
               );

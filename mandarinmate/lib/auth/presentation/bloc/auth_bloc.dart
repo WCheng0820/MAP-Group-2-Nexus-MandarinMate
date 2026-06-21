@@ -5,6 +5,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mandarinmate/models/user_model.dart';
 import 'package:mandarinmate/services/auth_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart';
 
 abstract class AuthEvent extends Equatable {
   const AuthEvent();
@@ -134,6 +136,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       Emitter<AuthState> emit,
       ) async {
     emit(AuthLoading());
+
+    bool rememberMe = true;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      rememberMe = prefs.getBool('remember_me') ?? true;
+    } catch (e) {
+      debugPrint('Error reading remember_me: $e');
+    }
+
+    if (!rememberMe) {
+      await _authService.logout();
+      emit(AuthUnauthenticated());
+      _authSubscription ??= _authService.authStateChanges.listen(
+            (user) => add(AuthUserChanged(user)),
+      );
+      return;
+    }
 
     // [NEW] Instantly grab the local session if it exists on the phone's hard drive!
     final currentUser = _authService.currentUser;
@@ -328,6 +347,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       ) async {
     emit(AuthLoading());
     try {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove('remember_me');
+      } catch (e) {
+        debugPrint('Error clearing remember_me: $e');
+      }
       await _authService.logout();
     } catch (e) {
       emit(AuthError(e.toString()));

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart'; // ADDED for Navigation
 import 'package:mandarinmate/auth/presentation/bloc/auth_bloc.dart'; // ADDED for BLoC Events
 import 'package:mandarinmate/utils/app_theme.dart';
 import 'package:mandarinmate/widgets/custom_widgets.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -15,6 +16,7 @@ class AuthScreen extends StatefulWidget {
 
 class _AuthScreenState extends State<AuthScreen> {
   bool _isLoginTab = true;
+  bool _rememberMe = true;
 
   // Login controllers
   final _loginEmailController = TextEditingController();
@@ -93,16 +95,25 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  void _login() {
+  void _login() async {
     if (!_loginFormKey.currentState!.validate()) return;
 
-    // Send the Login Event to the BLoC
-    context.read<AuthBloc>().add(
-      AuthLoginRequested(
-        email: _loginEmailController.text.trim(),
-        password: _loginPasswordController.text,
-      ),
-    );
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('remember_me', _rememberMe);
+    } catch (e) {
+      debugPrint('Error saving remember_me: $e');
+    }
+
+    if (mounted) {
+      // Send the Login Event to the BLoC
+      context.read<AuthBloc>().add(
+        AuthLoginRequested(
+          email: _loginEmailController.text.trim(),
+          password: _loginPasswordController.text,
+        ),
+      );
+    }
   }
 
   void _register() {
@@ -403,23 +414,37 @@ class _AuthScreenState extends State<AuthScreen> {
           ),
           const SizedBox(height: AppDimensions.md),
 
-          // Forgot password
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: () {
-                // Updated for GoRouter
-                context.push('/forgot-password');
-              },
-              child: Text(
-                'Forgot Password?',
-                style: AppTextStyles.labelMedium.copyWith(
-                  color: const Color(0xFF6C3BFF),
+          // Remember Me & Forgot Password Row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Checkbox(
+                    value: _rememberMe,
+                    onChanged: (value) {
+                      setState(() => _rememberMe = value ?? false);
+                    },
+                    activeColor: const Color(0xFF6C3BFF),
+                  ),
+                  Text('Remember Me', style: AppTextStyles.bodySmall),
+                ],
+              ),
+              TextButton(
+                onPressed: () {
+                  context.push('/forgot-password');
+                },
+                child: Text(
+                  'Forgot Password?',
+                  style: AppTextStyles.labelMedium.copyWith(
+                    color: const Color(0xFF6C3BFF),
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
-          const SizedBox(height: AppDimensions.xxl),
+          const SizedBox(height: AppDimensions.lg),
 
           // Login button
           CustomButton(
@@ -705,8 +730,16 @@ class _AuthScreenState extends State<AuthScreen> {
           borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
         ),
       ),
-      onPressed: () {
-        context.read<AuthBloc>().add(AuthGoogleSignInRequested());
+      onPressed: () async {
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool('remember_me', _rememberMe);
+        } catch (e) {
+          debugPrint('Error saving remember_me: $e');
+        }
+        if (mounted) {
+          context.read<AuthBloc>().add(AuthGoogleSignInRequested());
+        }
       },
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -718,7 +751,7 @@ class _AuthScreenState extends State<AuthScreen> {
             ),
           ),
           const SizedBox(width: AppDimensions.md),
-          Text('UTM Google Account', style: AppTextStyles.bodyMedium),
+          Text('Google Account', style: AppTextStyles.bodyMedium),
         ],
       ),
     );

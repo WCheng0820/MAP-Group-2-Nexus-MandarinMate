@@ -324,16 +324,21 @@ Check it out on MandarinMate! 🍊
                                   CircleAvatar(
                                     radius: 18,
                                     backgroundColor: _getRoleColor(post.authorRole).withOpacity(0.1),
-                                    child: Text(
-                                      post.authorName.isNotEmpty
-                                          ? post.authorName[0].toUpperCase()
-                                          : 'A',
-                                      style: TextStyle(
-                                        color: _getRoleColor(post.authorRole),
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 12,
-                                      ),
-                                    ),
+                                    backgroundImage: post.authorPhotoUrl.isNotEmpty
+                                        ? NetworkImage(post.authorPhotoUrl)
+                                        : null,
+                                    child: post.authorPhotoUrl.isEmpty
+                                        ? Text(
+                                            post.authorName.isNotEmpty
+                                                ? post.authorName[0].toUpperCase()
+                                                : 'A',
+                                            style: TextStyle(
+                                              color: _getRoleColor(post.authorRole),
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12,
+                                            ),
+                                          )
+                                        : null,
                                   ),
                                   const SizedBox(width: 10),
                                   Expanded(
