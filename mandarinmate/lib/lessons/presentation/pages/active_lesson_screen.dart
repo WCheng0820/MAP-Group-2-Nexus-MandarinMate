@@ -10,6 +10,8 @@ import 'package:go_router/go_router.dart';
 import '../bloc/active_lesson_bloc.dart';
 import '../../domain/active_lesson_model.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
+import 'package:mandarinmate/services/notification_service.dart';
+
 
 class LessonScreen extends StatefulWidget {
   final Lesson lesson;
@@ -66,14 +68,17 @@ class _LessonScreenState extends State<LessonScreen> {
       int currentStreak = data['currentStreak'] as int? ?? 0;
 
       // 2. Streak Logic
+      bool isNewStreakActivity = false;
       if (lastActiveDate == todayString) {
         // They already completed a lesson today. Streak is safe, no changes needed.
       } else if (lastActiveDate == yesterdayString) {
         // They completed a lesson yesterday. Streak continues!
         currentStreak += 1;
+        isNewStreakActivity = true;
       } else {
         // They missed a day, or this is their very first lesson. Reset to 1.
         currentStreak = 1;
+        isNewStreakActivity = true;
       }
 
       // 3. Update everything in Firestore at once
@@ -85,6 +90,15 @@ class _LessonScreenState extends State<LessonScreen> {
         'currentStreak': currentStreak,
         'lastActiveDate': todayString, // Update last active to today
       });
+
+      if (isNewStreakActivity) {
+        await NotificationService.sendInAppNotification(
+          recipientId: user.uid,
+          title: '🔥 Streak Active!',
+          body: "Congrats on keeping up your learning streak today! You're on a $currentStreak day streak!",
+          type: 'streak',
+        );
+      }
     } catch (e) {
       debugPrint('Firebase write error: $e');
     }

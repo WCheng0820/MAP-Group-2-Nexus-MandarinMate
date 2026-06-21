@@ -11,6 +11,10 @@ import 'package:mandarinmate/dashboard/admin_users_page.dart';
 import 'package:mandarinmate/dashboard/admin_profile_page.dart';
 import 'package:mandarinmate/screens/profile/edit_profile_page.dart'
     as mandarinmate_edit_profile;
+import 'package:mandarinmate/widgets/notification_badge_icon.dart';
+import 'dart:async';
+import 'package:mandarinmate/widgets/in_app_notification_overlay.dart';
+
 
 class AdminDashboardPage extends StatefulWidget {
   const AdminDashboardPage({super.key});
@@ -21,6 +25,25 @@ class AdminDashboardPage extends StatefulWidget {
 
 class _AdminDashboardPageState extends State<AdminDashboardPage> {
   int _currentIndex = 0;
+  StreamSubscription? _notifSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _notifSubscription = InAppNotificationOverlay.subscribeToNotifications(
+        context,
+        role: 'admin',
+        themeColor: _AdminDashboardColors.primaryAction,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _notifSubscription?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -286,74 +309,10 @@ class _AdminHeader extends StatelessWidget {
             ],
           ),
         ),
-        Row(
-          children: [
-            InkWell(
-              borderRadius: BorderRadius.circular(999),
-              onTap: onEditProfile,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(
-                      Icons.edit_rounded,
-                      color: _AdminDashboardColors.headerStart,
-                      size: 18,
-                    ),
-                    SizedBox(width: 6),
-                    Text(
-                      'Edit',
-                      style: TextStyle(
-                        color: _AdminDashboardColors.heading,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            InkWell(
-              borderRadius: BorderRadius.circular(999),
-              onTap: onLogout,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF0F0),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: const Color(0xFFFFD6D6)),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(
-                      Icons.logout_rounded,
-                      color: Color(0xFFD32F2F),
-                      size: 18,
-                    ),
-                    SizedBox(width: 6),
-                    Text(
-                      'Logout',
-                      style: TextStyle(
-                        color: Color(0xFFD32F2F),
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
+        NotificationBadgeIcon(
+          role: 'admin',
+          themeColor: _AdminDashboardColors.headerStart,
+          iconColor: _AdminDashboardColors.heading,
         ),
       ],
     );

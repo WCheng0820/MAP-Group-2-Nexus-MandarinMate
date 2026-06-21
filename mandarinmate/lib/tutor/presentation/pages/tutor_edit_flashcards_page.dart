@@ -52,19 +52,25 @@ class _TutorEditFlashcardsPageState extends State<TutorEditFlashcardsPage> {
           IconButton(
             icon: const Icon(Icons.check),
             onPressed: () async {
+              final titleText = _titleController.text.trim();
+              final descText = _descriptionController.text.trim();
+              final scaffoldMessenger = ScaffoldMessenger.of(context);
+
               await FirebaseFirestore.instance
                   .collection('flashcard_levels')
                   .doc(widget.docId)
                   .update({
-                'title': _titleController.text.trim(),
-                'description': _descriptionController.text.trim(),
+                'title': titleText,
+                'description': descText,
                 'updatedAt': FieldValue.serverTimestamp(),
               });
+
+              scaffoldMessenger.showSnackBar(
+                const SnackBar(content: Text('Flashcard set updated.')),
+              );
+
               if (context.mounted) {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Flashcard set updated.')),
-                );
               }
             },
           ),
@@ -81,7 +87,6 @@ class _TutorEditFlashcardsPageState extends State<TutorEditFlashcardsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Edit title and description
             TextField(
               controller: _titleController,
               decoration: InputDecoration(
@@ -108,7 +113,6 @@ class _TutorEditFlashcardsPageState extends State<TutorEditFlashcardsPage> {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 12),
-            // List of cards
             StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               stream: FirebaseFirestore.instance
                   .collection('flashcard_levels')
@@ -250,103 +254,7 @@ class _TutorEditFlashcardsPageState extends State<TutorEditFlashcardsPage> {
   void _showAddCardDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (dialogContext) {
-        final chineseCtrl = TextEditingController();
-        final pinyinCtrl = TextEditingController();
-        final englishCtrl = TextEditingController();
-        final malayCtrl = TextEditingController();
-
-        return AlertDialog(
-          title: const Text('Add New Card'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: chineseCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Chinese',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: pinyinCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Pinyin',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: englishCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'English',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: malayCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Malay',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                chineseCtrl.dispose();
-                pinyinCtrl.dispose();
-                englishCtrl.dispose();
-                malayCtrl.dispose();
-                Navigator.pop(dialogContext);
-              },
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (chineseCtrl.text.trim().isEmpty) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Chinese field is required')),
-                    );
-                  }
-                  return;
-                }
-
-                await FirebaseFirestore.instance
-                    .collection('flashcard_levels')
-                    .doc(widget.docId)
-                    .collection('cards')
-                    .add({
-                  'chinese': chineseCtrl.text.trim(),
-                  'pinyin': pinyinCtrl.text.trim(),
-                  'english': englishCtrl.text.trim(),
-                  'malay': malayCtrl.text.trim(),
-                  'createdAt': FieldValue.serverTimestamp(),
-                  'createdBy': FirebaseAuth.instance.currentUser?.uid,
-                });
-
-                if (context.mounted) {
-                  chineseCtrl.dispose();
-                  pinyinCtrl.dispose();
-                  englishCtrl.dispose();
-                  malayCtrl.dispose();
-                  Navigator.pop(dialogContext);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Card added successfully.')),
-                  );
-                }
-              },
-              child: const Text('Add'),
-            ),
-          ],
-        );
-      },
+      builder: (_) => _AddCardDialog(docId: widget.docId),
     );
   }
 
@@ -354,102 +262,14 @@ class _TutorEditFlashcardsPageState extends State<TutorEditFlashcardsPage> {
       String pinyin, String english, String malay) {
     showDialog(
       context: context,
-      builder: (dialogContext) {
-        final chineseCtrl = TextEditingController(text: chinese);
-        final pinyinCtrl = TextEditingController(text: pinyin);
-        final englishCtrl = TextEditingController(text: english);
-        final malayCtrl = TextEditingController(text: malay);
-
-        return AlertDialog(
-          title: const Text('Edit Card'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: chineseCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Chinese',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: pinyinCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Pinyin',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: englishCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'English',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: malayCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Malay',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                chineseCtrl.dispose();
-                pinyinCtrl.dispose();
-                englishCtrl.dispose();
-                malayCtrl.dispose();
-                Navigator.pop(dialogContext);
-              },
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (chineseCtrl.text.trim().isEmpty) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Chinese field is required')),
-                    );
-                  }
-                  return;
-                }
-
-                await FirebaseFirestore.instance
-                    .collection('flashcard_levels')
-                    .doc(widget.docId)
-                    .collection('cards')
-                    .doc(cardId)
-                    .update({
-                  'chinese': chineseCtrl.text.trim(),
-                  'pinyin': pinyinCtrl.text.trim(),
-                  'english': englishCtrl.text.trim(),
-                  'malay': malayCtrl.text.trim(),
-                });
-
-                if (context.mounted) {
-                  chineseCtrl.dispose();
-                  pinyinCtrl.dispose();
-                  englishCtrl.dispose();
-                  malayCtrl.dispose();
-                  Navigator.pop(dialogContext);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Card updated.')),
-                  );
-                }
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
+      builder: (_) => _EditCardDialog(
+        docId: widget.docId,
+        cardId: cardId,
+        chinese: chinese,
+        pinyin: pinyin,
+        english: english,
+        malay: malay,
+      ),
     );
   }
 
@@ -467,6 +287,7 @@ class _TutorEditFlashcardsPageState extends State<TutorEditFlashcardsPage> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () async {
+              final scaffoldMessenger = ScaffoldMessenger.of(context);
               await FirebaseFirestore.instance
                   .collection('flashcard_levels')
                   .doc(widget.docId)
@@ -474,11 +295,12 @@ class _TutorEditFlashcardsPageState extends State<TutorEditFlashcardsPage> {
                   .doc(cardId)
                   .delete();
 
-              if (context.mounted) {
+              scaffoldMessenger.showSnackBar(
+                const SnackBar(content: Text('Card deleted.')),
+              );
+
+              if (dialogContext.mounted) {
                 Navigator.pop(dialogContext);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Card deleted.')),
-                );
               }
             },
             child: const Text('Delete', style: TextStyle(color: Colors.white)),
@@ -486,5 +308,295 @@ class _TutorEditFlashcardsPageState extends State<TutorEditFlashcardsPage> {
         ],
       ),
     );
+  }
+}
+
+// standalone widget for clean lifecycle management of TextEditingControllers in Add Dialog
+class _AddCardDialog extends StatefulWidget {
+  final String docId;
+  const _AddCardDialog({required this.docId});
+
+  @override
+  State<_AddCardDialog> createState() => _AddCardDialogState();
+}
+
+class _AddCardDialogState extends State<_AddCardDialog> {
+  final _chineseCtrl = TextEditingController();
+  final _pinyinCtrl = TextEditingController();
+  final _englishCtrl = TextEditingController();
+  final _malayCtrl = TextEditingController();
+  bool _isSaving = false;
+
+  @override
+  void dispose() {
+    _chineseCtrl.dispose();
+    _pinyinCtrl.dispose();
+    _englishCtrl.dispose();
+    _malayCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Add New Card'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _chineseCtrl,
+              decoration: const InputDecoration(
+                labelText: 'Chinese',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _pinyinCtrl,
+              decoration: const InputDecoration(
+                labelText: 'Pinyin',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _englishCtrl,
+              decoration: const InputDecoration(
+                labelText: 'English',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _malayCtrl,
+              decoration: const InputDecoration(
+                labelText: 'Malay',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isSaving ? null : () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: _isSaving ? null : _saveCard,
+          child: _isSaving
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Add'),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _saveCard() async {
+    final chinese = _chineseCtrl.text.trim();
+    final pinyin = _pinyinCtrl.text.trim();
+    final english = _englishCtrl.text.trim();
+    final malay = _malayCtrl.text.trim();
+
+    if (chinese.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Chinese field is required')),
+      );
+      return;
+    }
+
+    setState(() => _isSaving = true);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('flashcard_levels')
+          .doc(widget.docId)
+          .collection('cards')
+          .add({
+        'chinese': chinese,
+        'pinyin': pinyin,
+        'english': english,
+        'malay': malay,
+        'createdAt': FieldValue.serverTimestamp(),
+        'createdBy': FirebaseAuth.instance.currentUser?.uid,
+        'order': 0, // default order field
+      });
+
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(content: Text('Card added successfully.')),
+      );
+
+      if (mounted) {
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text('Error adding card: $e')),
+      );
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+}
+
+// standalone widget for clean lifecycle management of TextEditingControllers in Edit Dialog
+class _EditCardDialog extends StatefulWidget {
+  final String docId;
+  final String cardId;
+  final String chinese;
+  final String pinyin;
+  final String english;
+  final String malay;
+
+  const _EditCardDialog({
+    required this.docId,
+    required this.cardId,
+    required this.chinese,
+    required this.pinyin,
+    required this.english,
+    required this.malay,
+  });
+
+  @override
+  State<_EditCardDialog> createState() => _EditCardDialogState();
+}
+
+class _EditCardDialogState extends State<_EditCardDialog> {
+  late TextEditingController _chineseCtrl;
+  late TextEditingController _pinyinCtrl;
+  late TextEditingController _englishCtrl;
+  late TextEditingController _malayCtrl;
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _chineseCtrl = TextEditingController(text: widget.chinese);
+    _pinyinCtrl = TextEditingController(text: widget.pinyin);
+    _englishCtrl = TextEditingController(text: widget.english);
+    _malayCtrl = TextEditingController(text: widget.malay);
+  }
+
+  @override
+  void dispose() {
+    _chineseCtrl.dispose();
+    _pinyinCtrl.dispose();
+    _englishCtrl.dispose();
+    _malayCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Edit Card'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _chineseCtrl,
+              decoration: const InputDecoration(
+                labelText: 'Chinese',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _pinyinCtrl,
+              decoration: const InputDecoration(
+                labelText: 'Pinyin',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _englishCtrl,
+              decoration: const InputDecoration(
+                labelText: 'English',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _malayCtrl,
+              decoration: const InputDecoration(
+                labelText: 'Malay',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isSaving ? null : () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: _isSaving ? null : _saveCard,
+          child: _isSaving
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Save'),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _saveCard() async {
+    final chinese = _chineseCtrl.text.trim();
+    final pinyin = _pinyinCtrl.text.trim();
+    final english = _englishCtrl.text.trim();
+    final malay = _malayCtrl.text.trim();
+
+    if (chinese.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Chinese field is required')),
+      );
+      return;
+    }
+
+    setState(() => _isSaving = true);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('flashcard_levels')
+          .doc(widget.docId)
+          .collection('cards')
+          .doc(widget.cardId)
+          .update({
+        'chinese': chinese,
+        'pinyin': pinyin,
+        'english': english,
+        'malay': malay,
+      });
+
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(content: Text('Card updated.')),
+      );
+
+      if (mounted) {
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text('Error updating card: $e')),
+      );
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
   }
 }

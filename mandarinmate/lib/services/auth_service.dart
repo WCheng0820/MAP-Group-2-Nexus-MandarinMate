@@ -2,6 +2,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:mandarinmate/models/user_model.dart';
+import 'package:mandarinmate/services/notification_service.dart';
+
 
 class AuthService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
@@ -90,6 +92,15 @@ class AuthService {
       );
 
       await _firestore.collection('users').doc(uid).set(userProfile.toMap());
+
+      if (role == UserRole.tutor) {
+        await NotificationService.notifyTargetRole(
+          targetRole: 'admin',
+          title: '🆕 New Tutor Registration',
+          body: 'Tutor $firstName $lastName has requested registration approval.',
+          type: 'tutor_registration',
+        );
+      }
     } catch (e) {
       throw 'Failed to create user profile: $e';
     }

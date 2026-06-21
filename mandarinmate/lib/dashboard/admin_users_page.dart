@@ -29,7 +29,14 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
     return Scaffold(
       backgroundColor: _surface,
       appBar: AppBar(
-        title: const Text('Admin Users'),
+        title: const Text(
+          'Admin Users',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
         backgroundColor: _primary,
         foregroundColor: Colors.white,
         automaticallyImplyLeading: false,

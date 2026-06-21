@@ -80,9 +80,17 @@ class TutorManageLessonsHubPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF6FBF8),
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: _green,
         foregroundColor: Colors.white,
-        title: const Text('Manage Lessons'),
+        title: const Text(
+          'Manage Lessons',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),

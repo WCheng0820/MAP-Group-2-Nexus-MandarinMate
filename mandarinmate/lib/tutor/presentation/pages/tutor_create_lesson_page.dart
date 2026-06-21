@@ -6,6 +6,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mandarinmate/lessons/domain/lesson_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:mandarinmate/services/notification_service.dart';
+
 
 class TutorCreateLearningMaterialsPage extends StatefulWidget {
   const TutorCreateLearningMaterialsPage({super.key, this.docId, this.existingData});
@@ -552,13 +554,34 @@ class _TutorCreateLearningMaterialsPageState extends State<TutorCreateLearningMa
     return material;
   }
 
-  void _removeMaterial(_DraftMaterial material) {
-    setState(() {
-      _materials.removeWhere((item) => item.id == material.id);
-      if (material.storagePath.isNotEmpty) {
-        _storagePathsMarkedForDeletion.add(material.storagePath);
-      }
-    });
+  Future<void> _removeMaterial(_DraftMaterial material) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Remove Material'),
+        content: Text('Are you sure you want to remove "${material.title}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Remove', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    ) ?? false;
+
+    if (confirm) {
+      setState(() {
+        _materials.removeWhere((item) => item.id == material.id);
+        if (material.storagePath.isNotEmpty) {
+          _storagePathsMarkedForDeletion.add(material.storagePath);
+        }
+      });
+    }
   }
 
   Future<void> _saveLesson() async {
@@ -605,6 +628,13 @@ class _TutorCreateLearningMaterialsPageState extends State<TutorCreateLearningMa
           'createdAt': FieldValue.serverTimestamp(),
           'createdBy': user.uid,
         });
+
+        final materialTitle = _titleController.text.trim();
+        await NotificationService.notifyAllStudents(
+          title: '📚 New Learning Materials!',
+          body: 'New learning materials have been uploaded: "$materialTitle"',
+          type: 'lesson_material',
+        );
 
         // ------------------------------------------------------------------
         // [NEW] NOTIFICATION BLAST TO ALL STUDENTS

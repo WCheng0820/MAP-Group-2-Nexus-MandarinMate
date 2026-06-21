@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:mandarinmate/services/notification_service.dart';
+
 
 class AnnouncementCreateEditPage extends StatefulWidget {
   final String role; // 'tutor' or 'admin'
@@ -78,14 +80,25 @@ class _AnnouncementCreateEditPageState extends State<AnnouncementCreateEditPage>
                 (widget.role == 'admin' ? 'Admin' : 'Tutor'))
             .toString();
 
+        final title = _titleController.text.trim();
+        final body = _bodyController.text.trim();
+        final targetRole = widget.role == 'admin' ? _targetRole : 'student';
+
         await FirebaseFirestore.instance.collection('announcements').add({
-          'title': _titleController.text.trim(),
-          'body': _bodyController.text.trim(),
+          'title': title,
+          'body': body,
           'createdAt': FieldValue.serverTimestamp(),
           'createdBy': user.uid,
           'createdByName': createdByName,
-          'targetRole': widget.role == 'admin' ? _targetRole : 'student',
+          'targetRole': targetRole,
         });
+
+        await NotificationService.notifyTargetRole(
+          targetRole: targetRole,
+          title: '📢 Announcement: $title',
+          body: body,
+          type: 'announcement',
+        );
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

@@ -130,8 +130,10 @@ class _TutorAnnouncementPageState extends State<TutorAnnouncementPage> {
                                   IconButton(
                                     icon: const Icon(Icons.delete_outline),
                                     color: Colors.red.shade400,
-                                    onPressed: () => _deleteAnnouncement(
+                                    onPressed: () => _confirmDeleteAnnouncement(
+                                      context,
                                       announcementDoc.id,
+                                      title,
                                     ),
                                   ),
                                 ],
@@ -169,6 +171,30 @@ class _TutorAnnouncementPageState extends State<TutorAnnouncementPage> {
                 );
               },
             ),
+    );
+  }
+
+  void _confirmDeleteAnnouncement(BuildContext context, String docId, String title) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete Announcement'),
+        content: Text('Are you sure you want to delete "$title"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              _deleteAnnouncement(docId);
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
     );
   }
 

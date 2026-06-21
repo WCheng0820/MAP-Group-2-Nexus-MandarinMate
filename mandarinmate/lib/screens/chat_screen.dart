@@ -7,7 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:mandarinmate/services/chat_attachment_service.dart';
+import 'package:mandarinmate/services/notification_service.dart';
 import 'package:mandarinmate/services/ai_moderation_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart'; // [NEW] For system tray
 import 'package:mandarinmate/utils/linkify_util.dart';
@@ -158,15 +158,36 @@ class _ChatScreenState extends State<ChatScreen> {
       'isLastMessageRead': false,
     });
 
-    // 2. Trigger Supabase Notification
+    String senderName = 'Someone';
+    try {
+      final senderDoc = await FirebaseFirestore.instance.collection('users').doc(currentUser.uid).get();
+      senderName = '${senderDoc.data()?['firstName'] ?? ''} ${senderDoc.data()?['lastName'] ?? ''}'.trim();
+      if (senderName.isEmpty) senderName = 'Someone';
+    } catch (_) {}
+
+    // 2. Add In-App Notification in Firestore
+    try {
+      await NotificationService.sendInAppNotification(
+        recipientId: widget.receiverId,
+        title: 'New message from $senderName',
+        body: notificationBody,
+        type: 'chat',
+        extra: {
+          'chatId': widget.chatId,
+          'senderId': currentUser.uid,
+          'senderName': senderName,
+        },
+      );
+    } catch (e) {
+      debugPrint('Error sending in-app chat notification: $e');
+    }
+
+    // 3. Trigger Supabase Notification
     try {
       final userDoc = await FirebaseFirestore.instance.collection('users').doc(widget.receiverId).get();
       final String? targetToken = userDoc.data()?['fcmToken'];
 
       if (targetToken != null && targetToken.isNotEmpty) {
-        final senderDoc = await FirebaseFirestore.instance.collection('users').doc(currentUser.uid).get();
-        final senderName = '${senderDoc.data()?['firstName'] ?? ''} ${senderDoc.data()?['lastName'] ?? ''}'.trim();
-
         await Supabase.instance.client.functions.invoke(
           'send-chat-notification',
           body: {

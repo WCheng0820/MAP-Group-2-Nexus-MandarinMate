@@ -1,4 +1,5 @@
 import 'dart:async'; // [NEW] Needed for the waiting logic!
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -14,6 +15,14 @@ import 'package:mandarinmate/app_router.dart';
 import 'package:mandarinmate/auth/presentation/bloc/auth_bloc.dart';
 import 'package:mandarinmate/services/auth_service.dart';
 import 'package:mandarinmate/utils/app_theme.dart';
+import 'package:mandarinmate/forum/presentation/pages/post_detail_page.dart';
+import 'package:mandarinmate/lessons/presentation/pages/lessons_page.dart';
+import 'package:mandarinmate/flashcards/presentation/pages/flashcard_levels_page.dart';
+import 'package:mandarinmate/screens/student_announcement_page.dart';
+import 'package:mandarinmate/tutor/presentation/pages/tutor_announcement_page.dart';
+import 'package:mandarinmate/dashboard/admin_users_page.dart';
+import 'package:mandarinmate/screens/main_screen.dart';
+import 'package:mandarinmate/models/user_model.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -110,6 +119,7 @@ class _MyAppState extends State<MyApp> {
   late final AuthBloc _authBloc;
   late final GoRouter _router;
   final NotificationService _notificationService = NotificationService();
+  StreamSubscription? _selectNotificationSubscription;
 
   @override
   void initState() {
@@ -119,7 +129,16 @@ class _MyAppState extends State<MyApp> {
 
     _notificationService.initializeNotifications();
 
-
+    _selectNotificationSubscription = NotificationService.selectNotificationStream.stream.listen((String? payload) {
+      if (payload != null && payload.isNotEmpty) {
+        try {
+          final Map<String, dynamic> data = jsonDecode(payload);
+          _handleNotificationDataTap(data);
+        } catch (e) {
+          debugPrint('Error parsing notification payload: $e');
+        }
+      }
+    });
 
     _setupInteractedMessage();
   }
@@ -135,47 +154,122 @@ class _MyAppState extends State<MyApp> {
     FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageTap);
   }
 
-  // --- THE FIX IS HERE ---
   void _handleMessageTap(RemoteMessage message) {
-    if (message.data.containsKey('chatId')) {
-      final String chatId = message.data['chatId'];
-      final String receiverId = message.data['senderId'] ?? '';
-      final String receiverName = message.data['senderName'] ?? 'User';
+    _handleNotificationDataTap(message.data);
+  }
 
-      // SCENARIO 1: The app was already running in the background.
-      // The user is already logged in, so it's safe to push the chat immediately!
-      if (_authBloc.state is AuthAuthenticated) {
-        _router.push('/chat', extra: {
-          'chatId': chatId,
-          'receiverId': receiverId,
-          'receiverName': receiverName,
-        });
-      }
+  void _handleNotificationDataTap(Map<String, dynamic> data) {
+    if (_authBloc.state is AuthAuthenticated) {
+      final role = (_authBloc.state as AuthAuthenticated).profile.role;
+      _performRedirection(data, role);
+    } else {
+      late StreamSubscription sub;
+      sub = _authBloc.stream.listen((state) {
+        if (state is AuthAuthenticated) {
+          Future.delayed(const Duration(milliseconds: 500), () {
+            _performRedirection(data, state.profile.role);
+          });
+          sub.cancel();
+        }
+      });
+    }
+  }
 
-      // SCENARIO 2: The app was totally closed (Terminated).
-      // We must wait for the Auto-Login to finish its job first.
-      else {
-        late StreamSubscription sub;
-        sub = _authBloc.stream.listen((state) {
-          if (state is AuthAuthenticated) {
-            // Once logged in, give GoRouter half a second to land on the Dashboard
-            Future.delayed(const Duration(milliseconds: 500), () {
-              _router.push('/chat', extra: {
-                'chatId': chatId,
-                'receiverId': receiverId,
-                'receiverName': receiverName,
-              });
-            });
-            // Stop listening once we've successfully opened the chat
-            sub.cancel();
-          }
-        });
-      }
+  void _performRedirection(Map<String, dynamic> data, UserRole role) {
+    final type = data['type'] ?? '';
+    final roleStr = role == UserRole.admin ? 'admin' : (role == UserRole.tutor ? 'tutor' : 'student');
+
+    final context = _router.routerDelegate.navigatorKey.currentContext;
+    if (context == null) return;
+
+    switch (type) {
+      case 'chat':
+        final chatId = data['chatId'] ?? '';
+        final senderId = data['senderId'] ?? '';
+        final senderName = data['senderName'] ?? 'Chat';
+        if (chatId.isNotEmpty) {
+          _router.push('/chat', extra: {
+            'chatId': chatId,
+            'receiverId': senderId,
+            'receiverName': senderName,
+          });
+        }
+        break;
+      case 'forum_like':
+      case 'forum_comment':
+        final postId = data['postId'] ?? '';
+        if (postId.isNotEmpty) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => PostDetailPage(
+                postId: postId,
+                themeColor: roleStr == 'tutor'
+                    ? const Color(0xFF0F6E56)
+                    : (roleStr == 'admin' ? const Color(0xFF6C3BFF) : const Color(0xFFFF8A21)),
+              ),
+            ),
+          );
+        }
+        break;
+      case 'vocab_unit':
+      case 'lesson_material':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const LessonsPage(),
+          ),
+        );
+        break;
+      case 'flashcards':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const FlashcardLevelsPage(),
+          ),
+        );
+        break;
+      case 'announcement':
+        if (roleStr == 'student') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const StudentAnnouncementPage(),
+            ),
+          );
+        } else if (roleStr == 'tutor') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const TutorAnnouncementPage(),
+            ),
+          );
+        }
+        break;
+      case 'tutor_registration':
+        if (roleStr == 'admin') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const AdminUsersPage(),
+            ),
+          );
+        }
+        break;
+      case 'streak':
+      case 'streak_missed':
+        if (roleStr == 'student') {
+          MainScreen.openDailyChallenge(context);
+        }
+        break;
+      default:
+        break;
     }
   }
 
   @override
   void dispose() {
+    _selectNotificationSubscription?.cancel();
     _authBloc.close();
     super.dispose();
   }

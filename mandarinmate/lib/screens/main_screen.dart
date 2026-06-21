@@ -22,9 +22,18 @@ import 'package:mandarinmate/models/badge_config_model.dart';
 import 'package:mandarinmate/forum/presentation/pages/forum_page.dart';
 import 'package:mandarinmate/screens/chat_list_screen.dart';
 import 'package:mandarinmate/screens/student_announcement_page.dart';
+import 'dart:async';
+import 'package:mandarinmate/services/notification_service.dart';
+import 'package:mandarinmate/widgets/notification_badge_icon.dart';
+import 'package:mandarinmate/widgets/in_app_notification_overlay.dart';
+
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
+
+  static Future<void> openDailyChallenge(BuildContext context) async {
+    await _LearnTab.openDailyChallenge(context);
+  }
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -32,6 +41,25 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
+  StreamSubscription? _notifSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _notifSubscription = InAppNotificationOverlay.subscribeToNotifications(
+        context,
+        role: 'student',
+        themeColor: _StudentColors.orange,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _notifSubscription?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -129,6 +157,36 @@ class _HomeTabState extends State<_HomeTab> {
           final completedLessons = (data['completedLessons'] as List?) ?? [];
           final dailyActivity =
               (data['dailyActivity'] as Map<String, dynamic>?) ?? {};
+
+          // Check if streak was missed/broken
+          if (uid != null && userSnapshot.hasData && userSnapshot.data!.exists) {
+            final now = DateTime.now();
+            final todayString = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+            final yesterday = now.subtract(const Duration(days: 1));
+            final yesterdayString = "${yesterday.year}-${yesterday.month.toString().padLeft(2, '0')}-${yesterday.day.toString().padLeft(2, '0')}";
+
+            final lastActiveDate = data['lastActiveDate'] as String?;
+            final lastStreakMissedDate = data['lastStreakMissedDate'] as String?;
+
+            if (lastActiveDate != null &&
+                lastActiveDate != todayString &&
+                lastActiveDate != yesterdayString &&
+                lastStreakMissedDate != todayString) {
+              // Streak is officially broken! Reset currentStreak to 0 and record the notification
+              FirebaseFirestore.instance.collection('users').doc(uid).update({
+                'lastStreakMissedDate': todayString,
+                'currentStreak': 0,
+                'streak': 0,
+              });
+
+              NotificationService.sendInAppNotification(
+                recipientId: uid,
+                title: '⚠️ Streak Broken!',
+                body: 'You missed your daily learning yesterday. Start a new lesson today to build back your streak!',
+                type: 'streak_missed',
+              );
+            }
+          }
 
           return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
             stream: FirebaseFirestore.instance
@@ -1001,6 +1059,12 @@ class _StudentHeader extends StatelessWidget {
               ),
             ],
           ),
+        ),
+        const SizedBox(width: 8),
+        NotificationBadgeIcon(
+          role: 'student',
+          themeColor: _StudentColors.orange,
+          iconColor: _StudentColors.deep,
         ),
       ],
     );

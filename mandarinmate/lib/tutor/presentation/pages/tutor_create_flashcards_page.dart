@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:mandarinmate/services/notification_service.dart';
+
 
 class TutorCreateFlashcardsPage extends StatefulWidget {
   const TutorCreateFlashcardsPage({super.key});
@@ -127,6 +129,12 @@ class _TutorCreateFlashcardsPageState extends State<TutorCreateFlashcardsPage> {
       }
 
       await batch.commit();
+
+      await NotificationService.notifyAllStudents(
+        title: '🃏 New Flashcards Available!',
+        body: 'A new set of flashcards is available for Level $levelNumber: "$title"',
+        type: 'flashcards',
+      );
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

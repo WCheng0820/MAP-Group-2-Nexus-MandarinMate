@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mandarinmate/tutor/services/vocabulary_draft_service.dart';
 import 'tutor_manage_units_page.dart';
+import 'package:mandarinmate/services/notification_service.dart';
+
 
 class TutorGenerateUnitPage extends StatefulWidget {
   const TutorGenerateUnitPage({super.key});
@@ -164,6 +166,12 @@ class _TutorGenerateUnitPageState extends State<TutorGenerateUnitPage> {
       // store summary quiz at top-level of the lesson doc
       batch.update(docRef, {'summaryQuiz': summaryQuiz ?? {}});
       await batch.commit();
+
+      await NotificationService.notifyAllStudents(
+        title: '🆕 New Vocabulary Unit!',
+        body: 'A new vocabulary unit "$title" is available. Start learning now!',
+        type: 'vocab_unit',
+      );
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

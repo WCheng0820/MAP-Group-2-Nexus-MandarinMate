@@ -11,6 +11,10 @@ import 'package:mandarinmate/tutor/presentation/pages/tutor_manage_lessons_hub_p
 import 'package:mandarinmate/tutor/presentation/pages/tutor_students_page.dart';
 import 'package:mandarinmate/forum/presentation/pages/forum_page.dart';
 import 'package:mandarinmate/screens/chat_list_screen.dart';
+import 'package:mandarinmate/widgets/notification_badge_icon.dart';
+import 'dart:async';
+import 'package:mandarinmate/widgets/in_app_notification_overlay.dart';
+
 
 class TutorDashboardPage extends StatefulWidget {
   const TutorDashboardPage({super.key});
@@ -21,6 +25,25 @@ class TutorDashboardPage extends StatefulWidget {
 
 class _TutorDashboardPageState extends State<TutorDashboardPage> {
   int _currentIndex = 0;
+  StreamSubscription? _notifSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _notifSubscription = InAppNotificationOverlay.subscribeToNotifications(
+        context,
+        role: 'tutor',
+        themeColor: _TutorColors.green,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _notifSubscription?.cancel();
+    super.dispose();
+  }
 
   void _logout(BuildContext context) {
     context.read<AuthBloc>().add(AuthLogoutRequested());
@@ -1037,84 +1060,10 @@ class _TutorHeader extends StatelessWidget {
             ],
           ),
         ),
-        Row(
-          children: [
-            InkWell(
-              borderRadius: BorderRadius.circular(999),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                    const mandarinmate_edit_profile.EditProfilePage(
-                      roleColor: _TutorColors.green,
-                    ),
-                  ),
-                );
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: const Color(0xFFDFF2E9)),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(
-                      Icons.edit_rounded,
-                      color: _TutorColors.green,
-                      size: 18,
-                    ),
-                    SizedBox(width: 6),
-                    Text(
-                      'Edit',
-                      style: TextStyle(
-                        color: _TutorColors.deep,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            InkWell(
-              borderRadius: BorderRadius.circular(999),
-              onTap: onLogout,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF0F0),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: const Color(0xFFFFD6D6)),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(
-                      Icons.logout_rounded,
-                      color: Color(0xFFD32F2F),
-                      size: 18,
-                    ),
-                    SizedBox(width: 6),
-                    Text(
-                      'Logout',
-                      style: TextStyle(
-                        color: Color(0xFFD32F2F),
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
+        NotificationBadgeIcon(
+          role: 'tutor',
+          themeColor: _TutorColors.green,
+          iconColor: _TutorColors.deep,
         ),
       ],
     );

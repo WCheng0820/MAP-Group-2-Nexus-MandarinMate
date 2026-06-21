@@ -24,12 +24,17 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF7FBF9),
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: _green,
         foregroundColor: Colors.white,
         elevation: 0,
         title: const Text(
           'Class Performance',
-          style: TextStyle(fontWeight: FontWeight.w800),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+            fontWeight: FontWeight.w900,
+          ),
         ),
       ),
       body: user == null

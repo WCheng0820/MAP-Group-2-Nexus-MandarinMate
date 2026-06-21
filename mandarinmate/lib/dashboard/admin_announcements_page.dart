@@ -19,7 +19,14 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
     return Scaffold(
       backgroundColor: _surface,
       appBar: AppBar(
-        title: const Text('Admin Announcements'),
+        title: const Text(
+          'Admin Announcements',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
         backgroundColor: _primary,
         foregroundColor: Colors.white,
         automaticallyImplyLeading: false,
@@ -147,7 +154,7 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
                       IconButton(
                         icon: const Icon(Icons.delete_outline_rounded),
                         color: Colors.red.shade400,
-                        onPressed: () => _deleteAnnouncement(doc.id),
+                        onPressed: () => _confirmDeleteAnnouncement(context, doc.id, title),
                       ),
                     ],
                   ),
@@ -156,6 +163,30 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
             },
           );
         },
+      ),
+    );
+  }
+
+  void _confirmDeleteAnnouncement(BuildContext context, String docId, String title) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete Announcement'),
+        content: Text('Are you sure you want to delete "$title"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              _deleteAnnouncement(docId);
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+          ),
+        ],
       ),
     );
   }

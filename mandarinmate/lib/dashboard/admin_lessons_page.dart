@@ -13,7 +13,14 @@ class AdminLessonsPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: _surface,
       appBar: AppBar(
-        title: const Text('Admin Lessons'),
+        title: const Text(
+          'Admin Lessons',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
         backgroundColor: _primary,
         foregroundColor: Colors.white,
         automaticallyImplyLeading: false,

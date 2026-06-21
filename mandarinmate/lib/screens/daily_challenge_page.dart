@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:mandarinmate/lessons/domain/active_lesson_model.dart';
+import 'package:mandarinmate/services/notification_service.dart';
 
 // Helper class for curated vocab pool
 class ChallengeVocab {
@@ -476,12 +477,15 @@ class _DailyChallengePageState extends State<DailyChallengePage>
       final xpEarned = alreadyDoneToday ? 0 : dailyXpReward;
 
       // Streak update logic
+      bool isNewStreakActivity = false;
       if (lastActiveDate == todayString) {
         // Streak is safe
       } else if (lastActiveDate == yesterdayString) {
         currentStreak += 1;
+        isNewStreakActivity = true;
       } else {
         currentStreak = 1;
+        isNewStreakActivity = true;
       }
 
       // Prepare updates containing only pre-allowed user profile fields
@@ -498,6 +502,15 @@ class _DailyChallengePageState extends State<DailyChallengePage>
       }
 
       await docRef.update(updates);
+
+      if (isNewStreakActivity) {
+        await NotificationService.sendInAppNotification(
+          recipientId: user.uid,
+          title: '🔥 Streak Active!',
+          body: "Congrats on keeping up your learning streak today! You're on a $currentStreak day streak!",
+          type: 'streak',
+        );
+      }
 
       setState(() {
         _alreadyCompletedToday = alreadyDoneToday;

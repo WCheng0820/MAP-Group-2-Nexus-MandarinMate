@@ -9,6 +9,7 @@ import 'package:mandarinmate/models/user_model.dart';
 import 'package:mandarinmate/forum/presentation/pages/edit_post_page.dart';
 import 'package:mandarinmate/services/ai_moderation_service.dart';
 import 'package:mandarinmate/utils/linkify_util.dart';
+import 'package:mandarinmate/services/notification_service.dart';
 
 class PostDetailPage extends StatefulWidget {
   final String postId;
@@ -72,6 +73,24 @@ class _PostDetailPageState extends State<PostDetailPage> {
             ? FieldValue.arrayRemove([currentUid])
             : FieldValue.arrayUnion([currentUid]),
       });
+
+      if (!isLiked && currentUid != post.authorId) {
+        final userDoc = await FirebaseFirestore.instance.collection('users').doc(currentUid).get();
+        final userData = userDoc.data() ?? {};
+        final name = userData['displayName'] ??
+            '${userData['firstName'] ?? ''} ${userData['lastName'] ?? ''}'.trim();
+        final finalName = name.isEmpty ? 'Someone' : name;
+
+        await NotificationService.sendInAppNotification(
+          recipientId: post.authorId,
+          title: '❤️ New Like',
+          body: '$finalName liked your post: "${post.title}"',
+          type: 'forum_like',
+          extra: {
+            'postId': post.id,
+          },
+        );
+      }
     } catch (e) {
       print('Error updating like: $e');
     }
@@ -165,7 +184,7 @@ Check it out on MandarinMate! 🍊
     }
   }
 
-  Future<void> _submitComment(String currentUid) async {
+  Future<void> _submitComment(String currentUid, ForumPost post) async {
     setState(() {
       _commentError = null;
     });
@@ -240,6 +259,18 @@ Check it out on MandarinMate! 🍊
       batch.update(postRef, {'commentCount': FieldValue.increment(1)});
       
       await batch.commit();
+
+      if (currentUid != post.authorId) {
+        await NotificationService.sendInAppNotification(
+          recipientId: post.authorId,
+          title: '💬 New Comment',
+          body: '$authorName commented on your post: "${post.title}"',
+          type: 'forum_comment',
+          extra: {
+            'postId': post.id,
+          },
+        );
+      }
 
       _commentController.clear();
       // Scroll to bottom
@@ -825,7 +856,7 @@ Check it out on MandarinMate! 🍊
                                 )
                               : IconButton(
                                   icon: Icon(Icons.send_rounded, color: widget.themeColor),
-                                  onPressed: () => _submitComment(currentUid),
+                                  onPressed: () => _submitComment(currentUid, post),
                                 ),
                         ],
                       ),
