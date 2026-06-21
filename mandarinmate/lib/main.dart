@@ -119,12 +119,7 @@ class _MyAppState extends State<MyApp> {
 
     _notificationService.initializeNotifications();
 
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('Got a message whilst in the foreground!');
-      if (message.notification != null) {
-        print('Notification Title: ${message.notification!.title}');
-      }
-    });
+
 
     _setupInteractedMessage();
   }

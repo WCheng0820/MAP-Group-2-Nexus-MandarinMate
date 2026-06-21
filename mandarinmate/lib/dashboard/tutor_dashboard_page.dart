@@ -161,7 +161,7 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                   physics: const NeverScrollableScrollPhysics(),
                   crossAxisSpacing: 10,
                   mainAxisSpacing: 10,
-                  childAspectRatio: 1.18,
+                  childAspectRatio: 1.1,
                   children: [
                     _TutorActionTile(
                       icon: Icons.class_rounded,
@@ -1262,7 +1262,7 @@ class _TutorActionTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: const Color(0xFFDDF2E8)),
@@ -1276,36 +1276,45 @@ class _TutorActionTile extends StatelessWidget {
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                width: 42,
-                height: 42,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, color: color, size: 24),
+                child: Icon(icon, color: color, size: 20),
               ),
-              const Spacer(),
-              Text(
-                title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: _TutorColors.deep,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                subtitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: _TutorColors.muted,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+              const SizedBox(height: 6),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: _TutorColors.deep,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 13,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: _TutorColors.muted,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],

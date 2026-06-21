@@ -70,6 +70,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Chats'),
+        automaticallyImplyLeading: false,
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance

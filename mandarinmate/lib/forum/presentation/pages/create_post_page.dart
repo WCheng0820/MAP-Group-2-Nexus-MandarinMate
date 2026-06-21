@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mandarinmate/forum/domain/forum_post_model.dart';
 import 'package:mandarinmate/models/user_model.dart';
+import 'package:mandarinmate/services/ai_moderation_service.dart';
 
 class CreatePostPage extends StatefulWidget {
   final Color themeColor;
@@ -20,6 +21,10 @@ class _CreatePostPageState extends State<CreatePostPage> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _contentController = TextEditingController();
+  
+  final _aiModerationService = AiModerationService();
+  String? _titleError;
+  String? _contentError;
   
   String _selectedCategory = 'General';
   bool _isPublishing = false;
@@ -40,11 +45,37 @@ class _CreatePostPageState extends State<CreatePostPage> {
   }
 
   Future<void> _publishPost() async {
+    setState(() {
+      _titleError = null;
+      _contentError = null;
+    });
+
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isPublishing = true);
 
     try {
+      // Content Moderation check
+      final titleScanError = await _aiModerationService.scanText(_titleController.text);
+      if (titleScanError != null) {
+        setState(() {
+          _titleError = titleScanError;
+          _isPublishing = false;
+        });
+        _formKey.currentState!.validate();
+        return;
+      }
+
+      final contentScanError = await _aiModerationService.scanText(_contentController.text);
+      if (contentScanError != null) {
+        setState(() {
+          _contentError = contentScanError;
+          _isPublishing = false;
+        });
+        _formKey.currentState!.validate();
+        return;
+      }
+
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
         throw Exception('User not logged in');
@@ -163,6 +194,14 @@ class _CreatePostPageState extends State<CreatePostPage> {
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF1C2433),
                         ),
+                        onChanged: (value) {
+                          if (_titleError != null) {
+                            setState(() {
+                              _titleError = null;
+                            });
+                            _formKey.currentState!.validate();
+                          }
+                        },
                         decoration: const InputDecoration(
                           hintText: 'Enter a descriptive title...',
                           hintStyle: TextStyle(color: Colors.grey, fontWeight: FontWeight.normal),
@@ -179,6 +218,9 @@ class _CreatePostPageState extends State<CreatePostPage> {
                           }
                           if (value.trim().length < 5) {
                             return 'Title must be at least 5 characters';
+                          }
+                          if (_titleError != null) {
+                            return _titleError;
                           }
                           return null;
                         },
@@ -248,6 +290,14 @@ class _CreatePostPageState extends State<CreatePostPage> {
                           fontSize: 14,
                           color: Color(0xFF1C2433),
                         ),
+                        onChanged: (value) {
+                          if (_contentError != null) {
+                            setState(() {
+                              _contentError = null;
+                            });
+                            _formKey.currentState!.validate();
+                          }
+                        },
                         decoration: const InputDecoration(
                           hintText: 'Share your question, learning tips, or topics in Mandarin...',
                           hintStyle: TextStyle(color: Colors.grey),
@@ -265,6 +315,9 @@ class _CreatePostPageState extends State<CreatePostPage> {
                           }
                           if (value.trim().length < 10) {
                             return 'Content must be at least 10 characters';
+                          }
+                          if (_contentError != null) {
+                            return _contentError;
                           }
                           return null;
                         },

@@ -7,6 +7,7 @@ import 'package:mandarinmate/forum/domain/forum_comment_model.dart';
 import 'package:mandarinmate/forum/domain/forum_post_model.dart';
 import 'package:mandarinmate/models/user_model.dart';
 import 'package:mandarinmate/forum/presentation/pages/edit_post_page.dart';
+import 'package:mandarinmate/services/ai_moderation_service.dart';
 
 class PostDetailPage extends StatefulWidget {
   final String postId;
@@ -27,6 +28,9 @@ class _PostDetailPageState extends State<PostDetailPage> {
   final ScrollController _scrollController = ScrollController();
   bool _isSubmittingComment = false;
   String? _currentUserRole;
+  
+  final _aiModerationService = AiModerationService();
+  String? _commentError;
 
   @override
   void initState() {
@@ -161,12 +165,30 @@ Check it out on MandarinMate! 🍊
   }
 
   Future<void> _submitComment(String currentUid) async {
+    setState(() {
+      _commentError = null;
+    });
+
     final content = _commentController.text.trim();
-    if (content.isEmpty) return;
+    if (content.isEmpty) {
+      setState(() {
+        _commentError = 'Comment cannot be empty';
+      });
+      return;
+    }
 
     setState(() => _isSubmittingComment = true);
 
     try {
+      final scanError = await _aiModerationService.scanText(content);
+      if (scanError != null) {
+        setState(() {
+          _commentError = scanError;
+          _isSubmittingComment = false;
+        });
+        return;
+      }
+
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception('Not logged in');
 
@@ -738,47 +760,74 @@ Check it out on MandarinMate! 🍊
                       top: BorderSide(color: Color(0xFFECEFF1), width: 1),
                     ),
                   ),
-                  child: Row(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF1F3F4),
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          child: TextField(
-                            controller: _commentController,
-                            maxLines: null,
-                            keyboardType: TextInputType.multiline,
-                            textCapitalization: TextCapitalization.sentences,
-                            style: const TextStyle(fontSize: 14),
-                            decoration: const InputDecoration(
-                              hintText: 'Add a comment...',
-                              hintStyle: TextStyle(color: Colors.grey),
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(vertical: 10),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      _isSubmittingComment
-                          ? Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 12),
-                              child: SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: widget.themeColor,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF1F3F4),
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(
+                                  color: _commentError != null ? Colors.red : Colors.transparent,
+                                  width: 1.5,
                                 ),
                               ),
-                            )
-                          : IconButton(
-                              icon: Icon(Icons.send_rounded, color: widget.themeColor),
-                              onPressed: () => _submitComment(currentUid),
+                              child: TextField(
+                                controller: _commentController,
+                                maxLines: null,
+                                keyboardType: TextInputType.multiline,
+                                textCapitalization: TextCapitalization.sentences,
+                                style: const TextStyle(fontSize: 14),
+                                onChanged: (value) {
+                                  if (_commentError != null) {
+                                    setState(() {
+                                      _commentError = null;
+                                    });
+                                  }
+                                },
+                                decoration: const InputDecoration(
+                                  hintText: 'Add a comment...',
+                                  hintStyle: TextStyle(color: Colors.grey),
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.symmetric(vertical: 10),
+                                ),
+                              ),
                             ),
+                          ),
+                          const SizedBox(width: 8),
+                          _isSubmittingComment
+                              ? Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  child: SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: widget.themeColor,
+                                    ),
+                                  ),
+                                )
+                              : IconButton(
+                                  icon: Icon(Icons.send_rounded, color: widget.themeColor),
+                                  onPressed: () => _submitComment(currentUid),
+                                ),
+                        ],
+                      ),
+                      if (_commentError != null) ...[
+                        const SizedBox(height: 4),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 14),
+                          child: Text(
+                            _commentError!,
+                            style: const TextStyle(color: Colors.red, fontSize: 12),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),

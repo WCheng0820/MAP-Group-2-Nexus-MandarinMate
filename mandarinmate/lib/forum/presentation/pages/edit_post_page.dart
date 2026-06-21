@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:mandarinmate/forum/domain/forum_post_model.dart';
+import 'package:mandarinmate/services/ai_moderation_service.dart';
 
 class EditPostPage extends StatefulWidget {
   final ForumPost post;
@@ -20,6 +21,10 @@ class _EditPostPageState extends State<EditPostPage> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _titleController;
   late final TextEditingController _contentController;
+  
+  final _aiModerationService = AiModerationService();
+  String? _titleError;
+  String? _contentError;
   
   late String _selectedCategory;
   bool _isUpdating = false;
@@ -48,11 +53,37 @@ class _EditPostPageState extends State<EditPostPage> {
   }
 
   Future<void> _updatePost() async {
+    setState(() {
+      _titleError = null;
+      _contentError = null;
+    });
+
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isUpdating = true);
 
     try {
+      // Content Moderation check
+      final titleScanError = await _aiModerationService.scanText(_titleController.text);
+      if (titleScanError != null) {
+        setState(() {
+          _titleError = titleScanError;
+          _isUpdating = false;
+        });
+        _formKey.currentState!.validate();
+        return;
+      }
+
+      final contentScanError = await _aiModerationService.scanText(_contentController.text);
+      if (contentScanError != null) {
+        setState(() {
+          _contentError = contentScanError;
+          _isUpdating = false;
+        });
+        _formKey.currentState!.validate();
+        return;
+      }
+
       final postRef = FirebaseFirestore.instance.collection('forum_posts').doc(widget.post.id);
 
       await postRef.update({
@@ -132,6 +163,14 @@ class _EditPostPageState extends State<EditPostPage> {
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF1C2433),
                         ),
+                        onChanged: (value) {
+                          if (_titleError != null) {
+                            setState(() {
+                              _titleError = null;
+                            });
+                            _formKey.currentState!.validate();
+                          }
+                        },
                         decoration: const InputDecoration(
                           hintText: 'Enter a descriptive title...',
                           hintStyle: TextStyle(color: Colors.grey, fontWeight: FontWeight.normal),
@@ -148,6 +187,9 @@ class _EditPostPageState extends State<EditPostPage> {
                           }
                           if (value.trim().length < 5) {
                             return 'Title must be at least 5 characters';
+                          }
+                          if (_titleError != null) {
+                            return _titleError;
                           }
                           return null;
                         },
@@ -217,6 +259,14 @@ class _EditPostPageState extends State<EditPostPage> {
                           fontSize: 14,
                           color: Color(0xFF1C2433),
                         ),
+                        onChanged: (value) {
+                          if (_contentError != null) {
+                            setState(() {
+                              _contentError = null;
+                            });
+                            _formKey.currentState!.validate();
+                          }
+                        },
                         decoration: const InputDecoration(
                           hintText: 'Share your question, learning tips, or topics in Mandarin...',
                           hintStyle: TextStyle(color: Colors.grey),
@@ -234,6 +284,9 @@ class _EditPostPageState extends State<EditPostPage> {
                           }
                           if (value.trim().length < 10) {
                             return 'Content must be at least 10 characters';
+                          }
+                          if (_contentError != null) {
+                            return _contentError;
                           }
                           return null;
                         },

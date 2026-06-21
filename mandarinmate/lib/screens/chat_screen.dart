@@ -1,10 +1,14 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:mandarinmate/services/chat_attachment_service.dart';
+import 'package:mandarinmate/services/ai_moderation_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart'; // [NEW] For system tray
 
 class ChatScreen extends StatefulWidget {
@@ -39,6 +43,10 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _showScrollToBottom = false;
   bool _firstScrollDone = false;
   final _formKey = GlobalKey<FormState>();
+
+  final _aiModerationService = AiModerationService();
+  String? _chatError;
+  bool _isSendingMedia = false;
 
   @override
   void initState() {
@@ -180,11 +188,37 @@ class _ChatScreenState extends State<ChatScreen> {
   // ------------------------------------------------------------------
 
   Future<void> sendMessage() async {
+    setState(() {
+      _chatError = null;
+    });
+
     if (!_formKey.currentState!.validate()) return;
 
     final text = _messageController.text.trim();
+
+    setState(() => _isSendingMedia = true);
+
+    try {
+      final scanError = await _aiModerationService.scanText(text);
+      if (scanError != null) {
+        setState(() {
+          _chatError = scanError;
+          _isSendingMedia = false;
+        });
+        _formKey.currentState!.validate();
+        return;
+      }
+    } catch (e) {
+      debugPrint('Moderation check failed: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isSendingMedia = false);
+      }
+    }
+
     _messageController.clear(); // Clear instantly for better UX
     _formKey.currentState!.reset(); // Reset validation state
+    _messageController.clear(); // Ensure text is cleared after form reset
 
     // Save message
     await FirebaseFirestore.instance
@@ -205,41 +239,135 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> sendImage() async {
-    final result = await ChatAttachmentService.uploadImage();
-    if (result == null) return;
+    final picker = ImagePicker();
+    final XFile? image = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
+    if (image == null) return;
 
-    // Save Image
-    await FirebaseFirestore.instance.collection('chats').doc(widget.chatId).collection('messages').add({
-      'senderId': currentUser.uid,
-      'messageType': 'image',
-      'fileUrl': result['fileUrl'],
-      'fileName': result['fileName'],
-      'timestamp': FieldValue.serverTimestamp(),
-      'isRead': false,
-    });
+    setState(() => _isSendingMedia = true);
 
-    // Call our helper with a custom image message!
-    await _updateSnippetAndNotify('📷 Photo');
-    _scrollToBottom();
+    try {
+      final scanError = await _aiModerationService.scanImage(image.path);
+      if (scanError != null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(scanError),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+        return;
+      }
+
+      final file = File(image.path);
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
+
+      await Supabase.instance.client.storage
+          .from('chat-files')
+          .upload(fileName, file);
+
+      final url = Supabase.instance.client.storage
+          .from('chat-files')
+          .getPublicUrl(fileName);
+
+      // Save Image
+      await FirebaseFirestore.instance.collection('chats').doc(widget.chatId).collection('messages').add({
+        'senderId': currentUser.uid,
+        'messageType': 'image',
+        'fileUrl': url,
+        'fileName': fileName,
+        'timestamp': FieldValue.serverTimestamp(),
+        'isRead': false,
+      });
+
+      await _updateSnippetAndNotify('📷 Photo');
+      _scrollToBottom();
+    } catch (e) {
+      debugPrint('Error sending image: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isSendingMedia = false);
+      }
+    }
   }
 
   Future<void> sendAttachment() async {
-    final result = await ChatAttachmentService.uploadFile();
-    if (result == null) return;
+    FilePickerResult? result = await FilePicker.platform.pickFiles();
+    if (result == null || result.files.single.path == null) return;
 
-    // Save File
-    await FirebaseFirestore.instance.collection('chats').doc(widget.chatId).collection('messages').add({
-      'senderId': currentUser.uid,
-      'messageType': 'file',
-      'fileName': result['fileName'],
-      'fileUrl': result['fileUrl'],
-      'timestamp': FieldValue.serverTimestamp(),
-      'isRead': false,
-    });
+    final filePath = result.files.single.path!;
+    final fileName = result.files.single.name;
 
-    // Call our helper with a custom file message!
-    await _updateSnippetAndNotify('📄 ${result['fileName']}');
-    _scrollToBottom();
+    setState(() => _isSendingMedia = true);
+
+    try {
+      // Moderate file name first
+      final textScanError = await _aiModerationService.scanText(fileName);
+      if (textScanError != null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(textScanError),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+        return;
+      }
+
+      // If it's an image file, scan the image content as well
+      final lowerPath = filePath.toLowerCase();
+      if (lowerPath.endsWith('.jpg') || lowerPath.endsWith('.jpeg') || lowerPath.endsWith('.png') || lowerPath.endsWith('.webp') || lowerPath.endsWith('.gif')) {
+        final imageScanError = await _aiModerationService.scanImage(filePath);
+        if (imageScanError != null) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(imageScanError),
+                backgroundColor: Colors.red,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+          return;
+        }
+      }
+
+      final file = File(filePath);
+      final finalStorageName = '${DateTime.now().millisecondsSinceEpoch}_$fileName';
+
+      await Supabase.instance.client.storage
+          .from('chat-files')
+          .upload(finalStorageName, file);
+
+      final url = Supabase.instance.client.storage
+          .from('chat-files')
+          .getPublicUrl(finalStorageName);
+
+      // Save File
+      await FirebaseFirestore.instance.collection('chats').doc(widget.chatId).collection('messages').add({
+        'senderId': currentUser.uid,
+        'messageType': 'file',
+        'fileName': fileName,
+        'fileUrl': url,
+        'timestamp': FieldValue.serverTimestamp(),
+        'isRead': false,
+      });
+
+      await _updateSnippetAndNotify('📄 $fileName');
+      _scrollToBottom();
+    } catch (e) {
+      debugPrint('Error sending attachment: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isSendingMedia = false);
+      }
+    }
   }
 
   Future<void> showAttachmentMenu() async {
@@ -650,6 +778,11 @@ class _ChatScreenState extends State<ChatScreen> {
               ],
             ),
           ),
+          if (_isSendingMedia)
+            const LinearProgressIndicator(
+              color: Colors.blue,
+              backgroundColor: Colors.transparent,
+            ),
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(8),
@@ -666,10 +799,21 @@ class _ChatScreenState extends State<ChatScreen> {
                           border: OutlineInputBorder(),
                           contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         ),
+                        onChanged: (value) {
+                          if (_chatError != null) {
+                            setState(() {
+                              _chatError = null;
+                            });
+                            _formKey.currentState!.validate();
+                          }
+                        },
                         onFieldSubmitted: (_) => sendMessage(),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
                             return 'Please enter a message';
+                          }
+                          if (_chatError != null) {
+                            return _chatError;
                           }
                           return null;
                         },
