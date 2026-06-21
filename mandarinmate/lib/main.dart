@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:mandarinmate/services/notification_service.dart';
 import 'firebase_options.dart';
@@ -22,6 +23,7 @@ import 'package:mandarinmate/screens/student_announcement_page.dart';
 import 'package:mandarinmate/tutor/presentation/pages/tutor_announcement_page.dart';
 import 'package:mandarinmate/dashboard/admin_users_page.dart';
 import 'package:mandarinmate/screens/main_screen.dart';
+import 'package:mandarinmate/utils/app_language.dart';
 import 'package:mandarinmate/models/user_model.dart';
 
 @pragma('vm:entry-point')
@@ -111,6 +113,8 @@ class UnsupportedPlatformApp extends StatelessWidget {
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
+  static final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
+
   @override
   State<MyApp> createState() => _MyAppState();
 }
@@ -141,6 +145,15 @@ class _MyAppState extends State<MyApp> {
     });
 
     _setupInteractedMessage();
+    _loadSettingsPreference();
+  }
+
+  Future<void> _loadSettingsPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    final darkMode = prefs.getBool('dark_mode') ?? false;
+    MyApp.themeNotifier.value = darkMode ? ThemeMode.dark : ThemeMode.light;
+    final lang = prefs.getString('language') ?? 'English';
+    AppLanguage.languageNotifier.value = lang;
   }
 
   Future<void> _setupInteractedMessage() async {
@@ -278,11 +291,23 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return BlocProvider.value(
       value: _authBloc,
-      child: MaterialApp.router(
-        title: 'MandarinMate UTM',
-        theme: AppTheme.lightTheme,
-        routerConfig: _router,
-        debugShowCheckedModeBanner: false,
+      child: ValueListenableBuilder<ThemeMode>(
+        valueListenable: MyApp.themeNotifier,
+        builder: (_, themeMode, __) {
+          return ValueListenableBuilder<String>(
+            valueListenable: AppLanguage.languageNotifier,
+            builder: (context, currentLanguage, _) {
+              return MaterialApp.router(
+                title: 'MandarinMate UTM',
+                theme: AppTheme.lightTheme,
+                darkTheme: AppTheme.darkTheme,
+                themeMode: themeMode,
+                routerConfig: _router,
+                debugShowCheckedModeBanner: false,
+              );
+            },
+          );
+        },
       ),
     );
   }

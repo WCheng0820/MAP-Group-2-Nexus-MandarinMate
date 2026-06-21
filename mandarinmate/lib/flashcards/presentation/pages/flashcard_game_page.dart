@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mandarinmate/lessons/domain/lesson_model.dart';
 
 class FlashcardGamePage extends StatefulWidget {
@@ -27,6 +28,8 @@ class _FlashcardGamePageState extends State<FlashcardGamePage>
   late final AnimationController _flipController;
   int _index = 0;
   bool _isSpeaking = false;
+  bool _showChinese = true;
+  bool _showPinyin = true;
 
   @override
   void initState() {
@@ -37,6 +40,17 @@ class _FlashcardGamePageState extends State<FlashcardGamePage>
       vsync: this,
     );
     _initTts();
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _showChinese = prefs.getBool('show_chinese_characters') ?? true;
+        _showPinyin = prefs.getBool('show_pinyin') ?? true;
+      });
+    }
   }
 
   Future<void> _initTts() async {
@@ -57,6 +71,20 @@ class _FlashcardGamePageState extends State<FlashcardGamePage>
   }
 
   Future<void> _speakCurrent() async {
+    final prefs = await SharedPreferences.getInstance();
+    final soundEffects = prefs.getBool('sound_effects') ?? true;
+    if (!soundEffects) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Sound effects are disabled in settings.'),
+            duration: Duration(seconds: 1),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
     if (_isSpeaking || _items.isEmpty) {
       return;
     }
@@ -210,24 +238,26 @@ class _FlashcardGamePageState extends State<FlashcardGamePage>
                             : Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Text(
-                                    item.chinese,
-                                    style: const TextStyle(
-                                      fontSize: 52,
-                                      fontWeight: FontWeight.w800,
+                                  if (_showChinese)
+                                    Text(
+                                      item.chinese,
+                                      style: const TextStyle(
+                                        fontSize: 52,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                      textAlign: TextAlign.center,
                                     ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    item.pinyin,
-                                    style: TextStyle(
-                                      fontSize: 26,
-                                      color: Colors.grey.shade700,
-                                      fontWeight: FontWeight.w600,
+                                  if (_showChinese && _showPinyin) const SizedBox(height: 12),
+                                  if (_showPinyin)
+                                    Text(
+                                      item.pinyin,
+                                      style: TextStyle(
+                                        fontSize: 26,
+                                        color: Colors.grey.shade700,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      textAlign: TextAlign.center,
                                     ),
-                                    textAlign: TextAlign.center,
-                                  ),
                                   const SizedBox(height: 20),
                                   Text(
                                     'Tap to reveal meaning',

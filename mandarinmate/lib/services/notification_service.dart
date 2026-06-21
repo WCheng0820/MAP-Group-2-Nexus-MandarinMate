@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 
 class NotificationService {
@@ -62,6 +63,13 @@ class NotificationService {
       // Listen for foreground Firebase messages and present them locally
       FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
         print('Got a foreground message: ${message.messageId}');
+        final prefs = await SharedPreferences.getInstance();
+        final pushNotifications = prefs.getBool('push_notifications') ?? true;
+        if (!pushNotifications) {
+          print('Push notifications disabled in Settings. Skipping foreground notification.');
+          return;
+        }
+
         RemoteNotification? notification = message.notification;
         AndroidNotification? android = message.notification?.android;
 
@@ -230,6 +238,12 @@ class NotificationService {
     String? payload,
   }) async {
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final pushNotifications = prefs.getBool('push_notifications') ?? true;
+      if (!pushNotifications) {
+        print('Push notifications disabled in Settings. Skipping local notification.');
+        return;
+      }
       const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
         'high_importance_channel',
         'High Importance Notifications',

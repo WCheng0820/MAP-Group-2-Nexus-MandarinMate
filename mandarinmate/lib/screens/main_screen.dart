@@ -1,16 +1,20 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:mandarinmate/utils/app_theme.dart';
+import 'package:mandarinmate/utils/app_language.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mandarinmate/lessons/domain/lesson_model.dart';
 import 'package:mandarinmate/auth/presentation/bloc/auth_bloc.dart';
 import 'package:mandarinmate/screens/profile/edit_profile_page.dart'
 as mandarinmate_edit_profile;
 import 'package:mandarinmate/screens/profile/badges_achievements_page.dart';
+import 'package:mandarinmate/screens/profile/app_settings_page.dart';
 import 'package:mandarinmate/flashcards/presentation/pages/flashcard_levels_page.dart';
 import 'package:mandarinmate/lessons/presentation/pages/lesson_detail_page.dart';
 import 'package:mandarinmate/screens/daily_challenge_page.dart';
-import 'package:mandarinmate/lessons/presentation/pages/vocab_lesson_page.dart';
+
 import 'package:mandarinmate/lessons/presentation/pages/active_lesson_screen.dart'
 as new_lessons;
 import 'package:mandarinmate/lessons/data/mock_lessons.dart';
@@ -72,19 +76,19 @@ class _MainScreenState extends State<MainScreen> {
     ];
 
     return Scaffold(
-      backgroundColor: _StudentColors.paper,
+      backgroundColor: context.scaffoldBg,
       body: pages[_currentIndex],
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (index) => setState(() => _currentIndex = index),
-        backgroundColor: Colors.white,
+        backgroundColor: context.cardBg,
         indicatorColor: _StudentColors.orange.withValues(alpha: 0.16),
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        destinations: const [
+        destinations: [
           NavigationDestination(
             icon: Icon(Icons.home_rounded),
             selectedIcon: Icon(Icons.home_rounded, color: _StudentColors.red),
-            label: 'Home',
+            label: AppLanguage.t('home'),
           ),
           NavigationDestination(
             icon: Icon(Icons.menu_book_rounded),
@@ -92,7 +96,7 @@ class _MainScreenState extends State<MainScreen> {
               Icons.menu_book_rounded,
               color: _StudentColors.red,
             ),
-            label: 'Learn',
+            label: AppLanguage.t('learn'),
           ),
           NavigationDestination(
             icon: _ChatBadgeIcon(iconData: Icons.chat_bubble_rounded),
@@ -100,17 +104,17 @@ class _MainScreenState extends State<MainScreen> {
               iconData: Icons.chat_bubble_rounded,
               color: _StudentColors.red,
             ),
-            label: 'Chat',
+            label: AppLanguage.t('chat'),
           ),
           NavigationDestination(
             icon: Icon(Icons.forum_rounded),
             selectedIcon: Icon(Icons.forum_rounded, color: _StudentColors.red),
-            label: 'Forum',
+            label: AppLanguage.t('forum'),
           ),
           NavigationDestination(
             icon: Icon(Icons.person_rounded),
             selectedIcon: Icon(Icons.person_rounded, color: _StudentColors.red),
-            label: 'Profile',
+            label: AppLanguage.t('profile'),
           ),
         ],
       ),
@@ -128,6 +132,100 @@ class _HomeTab extends StatefulWidget {
 
 class _HomeTabState extends State<_HomeTab> {
   List<CourseUnit>? _cachedDynamicUnits;
+  bool _dailyReminder = true;
+  int _dailyGoalXp = 50;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadReminderSetting();
+  }
+
+  Future<void> _loadReminderSetting() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _dailyReminder = prefs.getBool('daily_reminder') ?? true;
+        _dailyGoalXp = prefs.getInt('daily_goal_xp') ?? 50;
+      });
+    }
+  }
+
+  Widget _buildDailyReminderCard(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: context.isDarkMode
+              ? [const Color(0xFF2C1A0A), const Color(0xFF1E1005)]
+              : [const Color(0xFFFFF8F0), const Color(0xFFFFEAD5)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: context.isDarkMode ? const Color(0xFF5C3A1A) : const Color(0xFFFFDFC2)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFF8A21).withValues(alpha: 0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: const BoxDecoration(
+              color: Color(0xFFFF8A21),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.local_fire_department_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  AppLanguage.t('daily_challenge') + ' ' + AppLanguage.t('reminder_time').split(' ').last,
+                  style: TextStyle(
+                    color: context.isDarkMode ? const Color(0xFFFFB07C) : const Color(0xFFC2410C),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  AppLanguage.t('remind_study_daily'),
+                  style: TextStyle(
+                    color: context.isDarkMode ? Colors.orange.shade200 : Colors.orange.shade900,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton(
+            onPressed: () => _LearnTab.openDailyChallenge(context),
+            style: IconButton.styleFrom(
+              backgroundColor: const Color(0xFFFF8A21),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.all(10),
+            ),
+            icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -151,8 +249,8 @@ class _HomeTabState extends State<_HomeTab> {
           final level = (xp ~/ 250) + 1;
           final starredItems = (data['starredItems'] as List?) ?? [];
           final streak = _toInt(
-            data['streak'],
-            fallback: _toInt(data['currentStreak'], fallback: 0),
+            data['currentStreak'],
+            fallback: _toInt(data['streak'], fallback: 0),
           );
           final completedLessons = (data['completedLessons'] as List?) ?? [];
           final dailyActivity =
@@ -179,12 +277,17 @@ class _HomeTabState extends State<_HomeTab> {
                 'streak': 0,
               });
 
-              NotificationService.sendInAppNotification(
-                recipientId: uid,
-                title: '⚠️ Streak Broken!',
-                body: 'You missed your daily learning yesterday. Start a new lesson today to build back your streak!',
-                type: 'streak_missed',
-              );
+              SharedPreferences.getInstance().then((prefs) {
+                final streakAlert = prefs.getBool('streak_alert') ?? true;
+                if (streakAlert) {
+                  NotificationService.sendInAppNotification(
+                    recipientId: uid,
+                    title: '⚠️ Streak Broken!',
+                    body: 'You missed your daily learning yesterday. Start a new lesson today to build back your streak!',
+                    type: 'streak_missed',
+                  );
+                }
+              });
             }
           }
 
@@ -243,23 +346,31 @@ class _HomeTabState extends State<_HomeTab> {
                     if (nextLesson != null) break;
                   }
 
+                  final now = DateTime.now();
+                  final todayString = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+                  final hasCompletedDaily = completedLessons.contains("daily_challenge_$todayString");
+
                   return SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(16, 18, 16, 22),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _StudentHeader(name: name, streak: streak),
+                        if (_dailyReminder && !hasCompletedDaily) ...[
+                          const SizedBox(height: 12),
+                          _buildDailyReminderCard(context),
+                        ],
                         const SizedBox(height: 14),
                         _ProgressHero(
-                          title: 'Learning Dashboard',
+                          title: AppLanguage.t('learning_dashboard'),
                           headline: 'Level $level Mandarin',
                           subtitle:
                           '${(courseProgress * 100).round()}% Course Completed',
                           xp: xp,
                           progress: courseProgress,
                           actionLabel: nextLesson != null
-                              ? 'Continue Lesson'
-                              : 'Course Completed',
+                              ? AppLanguage.t('continue_lesson_btn')
+                              : AppLanguage.t('course_completed'),
                           onAction: nextLesson != null
                               ? () {
                             Navigator.push(
@@ -292,30 +403,30 @@ class _HomeTabState extends State<_HomeTab> {
                           children: [
                             _StudentActionTile(
                               icon: Icons.menu_book_rounded,
-                              title: 'Mandarin Lessons',
-                              subtitle: 'Vocab, quiz, listening',
+                              title: AppLanguage.t('mandarin_lessons'),
+                              subtitle: AppLanguage.t('vocab_quiz_listening'),
                               color: _StudentColors.red,
                               onTap: widget.onOpenLearn,
                             ),
                             _StudentActionTile(
                               icon: Icons.style_rounded,
-                              title: 'Flashcards',
-                              subtitle: 'Revision tools',
+                              title: AppLanguage.t('revision_tools').split(' ').first == 'Revision' ? 'Flashcards' : AppLanguage.t('revision_tools'),
+                              subtitle: AppLanguage.t('revision_tools'),
                               color: _StudentColors.orange,
                               onTap: () => _LearnTab.openFlashcards(context),
                             ),
                             _StudentActionTile(
                               icon: Icons.local_fire_department_rounded,
-                              title: 'Daily Challenge',
-                              subtitle: 'Earn bonus XP',
+                              title: AppLanguage.t('daily_challenge'),
+                              subtitle: AppLanguage.t('earn_bonus_xp'),
                               color: const Color(0xFF16A34A),
                               onTap: () =>
                                   _LearnTab.openDailyChallenge(context),
                             ),
                             _StudentActionTile(
                               icon: Icons.campaign_rounded,
-                              title: 'Announcements',
-                              subtitle: 'Tutor & Admin updates',
+                              title: AppLanguage.t('announcements'),
+                              subtitle: AppLanguage.t('tutor_admin_updates'),
                               color: _StudentColors.orange,
                               onTap: () {
                                 Navigator.push(
@@ -329,7 +440,10 @@ class _HomeTabState extends State<_HomeTab> {
                           ],
                         ),
                         const SizedBox(height: 20),
-                        _WeeklyProgressChart(dailyActivity: dailyActivity),
+                        _WeeklyProgressChart(
+                          dailyActivity: dailyActivity,
+                          dailyGoalXp: _dailyGoalXp,
+                        ),
                         const _StudentAnnouncementsSection(),
                         const _StudentLeaderboardPreview(),
                         if (starredItems.isNotEmpty) ...[
@@ -787,7 +901,7 @@ class _LearnTab extends StatelessWidget {
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
-      backgroundColor: Colors.white,
+      backgroundColor: context.cardBg,
       builder: (_) => _LeaderboardSheet(currentUid: uid),
     );
   }
@@ -797,7 +911,7 @@ class _LearnTab extends StatelessWidget {
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
-      backgroundColor: Colors.white,
+      backgroundColor: context.cardBg,
       builder: (_) => _ProgressSheet(uid: uid),
     );
   }
@@ -828,8 +942,8 @@ class _LearnTab extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _ProgressHero(
-                  title: 'Overall Progress',
-                  headline: 'Level $level',
+                  title: AppLanguage.t('overall_progress'),
+                  headline: AppLanguage.t('level') + ' $level',
                   xp: xp,
                 ),
                 const SizedBox(height: 16),
@@ -843,29 +957,29 @@ class _LearnTab extends StatelessWidget {
                   children: [
                     _StudentActionTile(
                       icon: Icons.style_rounded,
-                      title: 'Flashcards',
-                      subtitle: 'Fast revision',
+                      title: AppLanguage.t('revision_tools').split(' ').first == 'Revision' ? 'Flashcards' : AppLanguage.t('revision_tools'),
+                      subtitle: AppLanguage.t('revision_tools'),
                       color: _StudentColors.red,
                       onTap: () => openFlashcards(context),
                     ),
                     _StudentActionTile(
                       icon: Icons.flag_rounded,
-                      title: 'Daily Challenge',
-                      subtitle: 'Quiz + XP',
+                      title: AppLanguage.t('daily_challenge'),
+                      subtitle: AppLanguage.t('earn_bonus_xp'),
                       color: _StudentColors.orange,
                       onTap: () => openDailyChallenge(context),
                     ),
                     _StudentActionTile(
                       icon: Icons.insights_rounded,
-                      title: 'Progress',
-                      subtitle: 'Level and XP',
+                      title: AppLanguage.t('progress'),
+                      subtitle: AppLanguage.t('level') + ' & ' + AppLanguage.t('xp'),
                       color: const Color(0xFF16A34A),
                       onTap: () => _openProgress(context),
                     ),
                     _StudentActionTile(
                       icon: Icons.emoji_events_rounded,
-                      title: 'Leaderboard',
-                      subtitle: 'Top students',
+                      title: AppLanguage.t('leaderboard'),
+                      subtitle: AppLanguage.t('unlock_new_achievements'),
                       color: const Color(0xFF2F80ED),
                       onTap: () => _openLeaderboard(context),
                     ),
@@ -918,7 +1032,7 @@ class _LessonsList extends StatelessWidget {
 
         final docs = snapshot.data?.docs ?? const [];
         if (docs.isEmpty) {
-          return const _EmptyState(text: 'No lessons available yet.');
+          return _EmptyState(text: AppLanguage.t('no_lessons'));
         }
 
         // Separate units into regular learning path and community materials
@@ -987,9 +1101,12 @@ class _StudentPageFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [_StudentColors.paper, Color(0xFFFFEFE4)],
+          colors: [
+            context.scaffoldBg,
+            context.isDarkMode ? const Color(0xFF1F120A) : const Color(0xFFFFEFE4),
+          ],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
@@ -1014,20 +1131,20 @@ class _StudentHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '你好, $name',
+                AppLanguage.t('welcome') + ', $name',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: _StudentColors.deep,
+                style: TextStyle(
+                  color: context.textDeep,
                   fontSize: 24,
                   fontWeight: FontWeight.w900,
                 ),
               ),
               const SizedBox(height: 3),
-              const Text(
-                'Ready for Mandarin practice?',
+              Text(
+                AppLanguage.t('ready_for_practice'),
                 style: TextStyle(
-                  color: _StudentColors.muted,
+                  color: context.textMuted,
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                 ),
@@ -1038,9 +1155,9 @@ class _StudentHeader extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.cardBg,
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: const Color(0xFFFFDFC2)),
+            border: Border.all(color: context.borderTheme),
           ),
           child: Row(
             children: [
@@ -1052,8 +1169,8 @@ class _StudentHeader extends StatelessWidget {
               const SizedBox(width: 4),
               Text(
                 '$streak',
-                style: const TextStyle(
-                  color: _StudentColors.deep,
+                style: TextStyle(
+                  color: context.textDeep,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -1230,7 +1347,7 @@ class _StudentActionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: context.cardBg,
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
@@ -1239,7 +1356,7 @@ class _StudentActionTile extends StatelessWidget {
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFFFE4CF)),
+            border: Border.all(color: context.borderTheme),
             boxShadow: const [
               BoxShadow(
                 color: Color(0x0D111827),
@@ -1265,8 +1382,8 @@ class _StudentActionTile extends StatelessWidget {
                 title,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: _StudentColors.deep,
+                style: TextStyle(
+                  color: context.textDeep,
                   fontWeight: FontWeight.w900,
                   fontSize: 14,
                 ),
@@ -1276,8 +1393,8 @@ class _StudentActionTile extends StatelessWidget {
                 subtitle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: _StudentColors.muted,
+                style: TextStyle(
+                  color: context.textMuted,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
@@ -1303,8 +1420,8 @@ class _SectionHeader extends StatelessWidget {
         Expanded(
           child: Text(
             title,
-            style: const TextStyle(
-              color: _StudentColors.deep,
+            style: TextStyle(
+              color: context.textDeep,
               fontSize: 20,
               fontWeight: FontWeight.w900,
             ),
@@ -1337,7 +1454,7 @@ class _LessonCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Material(
-        color: Colors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(20),
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
@@ -1346,7 +1463,7 @@ class _LessonCard extends StatelessWidget {
             padding: const EdgeInsets.all(13),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFFFE4CF)),
+              border: Border.all(color: context.borderTheme),
             ),
             child: Row(
               children: [
@@ -1376,8 +1493,8 @@ class _LessonCard extends StatelessWidget {
                         'Unit ${unit.unitNumber}: ${unit.title}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: _StudentColors.deep,
+                        style: TextStyle(
+                          color: context.textDeep,
                           fontSize: 15,
                           fontWeight: FontWeight.w900,
                         ),
@@ -1389,8 +1506,8 @@ class _LessonCard extends StatelessWidget {
                             : unit.titleChinese,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: _StudentColors.muted,
+                        style: TextStyle(
+                          color: context.textMuted,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
@@ -1406,23 +1523,23 @@ class _LessonCard extends StatelessWidget {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE8F5E9),
+                      color: context.isDarkMode ? const Color(0xFF1B2E1E) : const Color(0xFFE8F5E9),
                       borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: const Color(0xFFC8E6C9)),
+                      border: Border.all(color: context.isDarkMode ? const Color(0xFF2E5E35) : const Color(0xFFC8E6C9)),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
                           Icons.check_circle_rounded,
-                          color: Color(0xFF2E7D32),
+                          color: context.isDarkMode ? const Color(0xFF81C784) : const Color(0xFF2E7D32),
                           size: 14,
                         ),
-                        SizedBox(width: 4),
+                        const SizedBox(width: 4),
                         Text(
                           'Completed',
                           style: TextStyle(
-                            color: Color(0xFF2E7D32),
+                            color: context.isDarkMode ? const Color(0xFF81C784) : const Color(0xFF2E7D32),
                             fontSize: 10,
                             fontWeight: FontWeight.w800,
                           ),
@@ -1502,11 +1619,11 @@ class _LeaderboardSheet extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Leaderboard Ranking',
                       style: TextStyle(
-                        color: _StudentColors.deep,
+                        color: context.textDeep,
                         fontSize: 20,
                         fontWeight: FontWeight.w900,
                       ),
@@ -1524,10 +1641,10 @@ class _LeaderboardSheet extends StatelessWidget {
                 _MyRankHero(entry: currentEntry, nextEntry: nextEntry),
                 const SizedBox(height: 16),
               ],
-              const Text(
+              Text(
                 'Top Students',
                 style: TextStyle(
-                  color: _StudentColors.deep,
+                  color: context.textDeep,
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
                 ),
@@ -1593,8 +1710,8 @@ List<_LeaderboardEntry> _leaderboardEntriesFromDocs(
     );
     final level = (xp ~/ 250) + 1;
     final streak = _toInt(
-      data['streak'],
-      fallback: _toInt(data['currentStreak'], fallback: 0),
+      data['currentStreak'],
+      fallback: _toInt(data['streak'], fallback: 0),
     );
     final completedLessonsRaw = (data['completedLessons'] as List?) ?? [];
     final curriculumLessons = completedLessonsRaw
@@ -1775,12 +1892,14 @@ class _LeaderboardRankTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isCurrentUser ? const Color(0xFFFFF3E0) : Colors.white,
+        color: isCurrentUser
+            ? (context.isDarkMode ? const Color(0xFF3E2D13) : const Color(0xFFFFF3E0))
+            : context.cardBg,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: isCurrentUser
               ? _StudentColors.orange.withValues(alpha: 0.5)
-              : const Color(0xFFFFE4CF),
+              : context.borderTheme,
         ),
       ),
       child: Row(
@@ -1808,8 +1927,8 @@ class _LeaderboardRankTile extends StatelessWidget {
                   isCurrentUser ? '${entry.name} (You)' : entry.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: _StudentColors.deep,
+                  style: TextStyle(
+                    color: context.textDeep,
                     fontSize: 15,
                     fontWeight: FontWeight.w900,
                   ),
@@ -1819,8 +1938,8 @@ class _LeaderboardRankTile extends StatelessWidget {
                   'Level ${entry.level} · ${entry.badges} badges · ${entry.completedLessons} lessons',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: _StudentColors.muted,
+                  style: TextStyle(
+                    color: context.textMuted,
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                   ),
@@ -1831,8 +1950,8 @@ class _LeaderboardRankTile extends StatelessWidget {
           const SizedBox(width: 10),
           Text(
             '${entry.xp} XP',
-            style: const TextStyle(
-              color: _StudentColors.deep,
+            style: TextStyle(
+              color: context.textDeep,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -1884,9 +2003,9 @@ class _LeaderboardSummaryCard extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.cardBg,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: const Color(0xFFFFE4CF)),
+            border: Border.all(color: context.borderTheme),
             boxShadow: [
               BoxShadow(
                 color: _StudentColors.orange.withValues(alpha: 0.05),
@@ -1904,7 +2023,7 @@ class _LeaderboardSummaryCard extends StatelessWidget {
                     width: 46,
                     height: 46,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFF3E0),
+                      color: context.isDarkMode ? const Color(0xFF3E2D13) : const Color(0xFFFFF3E0),
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: const Icon(
@@ -1917,10 +2036,10 @@ class _LeaderboardSummaryCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Leaderboard Ranking',
                           style: TextStyle(
-                            color: Color(0xFF263238),
+                            color: context.textDeep,
                             fontSize: 18,
                             fontWeight: FontWeight.w900,
                           ),
@@ -1929,8 +2048,8 @@ class _LeaderboardSummaryCard extends StatelessWidget {
                           totalStudents == 0
                               ? 'Rank will appear after students earn XP.'
                               : 'Ranked $rankText of $totalStudents students',
-                          style: const TextStyle(
-                            color: Color(0xFF78909C),
+                          style: TextStyle(
+                            color: context.textMuted,
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                           ),
@@ -1984,16 +2103,16 @@ class _LeaderboardSummaryCard extends StatelessWidget {
                 children: [
                   Text(
                     'Level $level progress',
-                    style: const TextStyle(
-                      color: Color(0xFF546E7A),
+                    style: TextStyle(
+                      color: context.textMuted,
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
                   Text(
                     '${(levelProgress * 100).round()}%',
-                    style: const TextStyle(
-                      color: Color(0xFF546E7A),
+                    style: TextStyle(
+                      color: context.textMuted,
                       fontSize: 12,
                       fontWeight: FontWeight.w900,
                     ),
@@ -2006,7 +2125,7 @@ class _LeaderboardSummaryCard extends StatelessWidget {
                 child: LinearProgressIndicator(
                   value: levelProgress,
                   minHeight: 10,
-                  backgroundColor: const Color(0xFFECEFF1),
+                  backgroundColor: context.isDarkMode ? const Color(0xFF2C2C2C) : const Color(0xFFECEFF1),
                   valueColor: const AlwaysStoppedAnimation<Color>(
                     _StudentColors.orange,
                   ),
@@ -2017,8 +2136,8 @@ class _LeaderboardSummaryCard extends StatelessWidget {
                 snapshot.connectionState == ConnectionState.waiting
                     ? 'Loading class ranking...'
                     : xpMessage,
-                style: const TextStyle(
-                  color: Color(0xFF78909C),
+                style: TextStyle(
+                  color: context.textMuted,
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                 ),
@@ -2065,8 +2184,8 @@ class _CompactMetric extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             label,
-            style: const TextStyle(
-              color: Color(0xFF78909C),
+            style: TextStyle(
+              color: context.textMuted,
               fontSize: 10,
               fontWeight: FontWeight.w800,
             ),
@@ -2151,10 +2270,10 @@ class _ProgressSheet extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Learning Progress',
                         style: TextStyle(
-                          color: _StudentColors.deep,
+                          color: context.textDeep,
                           fontSize: 20,
                           fontWeight: FontWeight.w900,
                         ),
@@ -2227,14 +2346,14 @@ class _EmptyState extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFFFE4CF)),
+        border: Border.all(color: context.borderTheme),
       ),
       child: Text(
         text,
-        style: const TextStyle(
-          color: _StudentColors.muted,
+        style: TextStyle(
+          color: context.textMuted,
           fontWeight: FontWeight.w700,
         ),
       ),
@@ -2450,8 +2569,8 @@ class _ProfileTabState extends State<_ProfileTab> {
         );
         final level = (xp ~/ 250) + 1;
         final streak = _toInt(
-          data['streak'],
-          fallback: _toInt(data['currentStreak'], fallback: 0),
+          data['currentStreak'],
+          fallback: _toInt(data['streak'], fallback: 0),
         );
         final completedLessons = (data['completedLessons'] as List?) ?? [];
         final curriculumLessons = completedLessons
@@ -2503,7 +2622,7 @@ class _ProfileTabState extends State<_ProfileTab> {
         final double statusBarHeight = MediaQuery.of(context).padding.top;
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF8F9FA),
+          backgroundColor: context.scaffoldBg,
           body: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -2534,8 +2653,8 @@ class _ProfileTabState extends State<_ProfileTab> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'Profile',
+                          Text(
+                            AppLanguage.t('profile'),
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 24,
@@ -2555,8 +2674,9 @@ class _ProfileTabState extends State<_ProfileTab> {
                                     context,
                                     MaterialPageRoute(
                                       builder: (_) =>
-                                      const mandarinmate_edit_profile.EditProfilePage(
+                                      const AppSettingsPage(
                                         roleColor: _StudentColors.orange,
+                                        role: 'student',
                                       ),
                                     ),
                                   );
@@ -2727,7 +2847,7 @@ class _ProfileTabState extends State<_ProfileTab> {
                             child: _buildHeaderStatCard(
                               icon: '🔥',
                               value: '$streak',
-                              label: 'Streak',
+                              label: AppLanguage.t('streak'),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -2735,7 +2855,7 @@ class _ProfileTabState extends State<_ProfileTab> {
                             child: _buildHeaderStatCard(
                               icon: '⚡',
                               value: '$xp',
-                              label: 'XP',
+                              label: AppLanguage.t('xp'),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -2743,7 +2863,7 @@ class _ProfileTabState extends State<_ProfileTab> {
                             child: _buildHeaderStatCard(
                               icon: '⭐',
                               value: 'Lv.$level',
-                              label: 'Level',
+                              label: AppLanguage.t('level'),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -2765,7 +2885,7 @@ class _ProfileTabState extends State<_ProfileTab> {
                               child: _buildHeaderStatCard(
                                 icon: '🏆',
                                 value: '$badgesCount',
-                                label: 'Badges',
+                                label: AppLanguage.t('badges'),
                               ),
                             ),
                           ),
@@ -3139,10 +3259,10 @@ class _ProfileTabState extends State<_ProfileTab> {
                               icon: Icons.menu_book_rounded,
                               iconBg: const Color(0xFFFFF3E0),
                               iconColor: _StudentColors.orange,
-                              title: 'My Learning Path',
+                              title: AppLanguage.t('my_learning_path'),
                               onTap: widget.onOpenLearn,
                             ),
-                            const Divider(height: 1, color: Color(0xFFECEFF1)),
+                            Divider(height: 1, color: context.borderTheme),
                             _buildNavigationRow(
                               icon: Icons.emoji_events_rounded,
                               iconBg: const Color(0xFFFFF9C4),
@@ -3161,12 +3281,30 @@ class _ProfileTabState extends State<_ProfileTab> {
                                 );
                               },
                             ),
-                            const Divider(height: 1, color: Color(0xFFECEFF1)),
+                            Divider(height: 1, color: context.borderTheme),
                             _buildNavigationRow(
                               icon: Icons.settings_rounded,
                               iconBg: const Color(0xFFECEFF1),
                               iconColor: const Color(0xFF546E7A),
-                              title: 'Settings & Profile Edit',
+                              title: AppLanguage.t('app_settings'),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const AppSettingsPage(
+                                      roleColor: _StudentColors.orange,
+                                      role: 'student',
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            Divider(height: 1, color: context.borderTheme),
+                            _buildNavigationRow(
+                              icon: Icons.edit_note_rounded,
+                              iconBg: const Color(0xFFE1F5FE),
+                              iconColor: Colors.blue.shade700,
+                              title: AppLanguage.t('edit_profile'),
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -3179,12 +3317,12 @@ class _ProfileTabState extends State<_ProfileTab> {
                                 );
                               },
                             ),
-                            const Divider(height: 1, color: Color(0xFFECEFF1)),
+                            Divider(height: 1, color: context.borderTheme),
                             _buildNavigationRow(
                               icon: Icons.logout_rounded,
                               iconBg: const Color(0xFFFFF0F0),
                               iconColor: const Color(0xFFD32F2F),
-                              title: 'Logout',
+                              title: AppLanguage.t('logout'),
                               onTap: () => _logout(context),
                             ),
                           ],
@@ -3246,9 +3384,9 @@ class _ProfileTabState extends State<_ProfileTab> {
       width: double.infinity,
       padding: padding,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFECEFF1)),
+        border: Border.all(color: context.borderTheme),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.02),
@@ -3266,12 +3404,12 @@ class _ProfileTabState extends State<_ProfileTab> {
       width: 70,
       height: 90,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: unlocked
-              ? const Color(0xFFFFD54F).withOpacity(0.4)
-              : const Color(0xFFECEFF1),
+              ? const Color(0xFFFFD54F).withValues(alpha: 0.4)
+              : context.borderTheme,
           width: unlocked ? 1.5 : 1,
         ),
       ),
@@ -3292,8 +3430,8 @@ class _ProfileTabState extends State<_ProfileTab> {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: unlocked
-                    ? const Color(0xFF263238)
-                    : const Color(0xFFB0BEC5),
+                    ? context.textDeep
+                    : context.textMuted,
                 fontSize: 9,
                 fontWeight: FontWeight.bold,
               ),
@@ -3316,7 +3454,7 @@ class _ProfileTabState extends State<_ProfileTab> {
       decoration: BoxDecoration(
         color: const Color(0xFFF8F9FB),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFECEFF1)),
+        border: Border.all(color: context.borderTheme),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -4189,8 +4327,12 @@ class _ChatBadgeIcon extends StatelessWidget {
 
 class _WeeklyProgressChart extends StatelessWidget {
   final Map<String, dynamic> dailyActivity;
+  final int dailyGoalXp;
 
-  const _WeeklyProgressChart({required this.dailyActivity});
+  const _WeeklyProgressChart({
+    required this.dailyActivity,
+    required this.dailyGoalXp,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -4252,7 +4394,7 @@ class _WeeklyProgressChart extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           SizedBox(
-            height: 150,
+            height: 160,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -4266,6 +4408,11 @@ class _WeeklyProgressChart extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.end,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
+                      if (data['xp'] >= dailyGoalXp)
+                        const Icon(Icons.stars_rounded, color: Colors.amber, size: 12)
+                      else
+                        const SizedBox(height: 12),
+                      const SizedBox(height: 2),
                       Text(
                         '${data['xp']}',
                         maxLines: 1,

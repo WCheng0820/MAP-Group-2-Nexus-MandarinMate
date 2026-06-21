@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:mandarinmate/utils/app_theme.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mandarinmate/auth/presentation/bloc/auth_bloc.dart';
@@ -51,7 +52,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
     if (user == null) {
       return Scaffold(
-        backgroundColor: _AdminDashboardColors.background,
+        backgroundColor: context.scaffoldBg,
         body: const Center(child: Text('Session expired. Please login again.')),
       );
     }
@@ -81,15 +82,15 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     }
 
     return Scaffold(
-      backgroundColor: _AdminDashboardColors.background,
+      backgroundColor: context.scaffoldBg,
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) => _onNavTapped(context, index),
         type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
+        backgroundColor: context.cardBg,
         elevation: 0,
-        selectedItemColor: _AdminDashboardColors.headerStart,
-        unselectedItemColor: _AdminDashboardColors.muted,
+        selectedItemColor: context.isDarkMode ? Colors.purple.shade300 : _AdminDashboardColors.headerStart,
+        unselectedItemColor: context.textMuted,
         selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700),
         unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
         items: const [
@@ -291,17 +292,17 @@ class _AdminHeader extends StatelessWidget {
                 'Hi, $name',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: _AdminDashboardColors.heading,
+                style: TextStyle(
+                  color: context.textDeep,
                   fontSize: 24,
                   fontWeight: FontWeight.w900,
                 ),
               ),
               const SizedBox(height: 3),
-              const Text(
+              Text(
                 'MandarinMate Administrator',
                 style: TextStyle(
-                  color: _AdminDashboardColors.bodyText,
+                  color: context.textMuted,
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                 ),
@@ -312,7 +313,7 @@ class _AdminHeader extends StatelessWidget {
         NotificationBadgeIcon(
           role: 'admin',
           themeColor: _AdminDashboardColors.headerStart,
-          iconColor: _AdminDashboardColors.heading,
+          iconColor: context.textDeep,
         ),
       ],
     );
@@ -341,10 +342,10 @@ class _AdminHero extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(22),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
+            gradient: LinearGradient(
               colors: [
-                _AdminDashboardColors.headerStart,
-                _AdminDashboardColors.headerEnd,
+                context.isDarkMode ? Color(0xFF3B1F4A) : _AdminDashboardColors.headerStart,
+                context.isDarkMode ? Color(0xFF230C36) : _AdminDashboardColors.headerEnd,
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -581,8 +582,8 @@ class _MetricCard extends StatelessWidget {
             data.label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: _AdminDashboardColors.bodyText,
+            style: TextStyle(
+              color: context.textMuted,
               fontSize: 13,
               fontWeight: FontWeight.w600,
             ),
@@ -658,7 +659,7 @@ class _ManagementCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: context.cardBg,
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
         onTap: action.onTap,
@@ -699,8 +700,8 @@ class _ManagementCard extends StatelessWidget {
                     action.title,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: _AdminDashboardColors.heading,
+                    style: TextStyle(
+                      color: context.textDeep,
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
                       letterSpacing: -0.2,
@@ -711,8 +712,8 @@ class _ManagementCard extends StatelessWidget {
                     action.subtitle,
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: _AdminDashboardColors.bodyText,
+                    style: TextStyle(
+                      color: context.textMuted,
                       fontSize: 12,
                       height: 1.4,
                       fontWeight: FontWeight.w500,
@@ -757,9 +758,9 @@ class _RecentUsersSection extends StatelessWidget {
 
         final docs = snapshot.data?.docs ?? const [];
         if (docs.isEmpty) {
-          return const _MessageCard(
+          return _MessageCard(
             message: 'No users found.',
-            color: _AdminDashboardColors.bodyText,
+            color: context.textMuted,
           );
         }
 
@@ -774,7 +775,7 @@ class _RecentUsersSection extends StatelessWidget {
                     height: 1,
                     indent: 20,
                     endIndent: 20,
-                    color: _AdminDashboardColors.divider,
+                    color: context.borderTheme,
                   ),
               ],
             ],
@@ -822,8 +823,8 @@ class _RecentUserTile extends StatelessWidget {
                   name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: _AdminDashboardColors.heading,
+                  style: TextStyle(
+                    color: context.textDeep,
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
                   ),
@@ -833,8 +834,8 @@ class _RecentUserTile extends StatelessWidget {
                   email.isEmpty ? 'No email available' : email,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: _AdminDashboardColors.bodyText,
+                  style: TextStyle(
+                    color: context.textMuted,
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
                   ),
@@ -901,8 +902,8 @@ class _SectionTitle extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(
-                  color: _AdminDashboardColors.heading,
+                style: TextStyle(
+                  color: context.textDeep,
                   fontSize: 21,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.4,
@@ -911,8 +912,8 @@ class _SectionTitle extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 subtitle,
-                style: const TextStyle(
-                  color: _AdminDashboardColors.bodyText,
+                style: TextStyle(
+                  color: context.textMuted,
                   fontSize: 13,
                   height: 1.45,
                   fontWeight: FontWeight.w500,
@@ -1057,9 +1058,9 @@ class _AdminSystemHealthSection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _AdminDashboardColors.divider),
+        border: Border.all(color: context.borderTheme),
         boxShadow: const [
           BoxShadow(
             color: Color(0x05111827),
@@ -1086,11 +1087,11 @@ class _AdminSystemHealthSection extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              const Expanded(
+              Expanded(
                 child: Text(
                   'System Infrastructure & Security',
                   style: TextStyle(
-                    color: _AdminDashboardColors.heading,
+                    color: context.textDeep,
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
                   ),
@@ -1100,6 +1101,7 @@ class _AdminSystemHealthSection extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           _buildHealthRow(
+            context,
             icon: Icons.cloud_done_rounded,
             iconColor: Colors.green,
             label: 'Firebase Services',
@@ -1107,8 +1109,9 @@ class _AdminSystemHealthSection extends StatelessWidget {
             badgeColor: Colors.green.shade50,
             badgeTextColor: Colors.green.shade700,
           ),
-          const Divider(height: 24, color: _AdminDashboardColors.divider),
+          Divider(height: 24, color: context.borderTheme),
           _buildHealthRow(
+            context,
             icon: Icons.security_rounded,
             iconColor: Colors.blue,
             label: 'Firestore Database Rules',
@@ -1116,8 +1119,9 @@ class _AdminSystemHealthSection extends StatelessWidget {
             badgeColor: Colors.blue.shade50,
             badgeTextColor: Colors.blue.shade700,
           ),
-          const Divider(height: 24, color: _AdminDashboardColors.divider),
+          Divider(height: 24, color: context.borderTheme),
           _buildHealthRow(
+            context,
             icon: Icons.shield_rounded,
             iconColor: Colors.purple,
             label: 'User Auth Validation',
@@ -1130,7 +1134,8 @@ class _AdminSystemHealthSection extends StatelessWidget {
     );
   }
 
-  Widget _buildHealthRow({
+  Widget _buildHealthRow(
+    BuildContext context, {
     required IconData icon,
     required Color iconColor,
     required String label,
@@ -1148,8 +1153,8 @@ class _AdminSystemHealthSection extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: const TextStyle(
-                  color: _AdminDashboardColors.heading,
+                style: TextStyle(
+                  color: context.textDeep,
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                 ),
@@ -1157,8 +1162,8 @@ class _AdminSystemHealthSection extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 value,
-                style: const TextStyle(
-                  color: _AdminDashboardColors.bodyText,
+                style: TextStyle(
+                  color: context.textMuted,
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
@@ -1242,7 +1247,7 @@ class _AdminRoleBreakdownSection extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: _AdminDashboardColors.divider),
+            border: Border.all(color: context.borderTheme),
             boxShadow: const [
               BoxShadow(
                 color: Color(0x05111827),
@@ -1269,10 +1274,10 @@ class _AdminRoleBreakdownSection extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  const Text(
+                  Text(
                     'User Distribution Proportion',
                     style: TextStyle(
-                      color: _AdminDashboardColors.heading,
+                      color: context.textDeep,
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
                     ),
@@ -1312,16 +1317,19 @@ class _AdminRoleBreakdownSection extends StatelessWidget {
                 alignment: WrapAlignment.spaceBetween,
                 children: [
                   _buildLegendItem(
+                    context,
                     color: _AdminDashboardColors.students,
                     label: 'Students',
                     percentage: '${(studentPct * 100).round()}%',
                   ),
                   _buildLegendItem(
+                    context,
                     color: _AdminDashboardColors.tutors,
                     label: 'Tutors',
                     percentage: '${(tutorPct * 100).round()}%',
                   ),
                   _buildLegendItem(
+                    context,
                     color: _AdminDashboardColors.admins,
                     label: 'Admins',
                     percentage: '${(adminPct * 100).round()}%',
@@ -1335,7 +1343,7 @@ class _AdminRoleBreakdownSection extends StatelessWidget {
     );
   }
 
-  Widget _buildLegendItem({required Color color, required String label, required String percentage}) {
+  Widget _buildLegendItem(BuildContext context, {required Color color, required String label, required String percentage}) {
     return Row(
       children: [
         Container(
@@ -1349,8 +1357,8 @@ class _AdminRoleBreakdownSection extends StatelessWidget {
         const SizedBox(width: 6),
         Text(
           '$label ($percentage)',
-          style: const TextStyle(
-            color: _AdminDashboardColors.bodyText,
+          style: TextStyle(
+            color: context.textMuted,
             fontSize: 12,
             fontWeight: FontWeight.bold,
           ),

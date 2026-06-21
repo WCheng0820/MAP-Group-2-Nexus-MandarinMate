@@ -1,12 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:mandarinmate/utils/app_theme.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mandarinmate/auth/presentation/bloc/auth_bloc.dart';
 import 'package:mandarinmate/auth/presentation/pages/login_page.dart';
 import 'package:mandarinmate/screens/profile/edit_profile_page.dart'
 as mandarinmate_edit_profile;
 import 'package:mandarinmate/tutor/presentation/pages/tutor_announcement_page.dart';
+import 'package:mandarinmate/screens/profile/app_settings_page.dart';
 import 'package:mandarinmate/tutor/presentation/pages/tutor_manage_lessons_hub_page.dart';
 import 'package:mandarinmate/tutor/presentation/pages/tutor_students_page.dart';
 import 'package:mandarinmate/forum/presentation/pages/forum_page.dart';
@@ -90,11 +92,11 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
     }
 
     return Scaffold(
-      backgroundColor: _TutorColors.paper,
+      backgroundColor: context.scaffoldBg,
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         selectedItemColor: _TutorColors.green,
-        unselectedItemColor: _TutorColors.muted,
+        unselectedItemColor: context.textMuted,
         type: BottomNavigationBarType.fixed,
         onTap: (index) => _onNavTapped(context, index),
         items: const [
@@ -315,8 +317,9 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                                     context,
                                     MaterialPageRoute(
                                       builder: (_) =>
-                                      const mandarinmate_edit_profile.EditProfilePage(
+                                      const AppSettingsPage(
                                         roleColor: _TutorColors.green,
+                                        role: 'tutor',
                                       ),
                                     ),
                                   );
@@ -646,10 +649,29 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                         child: Column(
                           children: [
                             _buildTutorNavigationRow(
-                              icon: Icons.edit_rounded,
+                              icon: Icons.settings_rounded,
                               iconBg: const Color(0xFFE8F5E9),
                               iconColor: _TutorColors.green,
-                              title: 'Edit Profile Settings',
+                              title: 'App Settings',
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                    const AppSettingsPage(
+                                      roleColor: _TutorColors.green,
+                                      role: 'tutor',
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            const Divider(height: 1, color: Color(0xFFECEFF1)),
+                            _buildTutorNavigationRow(
+                              icon: Icons.edit_note_rounded,
+                              iconBg: const Color(0xFFE1F5FE),
+                              iconColor: Colors.blue.shade700,
+                              title: 'Edit Profile',
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -756,8 +778,8 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
               padding: const EdgeInsets.fromLTRB(18, 18, 18, 0),
               child: Text(
                 title,
-                style: const TextStyle(
-                  color: _TutorColors.deep,
+                style: TextStyle(
+                  color: context.textDeep,
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
                 ),
@@ -808,8 +830,8 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
           const Spacer(),
           Text(
             value,
-            style: const TextStyle(
-              color: _TutorColors.deep,
+            style: TextStyle(
+              color: context.textDeep,
               fontSize: 16,
               fontWeight: FontWeight.w900,
             ),
@@ -819,8 +841,8 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: _TutorColors.muted,
+            style: TextStyle(
+              color: context.textMuted,
               fontSize: 10,
               fontWeight: FontWeight.w700,
             ),
@@ -854,8 +876,8 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
-                    color: _TutorColors.muted,
+                  style: TextStyle(
+                    color: context.textMuted,
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),
@@ -863,8 +885,8 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                 const SizedBox(height: 2),
                 Text(
                   value,
-                  style: const TextStyle(
-                    color: _TutorColors.deep,
+                  style: TextStyle(
+                    color: context.textDeep,
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                   ),
@@ -920,8 +942,8 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    color: _TutorColors.deep,
+                  style: TextStyle(
+                    color: context.textDeep,
                     fontSize: 13,
                     fontWeight: FontWeight.w900,
                   ),
@@ -931,8 +953,8 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                   detail,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: _TutorColors.deep,
+                  style: TextStyle(
+                    color: context.textDeep,
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                   ),
@@ -942,8 +964,8 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                   time,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: _TutorColors.muted,
+                  style: TextStyle(
+                    color: context.textMuted,
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
                   ),
@@ -981,16 +1003,16 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
             Expanded(
               child: Text(
                 title,
-                style: const TextStyle(
-                  color: _TutorColors.deep,
+                style: TextStyle(
+                  color: context.textDeep,
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ),
-            const Icon(
+            Icon(
               Icons.chevron_right_rounded,
-              color: _TutorColors.muted,
+              color: context.textMuted,
               size: 20,
             ),
           ],
@@ -1012,9 +1034,9 @@ class _TutorPageFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [_TutorColors.paper, Color(0xFFEFF8F4)],
+          colors: [context.scaffoldBg, Color(0xFFEFF8F4)],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
@@ -1042,17 +1064,17 @@ class _TutorHeader extends StatelessWidget {
                 'Hi, $name',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: _TutorColors.deep,
+                style: TextStyle(
+                  color: context.textDeep,
                   fontSize: 24,
                   fontWeight: FontWeight.w900,
                 ),
               ),
               const SizedBox(height: 3),
-              const Text(
+              Text(
                 'Ready to guide your students?',
                 style: TextStyle(
-                  color: _TutorColors.muted,
+                  color: context.textMuted,
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                 ),
@@ -1063,7 +1085,7 @@ class _TutorHeader extends StatelessWidget {
         NotificationBadgeIcon(
           role: 'tutor',
           themeColor: _TutorColors.green,
-          iconColor: _TutorColors.deep,
+          iconColor: context.textDeep,
         ),
       ],
     );
@@ -1145,7 +1167,7 @@ class _TutorHero extends StatelessWidget {
           FilledButton(
             onPressed: onAction,
             style: FilledButton.styleFrom(
-              backgroundColor: Colors.white,
+              backgroundColor: context.cardBg,
               foregroundColor: _TutorColors.green,
               visualDensity: VisualDensity.compact,
               textStyle: const TextStyle(fontWeight: FontWeight.w900),
@@ -1201,7 +1223,7 @@ class _TutorActionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: context.cardBg,
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
@@ -1210,7 +1232,7 @@ class _TutorActionTile extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFDDF2E8)),
+            border: Border.all(color: context.borderTheme),
             boxShadow: const [
               BoxShadow(
                 color: Color(0x0D111827),
@@ -1242,8 +1264,8 @@ class _TutorActionTile extends StatelessWidget {
                       title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: _TutorColors.deep,
+                      style: TextStyle(
+                        color: context.textDeep,
                         fontWeight: FontWeight.w900,
                         fontSize: 13,
                       ),
@@ -1253,8 +1275,8 @@ class _TutorActionTile extends StatelessWidget {
                       subtitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: _TutorColors.muted,
+                      style: TextStyle(
+                        color: context.textMuted,
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                       ),
@@ -1283,8 +1305,8 @@ class _SectionHeader extends StatelessWidget {
         Expanded(
           child: Text(
             title,
-            style: const TextStyle(
-              color: _TutorColors.deep,
+            style: TextStyle(
+              color: context.textDeep,
               fontSize: 20,
               fontWeight: FontWeight.w900,
             ),
@@ -1355,10 +1377,10 @@ class _TutorClassroomOverview extends StatelessWidget {
                 child: const Icon(Icons.school_rounded, color: _TutorColors.green, size: 20),
               ),
               const SizedBox(width: 10),
-              const Text(
+              Text(
                 'Classroom Stats • UTM Nexus',
                 style: TextStyle(
-                  color: _TutorColors.deep,
+                  color: context.textDeep,
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
                 ),
@@ -1370,6 +1392,7 @@ class _TutorClassroomOverview extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildInfoItem(
+                  context,
                   icon: Icons.cloud_done_rounded,
                   iconColor: Colors.green,
                   label: 'Server Status',
@@ -1378,6 +1401,7 @@ class _TutorClassroomOverview extends StatelessWidget {
               ),
               Expanded(
                 child: _buildInfoItem(
+                  context,
                   icon: Icons.gpp_good_rounded,
                   iconColor: Colors.teal,
                   label: 'Firestore DB',
@@ -1386,6 +1410,7 @@ class _TutorClassroomOverview extends StatelessWidget {
               ),
               Expanded(
                 child: _buildInfoItem(
+                  context,
                   icon: Icons.code_rounded,
                   iconColor: Colors.blue,
                   label: 'App Version',
@@ -1399,7 +1424,8 @@ class _TutorClassroomOverview extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoItem({
+  Widget _buildInfoItem(
+    BuildContext context, {
     required IconData icon,
     required Color iconColor,
     required String label,
@@ -1411,12 +1437,12 @@ class _TutorClassroomOverview extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           label,
-          style: const TextStyle(color: _TutorColors.muted, fontSize: 11, fontWeight: FontWeight.w600),
+          style: TextStyle(color: context.textMuted, fontSize: 11, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 2),
         Text(
           value,
-          style: const TextStyle(color: _TutorColors.deep, fontSize: 13, fontWeight: FontWeight.bold),
+          style: TextStyle(color: context.textDeep, fontSize: 13, fontWeight: FontWeight.bold),
         ),
       ],
     );
@@ -1472,10 +1498,10 @@ class _TutorChecklistPanelState extends State<_TutorChecklistPanel> {
                 child: const Icon(Icons.assignment_turned_in_rounded, color: _TutorColors.teal, size: 20),
               ),
               const SizedBox(width: 10),
-              const Text(
+              Text(
                 'Weekly Teaching Tasks',
                 style: TextStyle(
-                  color: _TutorColors.deep,
+                  color: context.textDeep,
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
                 ),
@@ -1494,7 +1520,7 @@ class _TutorChecklistPanelState extends State<_TutorChecklistPanel> {
                 title: Text(
                   task['title']!,
                   style: TextStyle(
-                    color: task['done'] ? _TutorColors.muted : _TutorColors.deep,
+                    color: task['done'] ? context.textMuted : context.textDeep,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     decoration: task['done'] ? TextDecoration.lineThrough : null,

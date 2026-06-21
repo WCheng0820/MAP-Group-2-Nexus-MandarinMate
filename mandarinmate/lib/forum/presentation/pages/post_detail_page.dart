@@ -10,6 +10,7 @@ import 'package:mandarinmate/forum/presentation/pages/edit_post_page.dart';
 import 'package:mandarinmate/services/ai_moderation_service.dart';
 import 'package:mandarinmate/utils/linkify_util.dart';
 import 'package:mandarinmate/services/notification_service.dart';
+import 'package:mandarinmate/utils/app_theme.dart';
 
 class PostDetailPage extends StatefulWidget {
   final String postId;
@@ -398,18 +399,18 @@ Check it out on MandarinMate! 🍊
         final isAdminOrTutor = _currentUserRole == 'admin' || _currentUserRole == 'tutor';
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF8F9FA),
+          backgroundColor: context.scaffoldBg,
           appBar: AppBar(
             title: Text(
               post.category,
               style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
             ),
-            backgroundColor: Colors.white,
-            foregroundColor: const Color(0xFF1C2433),
+            backgroundColor: context.cardBg,
+            foregroundColor: context.textDeep,
             elevation: 0,
             centerTitle: true,
-            shape: const Border(
-              bottom: BorderSide(color: Color(0xFFECEFF1), width: 1),
+            shape: Border(
+              bottom: BorderSide(color: context.borderTheme, width: 1),
             ),
             actions: [
               if (isPostAuthor || _currentUserRole == 'admin') ...[
@@ -443,7 +444,7 @@ Check it out on MandarinMate! 🍊
                     children: [
                       // --- POST HEADER & BODY ---
                       Container(
-                        color: Colors.white,
+                        color: context.cardBg,
                         padding: const EdgeInsets.all(20),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -478,10 +479,10 @@ Check it out on MandarinMate! 🍊
                                         children: [
                                           Text(
                                             post.authorName,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 14,
                                               fontWeight: FontWeight.bold,
-                                              color: Color(0xFF1C2433),
+                                              color: context.textDeep,
                                             ),
                                           ),
                                           const SizedBox(width: 6),
@@ -505,9 +506,9 @@ Check it out on MandarinMate! 🍊
                                       const SizedBox(height: 2),
                                       Text(
                                         DateFormat('MMM dd, yyyy • hh:mm a').format(post.createdAt),
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 11,
-                                          color: Color(0xFF78909C),
+                                          color: context.textMuted,
                                           fontWeight: FontWeight.w500,
                                         ),
                                       ),
@@ -520,19 +521,19 @@ Check it out on MandarinMate! 🍊
                             // Post Title
                             Text(
                               post.title,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w900,
-                                color: Color(0xFF1C2433),
+                                color: context.textDeep,
                               ),
                             ),
                             const SizedBox(height: 12),
                             // Post Content
                             buildLinkifiableText(
                               post.content,
-                              const TextStyle(
+                              TextStyle(
                                 fontSize: 14,
-                                color: Color(0xFF455A64),
+                                color: context.textMuted,
                                 height: 1.5,
                               ),
                               TextStyle(
@@ -542,7 +543,7 @@ Check it out on MandarinMate! 🍊
                               ),
                             ),
                             const SizedBox(height: 20),
-                            const Divider(color: Color(0xFFECEFF1)),
+                            Divider(color: context.borderTheme),
                             
                             // Post Actions Row (Like, Comment counts, Share)
                             Row(
@@ -556,14 +557,14 @@ Check it out on MandarinMate! 🍊
                                       children: [
                                         Icon(
                                           isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                                          color: isLiked ? Colors.red : const Color(0xFF78909C),
+                                          color: isLiked ? Colors.red : context.textMuted,
                                           size: 20,
                                         ),
                                         const SizedBox(width: 6),
                                         Text(
                                           '${post.likes.length}',
                                           style: TextStyle(
-                                            color: isLiked ? Colors.red : const Color(0xFF546E7A),
+                                            color: isLiked ? Colors.red : context.textMuted,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
@@ -574,16 +575,16 @@ Check it out on MandarinMate! 🍊
                                 const SizedBox(width: 16),
                                 Row(
                                   children: [
-                                    const Icon(
+                                    Icon(
                                       Icons.mode_comment_outlined,
-                                      color: Color(0xFF78909C),
+                                      color: context.textMuted,
                                       size: 19,
                                     ),
                                     const SizedBox(width: 6),
                                     Text(
                                       '${post.commentCount}',
-                                      style: const TextStyle(
-                                        color: Color(0xFF546E7A),
+                                      style: TextStyle(
+                                        color: context.textMuted,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -597,16 +598,16 @@ Check it out on MandarinMate! 🍊
                                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                     child: Row(
                                       children: [
-                                        const Icon(
+                                        Icon(
                                           Icons.share_outlined,
-                                          color: Color(0xFF78909C),
+                                          color: context.textMuted,
                                           size: 19,
                                         ),
                                         const SizedBox(width: 6),
                                         Text(
                                           '${post.sharesCount}',
-                                          style: const TextStyle(
-                                            color: Color(0xFF546E7A),
+                                          style: TextStyle(
+                                            color: context.textMuted,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
@@ -626,10 +627,10 @@ Check it out on MandarinMate! 🍊
                         padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                         child: Text(
                           'Comments (${post.commentCount})',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w900,
-                            color: Color(0xFF546E7A),
+                            color: context.textMuted,
                           ),
                         ),
                       ),
@@ -651,14 +652,14 @@ Check it out on MandarinMate! 🍊
                           }
 
                           final docs = commentSnapshot.data?.docs ?? [];
-                          if (docs.isEmpty) {
+                           if (docs.isEmpty) {
                             return Container(
                               margin: const EdgeInsets.all(20),
                               padding: const EdgeInsets.all(24),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: context.cardBg,
                                 borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: const Color(0xFFFFE4CF)),
+                                border: Border.all(color: context.borderTheme),
                               ),
                               child: const Center(
                                 child: Text(
@@ -682,7 +683,7 @@ Check it out on MandarinMate! 🍊
                               final canDelete = isCommentAuthor || isAdminOrTutor || isPostAuthor;
 
                               return Container(
-                                color: Colors.white,
+                                color: context.cardBg,
                                 margin: const EdgeInsets.only(bottom: 2),
                                 padding: const EdgeInsets.all(16),
                                 child: Column(
@@ -718,10 +719,10 @@ Check it out on MandarinMate! 🍊
                                                 children: [
                                                   Text(
                                                     comment.authorName,
-                                                    style: const TextStyle(
+                                                    style: TextStyle(
                                                       fontSize: 12,
                                                       fontWeight: FontWeight.bold,
-                                                      color: Color(0xFF1C2433),
+                                                      color: context.textDeep,
                                                     ),
                                                   ),
                                                   const SizedBox(width: 4),
@@ -745,9 +746,9 @@ Check it out on MandarinMate! 🍊
                                               const SizedBox(height: 1),
                                               Text(
                                                 DateFormat('MMM dd, yyyy • hh:mm a').format(comment.createdAt),
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   fontSize: 9,
-                                                  color: Color(0xFF78909C),
+                                                  color: context.textMuted,
                                                   fontWeight: FontWeight.w500,
                                                 ),
                                               ),
@@ -769,9 +770,9 @@ Check it out on MandarinMate! 🍊
                                        padding: const EdgeInsets.only(left: 36),
                                        child: buildLinkifiableText(
                                          comment.content,
-                                         const TextStyle(
+                                         TextStyle(
                                            fontSize: 13,
-                                           color: Color(0xFF37474F),
+                                           color: context.textDeep,
                                          ),
                                          TextStyle(
                                            color: widget.themeColor,
@@ -796,10 +797,10 @@ Check it out on MandarinMate! 🍊
               SafeArea(
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
+                  decoration: BoxDecoration(
+                    color: context.cardBg,
                     border: Border(
-                      top: BorderSide(color: Color(0xFFECEFF1), width: 1),
+                      top: BorderSide(color: context.borderTheme, width: 1),
                     ),
                   ),
                   child: Column(
@@ -812,7 +813,7 @@ Check it out on MandarinMate! 🍊
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 14),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF1F3F4),
+                                color: context.isDarkMode ? const Color(0xFF2C2C2C) : const Color(0xFFF1F3F4),
                                 borderRadius: BorderRadius.circular(24),
                                 border: Border.all(
                                   color: _commentError != null ? Colors.red : Colors.transparent,
@@ -824,7 +825,7 @@ Check it out on MandarinMate! 🍊
                                 maxLines: null,
                                 keyboardType: TextInputType.multiline,
                                 textCapitalization: TextCapitalization.sentences,
-                                style: const TextStyle(fontSize: 14),
+                                style: TextStyle(fontSize: 14, color: context.textDeep),
                                 onChanged: (value) {
                                   if (_commentError != null) {
                                     setState(() {
@@ -832,11 +833,11 @@ Check it out on MandarinMate! 🍊
                                     });
                                   }
                                 },
-                                decoration: const InputDecoration(
+                                decoration: InputDecoration(
                                   hintText: 'Add a comment...',
-                                  hintStyle: TextStyle(color: Colors.grey),
+                                  hintStyle: TextStyle(color: context.textMuted),
                                   border: InputBorder.none,
-                                  contentPadding: EdgeInsets.symmetric(vertical: 10),
+                                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
                                 ),
                               ),
                             ),

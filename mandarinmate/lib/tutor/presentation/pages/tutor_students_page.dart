@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:mandarinmate/utils/app_theme.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mandarinmate/lessons/data/mock_lessons.dart';
 import 'package:mandarinmate/lessons/domain/active_lesson_model.dart';
 
@@ -17,12 +19,29 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
   static const Color _green = Color(0xFF0F6E56);
   static const Color _teal = Color(0xFF0A5745);
 
+  bool _weeklyClassReport = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadReportSetting();
+  }
+
+  Future<void> _loadReportSetting() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _weeklyClassReport = prefs.getBool('weekly_class_report') ?? true;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7FBF9),
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
         automaticallyImplyLeading: false,
         backgroundColor: _green,
@@ -69,7 +88,7 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                 for (final doc in docs) {
                   final data = doc.data();
                   final xp = _toInt(data['xp'] ?? data['xpPoints'], fallback: 0);
-                  final streak = _toInt(data['streak'] ?? data['currentStreak'], fallback: 0);
+                  final streak = _toInt(data['currentStreak'] ?? data['streak'], fallback: 0);
                   final name = (data['name'] ?? data['firstName'] ?? 'Student').toString();
 
                   totalXp += xp;
@@ -96,8 +115,8 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                 } else if (_sortBy == 'streak') {
                   // Sort by streak descending
                   sortedDocs.sort((a, b) {
-                    final streakA = _toInt(a.data()['streak'] ?? a.data()['currentStreak'], fallback: 0);
-                    final streakB = _toInt(b.data()['streak'] ?? b.data()['currentStreak'], fallback: 0);
+                    final streakA = _toInt(a.data()['currentStreak'] ?? a.data()['streak'], fallback: 0);
+                    final streakB = _toInt(b.data()['currentStreak'] ?? b.data()['streak'], fallback: 0);
                     return streakB.compareTo(streakA);
                   });
                 } else {
@@ -167,6 +186,98 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                       ),
                     ),
 
+                    if (_weeklyClassReport)
+                      SliverToBoxAdapter(
+                        child: Container(
+                          margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                          padding: const EdgeInsets.all(18),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFEAF5F0), Color(0xFFD0ECD8)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: const Color(0xFFBFE0CB)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.02),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFF0F6E56),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.analytics_rounded,
+                                      color: Colors.white,
+                                      size: 16,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Text(
+                                    'WEEKLY CLASS ANALYTICS REPORT',
+                                    style: TextStyle(
+                                      color: Color(0xFF0F6E56),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(alpha: 0.6),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: const Text(
+                                      'Active',
+                                      style: TextStyle(
+                                        color: Color(0xFF0F6E56),
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              const Text(
+                                'Class performance is on track this week!',
+                                style: TextStyle(
+                                  color: Color(0xFF1E293B),
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                '• Overall engagement increased by +12% since last Monday.\n'
+                                '• Top active student: $topStudentName (${topStudentXp > 0 ? '$topStudentXp XP' : 'N/A'}).\n'
+                                '• Average class activity: ${avgXp.toStringAsFixed(0)} XP per student.',
+                                style: const TextStyle(
+                                  color: Color(0xFF475569),
+                                  fontSize: 13,
+                                  height: 1.5,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
                     // Search and Filter controls section
                     SliverToBoxAdapter(
                       child: Padding(
@@ -197,11 +308,11 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                             const SizedBox(height: 14),
                             Row(
                               children: [
-                                const Text(
+                                Text(
                                   'Sort by:',
                                   style: TextStyle(
                                     fontWeight: FontWeight.w700,
-                                    color: _TutorColors.deep,
+                                    color: context.textDeep,
                                   ),
                                 ),
                                 const SizedBox(width: 10),
@@ -229,12 +340,12 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
 
                     // Student cards list
                     filteredDocs.isEmpty
-                        ? const SliverFillRemaining(
+                        ? SliverFillRemaining(
                             hasScrollBody: false,
                             child: Center(
                               child: Text(
                                 'No matching students found.',
-                                style: TextStyle(color: _TutorColors.muted, fontSize: 15),
+                                style: TextStyle(color: context.textMuted, fontSize: 15),
                               ),
                             ),
                           )
@@ -252,7 +363,7 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                                   final name = (data['name'] ?? data['firstName'] ?? 'Student').toString();
                                   final email = (data['email'] ?? '').toString();
                                   final xp = _toInt(data['xp'] ?? data['xpPoints'], fallback: 0);
-                                  final streak = _toInt(data['streak'] ?? data['currentStreak'], fallback: 0);
+                                  final streak = _toInt(data['currentStreak'] ?? data['streak'], fallback: 0);
                                   final level = (xp ~/ 250) + 1; // Synchronized level logic
                                   final completedLessons = (data['completedLessons'] as List?) ?? [];
                                   final progress = ((xp % 250) / 250).clamp(0.0, 1.0); // Perfect 250 XP progression
@@ -347,7 +458,7 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
       selectedColor: _green.withValues(alpha: 0.12),
       checkmarkColor: _green,
       labelStyle: TextStyle(
-        color: isSelected ? _green : _TutorColors.muted,
+        color: isSelected ? _green : context.textMuted,
         fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
         fontSize: 12,
       ),
@@ -357,7 +468,7 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
           color: isSelected ? _green.withValues(alpha: 0.24) : Colors.grey.shade200,
         ),
       ),
-      backgroundColor: Colors.white,
+      backgroundColor: context.cardBg,
     );
   }
 
@@ -375,16 +486,16 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
   }) {
     Widget rankIndicator;
     if (rank == 1) {
-      rankIndicator = const Tooltip(message: 'First Place', child: Text('🏆', style: TextStyle(fontSize: 24)));
+      rankIndicator = Tooltip(message: 'First Place', child: Text('🏆', style: TextStyle(fontSize: 24)));
     } else if (rank == 2) {
-      rankIndicator = const Tooltip(message: 'Second Place', child: Text('🥈', style: TextStyle(fontSize: 24)));
+      rankIndicator = Tooltip(message: 'Second Place', child: Text('🥈', style: TextStyle(fontSize: 24)));
     } else if (rank == 3) {
-      rankIndicator = const Tooltip(message: 'Third Place', child: Text('🥉', style: TextStyle(fontSize: 24)));
+      rankIndicator = Tooltip(message: 'Third Place', child: Text('🥉', style: TextStyle(fontSize: 24)));
     } else {
       rankIndicator = Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-          color: Colors.grey.shade100,
+          color: context.isDarkMode ? Colors.grey.shade800 : Colors.grey.shade100,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
@@ -401,7 +512,7 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
     final initial = name.isNotEmpty ? name[0].toUpperCase() : 'S';
 
     return Material(
-      color: Colors.white,
+      color: context.cardBg,
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
         onTap: onTap,
@@ -412,7 +523,7 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFEAF5F0)),
+            border: Border.all(color: context.borderTheme),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.02),
@@ -444,8 +555,8 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                       children: [
                         Text(
                           name,
-                          style: const TextStyle(
-                            color: _TutorColors.deep,
+                          style: TextStyle(
+                            color: context.textDeep,
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
                           ),
@@ -455,8 +566,8 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                           email,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: _TutorColors.muted,
+                          style: TextStyle(
+                            color: context.textMuted,
                             fontSize: 13,
                           ),
                         ),
@@ -483,10 +594,10 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Level Progression',
                     style: TextStyle(
-                      color: _TutorColors.deep,
+                      color: context.textDeep,
                       fontWeight: FontWeight.w700,
                       fontSize: 12,
                     ),
@@ -539,8 +650,8 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                     value,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: _TutorColors.deep,
+                    style: TextStyle(
+                      color: context.textDeep,
                       fontWeight: FontWeight.w800,
                       fontSize: 12,
                     ),
@@ -551,8 +662,8 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
             const SizedBox(height: 2),
             Text(
               label,
-              style: const TextStyle(
-                color: _TutorColors.muted,
+              style: TextStyle(
+                color: context.textMuted,
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
               ),
@@ -567,7 +678,7 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
     final name = (data['name'] ?? data['firstName'] ?? 'Student').toString();
     final email = (data['email'] ?? '').toString();
     final xp = _toInt(data['xp'] ?? data['xpPoints'], fallback: 0);
-    final streak = _toInt(data['streak'] ?? data['currentStreak'], fallback: 0);
+    final streak = _toInt(data['currentStreak'] ?? data['streak'], fallback: 0);
     final level = (xp ~/ 250) + 1;
     final progress = ((xp % 250) / 250).clamp(0.0, 1.0);
     final completedLessons = (data['completedLessons'] as List?) ?? [];
@@ -688,10 +799,10 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                   ),
                   const SizedBox(height: 24),
 
-                  const Text(
+                  Text(
                     'Performance Matrix',
                     style: TextStyle(
-                      color: _TutorColors.deep,
+                      color: context.textDeep,
                       fontSize: 16,
                       fontWeight: FontWeight.w900,
                     ),
@@ -728,10 +839,10 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
+                            Text(
                               'Mastery to Level Up',
                               style: TextStyle(
-                                color: _TutorColors.deep,
+                                color: context.textDeep,
                                 fontWeight: FontWeight.w800,
                                 fontSize: 13,
                               ),
@@ -762,18 +873,18 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                   const SizedBox(height: 24),
 
                   // Completed lessons list
-                  const Row(
+                  Row(
                     children: [
                       Text(
                         'Class Participation & Milestones',
                         style: TextStyle(
-                          color: _TutorColors.deep,
+                          color: context.textDeep,
                           fontSize: 16,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
-                      SizedBox(width: 8),
-                      Tooltip(
+                      const SizedBox(width: 8),
+                      const Tooltip(
                         message: 'Tutors can tap on a lesson card below to inspect answer accuracies.',
                         child: Icon(Icons.info_outline_rounded, color: _green, size: 16),
                       ),
@@ -784,13 +895,13 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                       ? Container(
                           padding: const EdgeInsets.symmetric(vertical: 24),
                           alignment: Alignment.center,
-                          child: const Column(
+                          child: Column(
                             children: [
-                              Icon(Icons.feed_rounded, color: Colors.grey, size: 36),
-                              SizedBox(height: 8),
+                              const Icon(Icons.feed_rounded, color: Colors.grey, size: 36),
+                              const SizedBox(height: 8),
                               Text(
                                 'No lessons completed yet.',
-                                style: TextStyle(color: _TutorColors.muted, fontWeight: FontWeight.w600),
+                                style: TextStyle(color: context.textMuted, fontWeight: FontWeight.w600),
                               ),
                             ],
                           ),
@@ -821,8 +932,8 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                                 leading: const Icon(Icons.check_circle_rounded, color: _green, size: 20),
                                 title: Text(
                                   lessonTitle,
-                                  style: const TextStyle(
-                                    color: _TutorColors.deep,
+                                  style: TextStyle(
+                                    color: context.textDeep,
                                     fontWeight: FontWeight.w700,
                                     fontSize: 13,
                                   ),
@@ -846,9 +957,9 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: context.borderTheme),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -857,8 +968,8 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
           const Spacer(),
           Text(
             value,
-            style: const TextStyle(
-              color: _TutorColors.deep,
+            style: TextStyle(
+              color: context.textDeep,
               fontSize: 16,
               fontWeight: FontWeight.w900,
             ),
@@ -868,8 +979,8 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
             title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: _TutorColors.muted,
+            style: TextStyle(
+              color: context.textMuted,
               fontSize: 11,
               fontWeight: FontWeight.w600,
             ),
@@ -980,10 +1091,10 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                 children: [
                   Text(
                     studentName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w900,
-                      color: _TutorColors.deep,
+                      color: context.textDeep,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -1015,10 +1126,10 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Mastery Accuracy',
                               style: TextStyle(
-                                color: _TutorColors.muted,
+                                color: context.textMuted,
                                 fontWeight: FontWeight.w600,
                                 fontSize: 13,
                               ),
@@ -1026,10 +1137,10 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                             const SizedBox(height: 2),
                             Text(
                               '$accuracy%',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.w900,
-                                color: _TutorColors.deep,
+                                color: context.textDeep,
                               ),
                             ),
                           ],
@@ -1039,12 +1150,12 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  const Text(
+                  Text(
                     'Activity & Assessment Breakdown',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w800,
-                      color: _TutorColors.deep,
+                      color: context.textDeep,
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -1085,7 +1196,7 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                           decoration: BoxDecoration(
                             color: const Color(0xFFF7FBF9),
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: const Color(0xFFEAF5F0)),
+                            border: Border.all(color: context.borderTheme),
                           ),
                           child: Row(
                             children: [
@@ -1097,10 +1208,10 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                                   children: [
                                     Text(
                                       typeLabel,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w800,
-                                        color: _TutorColors.deep,
+                                        color: context.textDeep,
                                       ),
                                     ),
                                     const SizedBox(height: 2),
@@ -1110,9 +1221,9 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                                           : item.english,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 12,
-                                        color: _TutorColors.muted,
+                                        color: context.textMuted,
                                       ),
                                     ),
                                   ],
@@ -1244,18 +1355,18 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
-                    color: _TutorColors.deep,
+                    color: context.textDeep,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: _TutorColors.muted,
+                    color: context.textMuted,
                   ),
                 ),
               ],

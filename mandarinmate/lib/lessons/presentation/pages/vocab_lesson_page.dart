@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mandarinmate/lessons/domain/lesson_model.dart';
 
 class VocabLessonPage extends StatefulWidget {
@@ -23,11 +24,24 @@ class _VocabLessonPageState extends State<VocabLessonPage> {
   int _currentIndex = 0;
   bool _isSpeaking = false;
   final Set<int> _learned = {};
+  bool _showChinese = true;
+  bool _showPinyin = true;
 
   @override
   void initState() {
     super.initState();
     _initTts();
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _showChinese = prefs.getBool('show_chinese_characters') ?? true;
+        _showPinyin = prefs.getBool('show_pinyin') ?? true;
+      });
+    }
   }
 
   Future<void> _initTts() async {
@@ -40,6 +54,20 @@ class _VocabLessonPageState extends State<VocabLessonPage> {
   }
 
   Future<void> _speak(String text) async {
+    final prefs = await SharedPreferences.getInstance();
+    final soundEffects = prefs.getBool('sound_effects') ?? true;
+    if (!soundEffects) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Sound effects are disabled in settings.'),
+            duration: Duration(seconds: 1),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
     if (_isSpeaking) return;
     setState(() => _isSpeaking = true);
     await _tts.speak(text);
@@ -124,21 +152,23 @@ class _VocabLessonPageState extends State<VocabLessonPage> {
                       padding: const EdgeInsets.all(24),
                       child: Column(
                         children: [
-                          Text(
-                            vocab.chinese,
-                            style: const TextStyle(
-                              fontSize: 48,
-                              fontWeight: FontWeight.bold,
+                          if (_showChinese)
+                            Text(
+                              vocab.chinese,
+                              style: const TextStyle(
+                                fontSize: 48,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            vocab.pinyin,
-                            style: const TextStyle(
-                              fontSize: 20,
-                              color: Colors.grey,
+                          if (_showChinese && _showPinyin) const SizedBox(height: 8),
+                          if (_showPinyin)
+                            Text(
+                              vocab.pinyin,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                color: Colors.grey,
+                              ),
                             ),
-                          ),
                           const SizedBox(height: 16),
                           ElevatedButton.icon(
                             onPressed: _isSpeaking

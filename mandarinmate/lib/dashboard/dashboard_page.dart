@@ -25,7 +25,7 @@ class DashboardPage extends StatelessWidget {
             final data = snapshot.data?.data() as Map<String, dynamic>? ?? {};
             final name = data['name'] ?? user?.displayName ?? 'Pelajar';
             final xp = data['xp'] ?? 0;
-            final streak = data['streak'] ?? 0;
+            final streak = data['currentStreak'] ?? data['streak'] ?? 0;
             final level = data['level'] ?? 1;
 
             return CustomScrollView(

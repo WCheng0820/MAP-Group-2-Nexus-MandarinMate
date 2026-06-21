@@ -429,7 +429,16 @@ class _ChatScreenState extends State<ChatScreen> {
           children: [
             const Icon(Icons.insert_drive_file, color: Colors.blue),
             const SizedBox(width: 10),
-            Flexible(child: Text(message['fileName'] ?? 'Attachment', overflow: TextOverflow.ellipsis)),
+            Flexible(
+              child: Text(
+                message['fileName'] ?? 'Attachment',
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
           ],
         ),
       ),

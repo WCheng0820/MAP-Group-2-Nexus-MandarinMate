@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:mandarinmate/forum/domain/forum_post_model.dart';
 import 'package:mandarinmate/models/user_model.dart';
 import 'package:mandarinmate/services/ai_moderation_service.dart';
+import 'package:mandarinmate/utils/app_theme.dart';
 
 class CreatePostPage extends StatefulWidget {
   final Color themeColor;
@@ -154,18 +155,18 @@ class _CreatePostPageState extends State<CreatePostPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
         title: const Text(
           'Create New Post',
           style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20),
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1C2433),
+        backgroundColor: context.cardBg,
+        foregroundColor: context.textDeep,
         elevation: 0,
         centerTitle: true,
-        shape: const Border(
-          bottom: BorderSide(color: Color(0xFFECEFF1), width: 1),
+        shape: Border(
+          bottom: BorderSide(color: context.borderTheme, width: 1),
         ),
       ),
       body: _isPublishing
@@ -183,16 +184,16 @@ class _CreatePostPageState extends State<CreatePostPage> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: context.cardBg,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFFFE4CF)),
+                        border: Border.all(color: context.borderTheme),
                       ),
                       child: TextFormField(
                         controller: _titleController,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1C2433),
+                          color: context.textDeep,
                         ),
                         onChanged: (value) {
                           if (_titleError != null) {
@@ -202,13 +203,13 @@ class _CreatePostPageState extends State<CreatePostPage> {
                             _formKey.currentState!.validate();
                           }
                         },
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           hintText: 'Enter a descriptive title...',
-                          hintStyle: TextStyle(color: Colors.grey, fontWeight: FontWeight.normal),
+                          hintStyle: TextStyle(color: context.textMuted, fontWeight: FontWeight.normal),
                           border: InputBorder.none,
                           labelText: 'Title',
                           labelStyle: TextStyle(
-                            color: Colors.grey,
+                            color: context.textMuted,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -229,12 +230,12 @@ class _CreatePostPageState extends State<CreatePostPage> {
                     const SizedBox(height: 20),
                     
                     // Category selector card
-                    const Text(
+                    Text(
                       'Select Category',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w900,
-                        color: Color(0xFF546E7A),
+                        color: context.textMuted,
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -247,17 +248,17 @@ class _CreatePostPageState extends State<CreatePostPage> {
                           label: Text(
                             category,
                             style: TextStyle(
-                              color: isSelected ? Colors.white : const Color(0xFF546E7A),
+                              color: isSelected ? Colors.white : context.textMuted,
                               fontWeight: FontWeight.bold,
                               fontSize: 12,
                             ),
                           ),
                           selected: isSelected,
                           selectedColor: widget.themeColor,
-                          backgroundColor: Colors.white,
+                          backgroundColor: context.cardBg,
                           elevation: 1,
                           side: BorderSide(
-                            color: isSelected ? widget.themeColor : const Color(0xFFFFE4CF),
+                            color: isSelected ? widget.themeColor : context.borderTheme,
                           ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
@@ -278,17 +279,17 @@ class _CreatePostPageState extends State<CreatePostPage> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: context.cardBg,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFFFE4CF)),
+                        border: Border.all(color: context.borderTheme),
                       ),
                       child: TextFormField(
                         controller: _contentController,
                         maxLines: 12,
                         keyboardType: TextInputType.multiline,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
-                          color: Color(0xFF1C2433),
+                          color: context.textDeep,
                         ),
                         onChanged: (value) {
                           if (_contentError != null) {
@@ -298,13 +299,13 @@ class _CreatePostPageState extends State<CreatePostPage> {
                             _formKey.currentState!.validate();
                           }
                         },
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           hintText: 'Share your question, learning tips, or topics in Mandarin...',
-                          hintStyle: TextStyle(color: Colors.grey),
+                          hintStyle: TextStyle(color: context.textMuted),
                           border: InputBorder.none,
                           labelText: 'Content',
                           labelStyle: TextStyle(
-                            color: Colors.grey,
+                            color: context.textMuted,
                             fontWeight: FontWeight.bold,
                           ),
                           alignLabelWithHint: true,

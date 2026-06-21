@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../domain/vocabulary_entry.dart';
 import '../../services/vocabulary_draft_service.dart';
@@ -273,6 +274,9 @@ class _TutorVocabularyEditorPageState extends State<TutorVocabularyEditorPage> {
 
   bool get _isEditMode => widget.entry != null;
 
+  bool _pinyinInCreator = true;
+  bool _autoSaveDrafts = true;
+
   @override
   void initState() {
     super.initState();
@@ -293,6 +297,128 @@ class _TutorVocabularyEditorPageState extends State<TutorVocabularyEditorPage> {
       }
       _correctAnswerIndex = entry.correctAnswerIndex.clamp(0, 3);
     }
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _pinyinInCreator = prefs.getBool('pinyin_in_creator') ?? true;
+        _autoSaveDrafts = prefs.getBool('auto_save_drafts') ?? true;
+      });
+      if (_autoSaveDrafts && !_isEditMode) {
+        final savedWord = prefs.getString('tutor_draft_word') ?? '';
+        final savedMeaning = prefs.getString('tutor_draft_meaning') ?? '';
+        if (savedWord.isNotEmpty || savedMeaning.isNotEmpty) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _showRestoreDraftDialog(prefs, savedWord);
+          });
+        } else {
+          _setupAutoSaveListeners();
+        }
+      }
+    }
+  }
+
+  void _setupAutoSaveListeners() {
+    _wordController.addListener(_onFieldChanged);
+    _meaningController.addListener(_onFieldChanged);
+    _pronunciationController.addListener(_onFieldChanged);
+    _listeningTextController.addListener(_onFieldChanged);
+    _exampleSentenceController.addListener(_onFieldChanged);
+    _exampleMeaningController.addListener(_onFieldChanged);
+    _quizQuestionController.addListener(_onFieldChanged);
+    for (int i = 0; i < 4; i++) {
+      _optionControllers[i].addListener(_onFieldChanged);
+    }
+  }
+
+  void _onFieldChanged() async {
+    if (!_autoSaveDrafts || _isEditMode) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('tutor_draft_word', _wordController.text);
+    await prefs.setString('tutor_draft_meaning', _meaningController.text);
+    await prefs.setString('tutor_draft_pronunciation', _pronunciationController.text);
+    await prefs.setString('tutor_draft_listeningText', _listeningTextController.text);
+    await prefs.setString('tutor_draft_exampleSentence', _exampleSentenceController.text);
+    await prefs.setString('tutor_draft_exampleMeaning', _exampleMeaningController.text);
+    await prefs.setString('tutor_draft_quizQuestion', _quizQuestionController.text);
+    for (int i = 0; i < 4; i++) {
+      await prefs.setString('tutor_draft_quizOption$i', _optionControllers[i].text);
+    }
+    await prefs.setInt('tutor_draft_correctAnswerIndex', _correctAnswerIndex);
+  }
+
+  void _showRestoreDraftDialog(SharedPreferences prefs, String savedWord) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.restore_page_rounded, color: _green),
+            SizedBox(width: 10),
+            Text('Unsaved Draft Found', style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Text(
+          savedWord.isNotEmpty
+              ? 'We found an autosaved draft for the word "$savedWord". Would you like to restore it and continue editing?'
+              : 'We found an autosaved draft from your last session. Would you like to restore it and continue editing?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              _clearDraft(prefs);
+              _setupAutoSaveListeners();
+              Navigator.pop(ctx);
+            },
+            child: Text('Discard Draft', style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.bold)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _green,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () {
+              setState(() {
+                _wordController.text = prefs.getString('tutor_draft_word') ?? '';
+                _meaningController.text = prefs.getString('tutor_draft_meaning') ?? '';
+                _pronunciationController.text = prefs.getString('tutor_draft_pronunciation') ?? '';
+                _listeningTextController.text = prefs.getString('tutor_draft_listeningText') ?? '';
+                _exampleSentenceController.text = prefs.getString('tutor_draft_exampleSentence') ?? '';
+                _exampleMeaningController.text = prefs.getString('tutor_draft_exampleMeaning') ?? '';
+                _quizQuestionController.text = prefs.getString('tutor_draft_quizQuestion') ?? '';
+                for (int i = 0; i < 4; i++) {
+                  _optionControllers[i].text = prefs.getString('tutor_draft_quizOption$i') ?? '';
+                }
+                _correctAnswerIndex = prefs.getInt('tutor_draft_correctAnswerIndex') ?? 0;
+              });
+              _setupAutoSaveListeners();
+              Navigator.pop(ctx);
+            },
+            child: const Text('Restore Draft', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _clearDraft(SharedPreferences prefs) {
+    prefs.remove('tutor_draft_word');
+    prefs.remove('tutor_draft_meaning');
+    prefs.remove('tutor_draft_pronunciation');
+    prefs.remove('tutor_draft_listeningText');
+    prefs.remove('tutor_draft_exampleSentence');
+    prefs.remove('tutor_draft_exampleMeaning');
+    prefs.remove('tutor_draft_quizQuestion');
+    for (int i = 0; i < 4; i++) {
+      prefs.remove('tutor_draft_quizOption$i');
+    }
+    prefs.remove('tutor_draft_correctAnswerIndex');
   }
 
   @override
@@ -333,7 +459,7 @@ class _TutorVocabularyEditorPageState extends State<TutorVocabularyEditorPage> {
       if (_meaningController.text.trim().isEmpty) {
         _meaningController.text = draft.meaning;
       }
-      if (_pronunciationController.text.trim().isEmpty) {
+      if (_pinyinInCreator && _pronunciationController.text.trim().isEmpty) {
         _pronunciationController.text = draft.pronunciation;
       }
       if (_listeningTextController.text.trim().isEmpty) {
@@ -418,6 +544,10 @@ class _TutorVocabularyEditorPageState extends State<TutorVocabularyEditorPage> {
         await docRef.set(payload);
       }
 
+      if (_autoSaveDrafts && !_isEditMode) {
+        final prefs = await SharedPreferences.getInstance();
+        _clearDraft(prefs);
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -542,7 +672,10 @@ class _TutorVocabularyEditorPageState extends State<TutorVocabularyEditorPage> {
               ],
               onChanged: (value) {
                 if (value == null) return;
-                setState(() => _correctAnswerIndex = value);
+                setState(() {
+                  _correctAnswerIndex = value;
+                  _onFieldChanged();
+                });
               },
             ),
             const SizedBox(height: 16),

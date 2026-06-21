@@ -247,4 +247,48 @@ class AppTheme {
       thickness: 1,
     ),
   );
+
+  static ThemeData darkTheme = ThemeData(
+    useMaterial3: true,
+    brightness: Brightness.dark,
+    primaryColor: AppColors.primaryColor,
+    scaffoldBackgroundColor: const Color(0xFF121212),
+    colorScheme: const ColorScheme.dark(
+      primary: AppColors.primaryColor,
+      surface: Color(0xFF1E1E1E),
+      onSurface: Colors.white,
+    ),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Color(0xFF1E1E1E),
+      elevation: 0,
+      centerTitle: true,
+      titleTextStyle: TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.w600,
+        color: Colors.white,
+      ),
+      iconTheme: IconThemeData(color: Colors.white),
+    ),
+    cardTheme: CardThemeData(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
+      ),
+      color: const Color(0xFF1E1E1E),
+    ),
+    dividerTheme: const DividerThemeData(
+      color: Color(0xFF2C2C2C),
+      thickness: 1,
+    ),
+  );
 }
+
+extension BuildContextThemeExtensions on BuildContext {
+  bool get isDarkMode => Theme.of(this).brightness == Brightness.dark;
+  Color get scaffoldBg => isDarkMode ? const Color(0xFF121212) : const Color(0xFFFFFBF7);
+  Color get cardBg => isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
+  Color get textDeep => isDarkMode ? Colors.white : const Color(0xFF1C2433);
+  Color get textMuted => isDarkMode ? Colors.white70 : const Color(0xFF737C8B);
+  Color get borderTheme => isDarkMode ? const Color(0xFF2C2C2C) : const Color(0xFFFFE4CF);
+}
+

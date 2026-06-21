@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:mandarinmate/forum/domain/forum_post_model.dart';
 import 'package:mandarinmate/forum/presentation/pages/create_post_page.dart';
 import 'package:mandarinmate/forum/presentation/pages/post_detail_page.dart';
+import 'package:mandarinmate/utils/app_theme.dart';
 
 class ForumPage extends StatefulWidget {
   final Color themeColor;
@@ -111,7 +112,7 @@ Check it out on MandarinMate! 🍊
     final double statusBarHeight = MediaQuery.of(context).padding.top;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: context.scaffoldBg,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -155,7 +156,7 @@ Check it out on MandarinMate! 🍊
                 Container(
                   height: 48,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: context.cardBg,
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
@@ -167,6 +168,7 @@ Check it out on MandarinMate! 🍊
                   ),
                   child: TextField(
                     controller: _searchController,
+                    style: TextStyle(color: context.textDeep),
                     onChanged: (val) {
                       setState(() {
                         _searchQuery = val.trim();
@@ -174,11 +176,11 @@ Check it out on MandarinMate! 🍊
                     },
                     decoration: InputDecoration(
                       hintText: 'Search posts by title or content...',
-                      hintStyle: const TextStyle(color: Colors.grey, fontSize: 13),
-                      prefixIcon: const Icon(Icons.search_rounded, color: Colors.grey),
+                      hintStyle: TextStyle(color: context.textMuted, fontSize: 13),
+                      prefixIcon: Icon(Icons.search_rounded, color: context.textMuted),
                       suffixIcon: _searchQuery.isNotEmpty
                           ? IconButton(
-                              icon: const Icon(Icons.clear_rounded, color: Colors.grey),
+                              icon: Icon(Icons.clear_rounded, color: context.textMuted),
                               onPressed: () {
                                 _searchController.clear();
                                 setState(() {
@@ -213,16 +215,16 @@ Check it out on MandarinMate! 🍊
                     label: Text(
                       category,
                       style: TextStyle(
-                        color: isSelected ? Colors.white : const Color(0xFF546E7A),
+                        color: isSelected ? Colors.white : context.textMuted,
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
                       ),
                     ),
                     selected: isSelected,
                     selectedColor: widget.themeColor,
-                    backgroundColor: Colors.white,
+                    backgroundColor: context.cardBg,
                     side: BorderSide(
-                      color: isSelected ? widget.themeColor : const Color(0xFFFFE4CF),
+                      color: isSelected ? widget.themeColor : context.borderTheme,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
@@ -289,9 +291,9 @@ Check it out on MandarinMate! 🍊
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: context.cardBg,
                         borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: const Color(0xFFFFE4CF)),
+                        border: Border.all(color: context.borderTheme),
                         boxShadow: [
                           BoxShadow(
                             color: widget.themeColor.withOpacity(0.03),
@@ -349,10 +351,10 @@ Check it out on MandarinMate! 🍊
                                           children: [
                                             Text(
                                               post.authorName,
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 fontSize: 13,
                                                 fontWeight: FontWeight.bold,
-                                                color: Color(0xFF1C2433),
+                                                color: context.textDeep,
                                               ),
                                             ),
                                             const SizedBox(width: 4),
@@ -376,9 +378,9 @@ Check it out on MandarinMate! 🍊
                                         const SizedBox(height: 1),
                                         Text(
                                           DateFormat('MMM dd, yyyy').format(post.createdAt),
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontSize: 10,
-                                            color: Color(0xFF78909C),
+                                            color: context.textMuted,
                                             fontWeight: FontWeight.w600,
                                           ),
                                         ),
@@ -389,13 +391,13 @@ Check it out on MandarinMate! 🍊
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFECEFF1),
+                                      color: context.isDarkMode ? const Color(0xFF2C2C2C) : const Color(0xFFECEFF1),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Text(
                                       post.category,
-                                      style: const TextStyle(
-                                        color: Color(0xFF546E7A),
+                                      style: TextStyle(
+                                        color: context.textMuted,
                                         fontSize: 9,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -408,10 +410,10 @@ Check it out on MandarinMate! 🍊
                               // Post content
                               Text(
                                 post.title,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w900,
-                                  color: Color(0xFF1C2433),
+                                  color: context.textDeep,
                                 ),
                               ),
                               const SizedBox(height: 6),
@@ -419,14 +421,14 @@ Check it out on MandarinMate! 🍊
                                 post.content,
                                 maxLines: 3,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12,
-                                  color: Color(0xFF546E7A),
+                                  color: context.textMuted,
                                   height: 1.45,
                                 ),
                               ),
                               const SizedBox(height: 14),
-                              const Divider(height: 1, color: Color(0xFFECEFF1)),
+                              Divider(height: 1, color: context.borderTheme),
                               const SizedBox(height: 8),
 
                               // Interactive metrics row
@@ -442,7 +444,7 @@ Check it out on MandarinMate! 🍊
                                         children: [
                                           Icon(
                                             isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                                            color: isLiked ? Colors.red : const Color(0xFF78909C),
+                                            color: isLiked ? Colors.red : context.textMuted,
                                             size: 18,
                                           ),
                                           const SizedBox(width: 4),
@@ -450,7 +452,7 @@ Check it out on MandarinMate! 🍊
                                             '${post.likes.length}',
                                             style: TextStyle(
                                               fontSize: 12,
-                                              color: isLiked ? Colors.red : const Color(0xFF546E7A),
+                                              color: isLiked ? Colors.red : context.textMuted,
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
@@ -478,17 +480,17 @@ Check it out on MandarinMate! 🍊
                                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                       child: Row(
                                         children: [
-                                          const Icon(
+                                          Icon(
                                             Icons.mode_comment_outlined,
-                                            color: Color(0xFF78909C),
+                                            color: context.textMuted,
                                             size: 17,
                                           ),
                                           const SizedBox(width: 4),
                                           Text(
                                             '${post.commentCount}',
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 12,
-                                              color: Color(0xFF546E7A),
+                                              color: context.textMuted,
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
@@ -506,17 +508,17 @@ Check it out on MandarinMate! 🍊
                                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                       child: Row(
                                         children: [
-                                          const Icon(
+                                          Icon(
                                             Icons.share_outlined,
-                                            color: Color(0xFF78909C),
+                                            color: context.textMuted,
                                             size: 17,
                                           ),
                                           const SizedBox(width: 4),
                                           Text(
                                             '${post.sharesCount}',
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 12,
-                                              color: Color(0xFF546E7A),
+                                              color: context.textMuted,
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
@@ -583,20 +585,20 @@ Check it out on MandarinMate! 🍊
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
+          Text(
             'No Posts Found',
             style: TextStyle(
-              color: Color(0xFF1C2433),
+              color: context.textDeep,
               fontSize: 18,
               fontWeight: FontWeight.w900,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Start the conversation! Be the first to share study updates, ask questions, or exchange Mandarin tips.',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: Color(0xFF78909C),
+              color: context.textMuted,
               fontSize: 13,
               fontWeight: FontWeight.bold,
               height: 1.45,
