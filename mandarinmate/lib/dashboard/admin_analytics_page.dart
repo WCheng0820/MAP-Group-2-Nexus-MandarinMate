@@ -15,6 +15,7 @@ class AdminAnalyticsPage extends StatelessWidget {
         title: const Text('Admin Analytics'),
         backgroundColor: _primary,
         foregroundColor: Colors.white,
+        automaticallyImplyLeading: false,
       ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
         stream: FirebaseFirestore.instance.collection('users').snapshots(),

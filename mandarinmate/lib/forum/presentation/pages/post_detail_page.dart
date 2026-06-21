@@ -8,6 +8,7 @@ import 'package:mandarinmate/forum/domain/forum_post_model.dart';
 import 'package:mandarinmate/models/user_model.dart';
 import 'package:mandarinmate/forum/presentation/pages/edit_post_page.dart';
 import 'package:mandarinmate/services/ai_moderation_service.dart';
+import 'package:mandarinmate/utils/linkify_util.dart';
 
 class PostDetailPage extends StatefulWidget {
   final String postId;
@@ -496,12 +497,17 @@ Check it out on MandarinMate! 🍊
                             ),
                             const SizedBox(height: 12),
                             // Post Content
-                            Text(
+                            buildLinkifiableText(
                               post.content,
-                              style: const TextStyle(
+                              const TextStyle(
                                 fontSize: 14,
                                 color: Color(0xFF455A64),
                                 height: 1.5,
+                              ),
+                              TextStyle(
+                                color: widget.themeColor,
+                                fontWeight: FontWeight.bold,
+                                decoration: TextDecoration.underline,
                               ),
                             ),
                             const SizedBox(height: 20),
@@ -728,16 +734,21 @@ Check it out on MandarinMate! 🍊
                                       ],
                                     ),
                                     const SizedBox(height: 8),
-                                    Padding(
-                                      padding: const EdgeInsets.only(left: 36),
-                                      child: Text(
-                                        comment.content,
-                                        style: const TextStyle(
-                                          fontSize: 13,
-                                          color: Color(0xFF37474F),
-                                        ),
-                                      ),
-                                    ),
+                                     Padding(
+                                       padding: const EdgeInsets.only(left: 36),
+                                       child: buildLinkifiableText(
+                                         comment.content,
+                                         const TextStyle(
+                                           fontSize: 13,
+                                           color: Color(0xFF37474F),
+                                         ),
+                                         TextStyle(
+                                           color: widget.themeColor,
+                                           fontWeight: FontWeight.bold,
+                                           decoration: TextDecoration.underline,
+                                         ),
+                                       ),
+                                     ),
                                   ],
                                 ),
                               );

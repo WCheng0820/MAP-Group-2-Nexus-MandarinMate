@@ -32,6 +32,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
         title: const Text('Admin Users'),
         backgroundColor: _primary,
         foregroundColor: Colors.white,
+        automaticallyImplyLeading: false,
       ),
       body: Column(
         children: [

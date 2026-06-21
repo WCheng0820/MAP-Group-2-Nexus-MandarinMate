@@ -16,6 +16,7 @@ class AdminLessonsPage extends StatelessWidget {
         title: const Text('Admin Lessons'),
         backgroundColor: _primary,
         foregroundColor: Colors.white,
+        automaticallyImplyLeading: false,
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _openLessonForm(context),

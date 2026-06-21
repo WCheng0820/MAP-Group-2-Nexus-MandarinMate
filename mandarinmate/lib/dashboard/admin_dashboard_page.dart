@@ -101,120 +101,100 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   }
 
   Widget _buildHomeTab(BuildContext context, User user) {
-    return CustomScrollView(
-      physics: const BouncingScrollPhysics(),
-      slivers: [
-        SliverAppBar(
-          pinned: true,
-          stretch: true,
-          elevation: 0,
-          backgroundColor: _AdminDashboardColors.headerStart,
-          expandedHeight: 270,
-          titleSpacing: 20,
-          title: const Text(
-            'Admin Dashboard',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
+    return _AdminPageFrame(
+      child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+        stream: FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .snapshots(),
+        builder: (context, snapshot) {
+          final data = snapshot.data?.data() ?? <String, dynamic>{};
+          final name = (data['name'] ?? data['firstName'] ?? 'Admin').toString();
+
+          return SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(16, 18, 16, 22),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _AdminHeader(
+                  name: name,
+                  onEditProfile: _handleEditProfile,
+                  onLogout: _handleLogout,
+                ),
+                const SizedBox(height: 16),
+                _AdminHero(
+                  uid: user.uid,
+                  fallbackEmail: user.email,
+                ),
+                const SizedBox(height: 22),
+                const _SectionTitle(
+                  title: 'Real-time analytics',
+                  subtitle:
+                      'A live view of users currently registered across the platform.',
+                ),
+                const SizedBox(height: 14),
+                const _RealtimeAnalyticsSection(),
+                const SizedBox(height: 22),
+                const _AdminSystemHealthSection(),
+                const SizedBox(height: 22),
+                const _AdminRoleBreakdownSection(),
+                const SizedBox(height: 22),
+                _SectionTitle(
+                  title: 'Management hub',
+                  subtitle:
+                      'Move quickly between moderation, lesson curation, announcements, and reporting.',
+                  actionLabel: 'Open users',
+                  onAction: () => setState(() => _currentIndex = 1),
+                ),
+                const SizedBox(height: 14),
+                _ManagementGrid(
+                  actions: [
+                    _ManagementActionData(
+                      title: 'Manage Users',
+                      subtitle: 'Roles, accounts, and moderation tools',
+                      icon: Icons.group_rounded,
+                      color: _AdminDashboardColors.students,
+                      onTap: () => setState(() => _currentIndex = 1),
+                    ),
+                    _ManagementActionData(
+                      title: 'Manage Lessons',
+                      subtitle: 'Curriculum, units, and XP rewards',
+                      icon: Icons.menu_book_rounded,
+                      color: _AdminDashboardColors.primaryAction,
+                      onTap: () => setState(() => _currentIndex = 2),
+                    ),
+                    _ManagementActionData(
+                      title: 'Announcements',
+                      subtitle: 'Publish updates to students and tutors',
+                      icon: Icons.campaign_rounded,
+                      color: _AdminDashboardColors.admins,
+                      onTap: () => setState(() => _currentIndex = 3),
+                    ),
+                    _ManagementActionData(
+                      title: 'Analytics',
+                      subtitle: 'Review activity and learning trends',
+                      icon: Icons.insights_rounded,
+                      color: _AdminDashboardColors.tutors,
+                      onTap: () => setState(() => _currentIndex = 4),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 22),
+                _SectionTitle(
+                  title: 'Recent users',
+                  subtitle:
+                      'A quick preview of the newest accounts joining MandarinMate.',
+                  actionLabel: 'View all',
+                  onAction: () => setState(() => _currentIndex = 1),
+                ),
+                const SizedBox(height: 14),
+                const _RecentUsersSection(),
+              ],
             ),
-          ),
-          actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: Row(
-                children: [
-                  _HeaderActionButton(
-                    icon: Icons.edit_rounded,
-                    tooltip: 'Edit profile',
-                    onTap: _handleEditProfile,
-                  ),
-                  const SizedBox(width: 8),
-                  _HeaderActionButton(
-                    icon: Icons.logout_rounded,
-                    tooltip: 'Logout',
-                    onTap: _handleLogout,
-                  ),
-                ],
-              ),
-            ),
-          ],
-          flexibleSpace: FlexibleSpaceBar(
-            background: _AdminHeroHeader(
-              uid: user.uid,
-              fallbackEmail: user.email,
-            ),
-          ),
-        ),
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
-          sliver: SliverList(
-            delegate: SliverChildListDelegate([
-              const _SectionTitle(
-                title: 'Real-time analytics',
-                subtitle:
-                    'A live view of users currently registered across the platform.',
-              ),
-              const SizedBox(height: 14),
-              const _RealtimeAnalyticsSection(),
-              const SizedBox(height: 28),
-              const _AdminSystemHealthSection(),
-              const SizedBox(height: 28),
-              const _AdminRoleBreakdownSection(),
-              const SizedBox(height: 28),
-              _SectionTitle(
-                title: 'Management hub',
-                subtitle:
-                    'Move quickly between moderation, lesson curation, announcements, and reporting.',
-                actionLabel: 'Open users',
-                onAction: () => setState(() => _currentIndex = 1),
-              ),
-              const SizedBox(height: 14),
-              _ManagementGrid(
-                actions: [
-                  _ManagementActionData(
-                    title: 'Manage Users',
-                    subtitle: 'Roles, accounts, and moderation tools',
-                    icon: Icons.group_rounded,
-                    color: _AdminDashboardColors.students,
-                    onTap: () => setState(() => _currentIndex = 1),
-                  ),
-                  _ManagementActionData(
-                    title: 'Manage Lessons',
-                    subtitle: 'Curriculum, units, and XP rewards',
-                    icon: Icons.menu_book_rounded,
-                    color: _AdminDashboardColors.primaryAction,
-                    onTap: () => setState(() => _currentIndex = 2),
-                  ),
-                  _ManagementActionData(
-                    title: 'Announcements',
-                    subtitle: 'Publish updates to students and tutors',
-                    icon: Icons.campaign_rounded,
-                    color: _AdminDashboardColors.admins,
-                    onTap: () => setState(() => _currentIndex = 3),
-                  ),
-                  _ManagementActionData(
-                    title: 'Analytics',
-                    subtitle: 'Review activity and learning trends',
-                    icon: Icons.insights_rounded,
-                    color: _AdminDashboardColors.tutors,
-                    onTap: () => setState(() => _currentIndex = 4),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 28),
-              _SectionTitle(
-                title: 'Recent users',
-                subtitle:
-                    'A quick preview of the newest accounts joining MandarinMate.',
-                actionLabel: 'View all',
-                onAction: () => setState(() => _currentIndex = 1),
-              ),
-              const SizedBox(height: 14),
-              const _RecentUsersSection(),
-            ]),
-          ),
-        ),
-      ],
+          );
+        },
+      ),
     );
   }
 
@@ -245,123 +225,224 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   }
 }
 
-class _AdminHeroHeader extends StatelessWidget {
-  const _AdminHeroHeader({required this.uid, required this.fallbackEmail});
+class _AdminPageFrame extends StatelessWidget {
+  const _AdminPageFrame({required this.child});
 
-  final String uid;
-  final String? fallbackEmail;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
+    return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            _AdminDashboardColors.headerStart,
-            _AdminDashboardColors.headerEnd,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          colors: [Color(0xFFFCF9FF), Color(0xFFF3EDFF)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
         ),
       ),
-      child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-        stream: FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .snapshots(),
-        builder: (context, snapshot) {
-          final data = snapshot.data?.data() ?? <String, dynamic>{};
-          final email = (data['email'] ?? fallbackEmail ?? '').toString();
-          final name = (data['name'] ?? data['firstName'] ?? 'Admin')
-              .toString();
+      child: SafeArea(child: child),
+    );
+  }
+}
 
-          return SafeArea(
-            bottom: false,
-            child: SingleChildScrollView(
-              physics: const NeverScrollableScrollPhysics(),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 88, 24, 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+class _AdminHeader extends StatelessWidget {
+  const _AdminHeader({
+    required this.name,
+    required this.onEditProfile,
+    required this.onLogout,
+  });
+
+  final String name;
+  final VoidCallback onEditProfile;
+  final VoidCallback onLogout;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Hi, $name',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: _AdminDashboardColors.heading,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 3),
+              const Text(
+                'MandarinMate Administrator',
+                style: TextStyle(
+                  color: _AdminDashboardColors.bodyText,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Row(
+          children: [
+            InkWell(
+              borderRadius: BorderRadius.circular(999),
+              onTap: onEditProfile,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: const Row(
                   children: [
-                    const _GlassBadge(
-                      icon: Icons.shield_rounded,
-                      label: 'Admin Shield',
+                    Icon(
+                      Icons.edit_rounded,
+                      color: _AdminDashboardColors.headerStart,
+                      size: 18,
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(width: 6),
                     Text(
-                      'Welcome back, $name!',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      email.isEmpty ? 'admin@mandarinmate.app' : email,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Color(0xFFF1E8FF),
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Track user growth, coordinate teaching operations, and keep content delivery sharp.',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                      'Edit',
                       style: TextStyle(
-                        color: const Color(0xFFE8D9F8).withValues(alpha: 0.9),
-                        fontSize: 13,
-                        height: 1.45,
-                        fontWeight: FontWeight.w500,
+                        color: _AdminDashboardColors.heading,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                   ],
                 ),
               ),
             ),
-          );
-        },
-      ),
+            const SizedBox(width: 8),
+            InkWell(
+              borderRadius: BorderRadius.circular(999),
+              onTap: onLogout,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF0F0),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: const Color(0xFFFFD6D6)),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(
+                      Icons.logout_rounded,
+                      color: Color(0xFFD32F2F),
+                      size: 18,
+                    ),
+                    SizedBox(width: 6),
+                    Text(
+                      'Logout',
+                      style: TextStyle(
+                        color: Color(0xFFD32F2F),
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
 
-class _HeaderActionButton extends StatelessWidget {
-  const _HeaderActionButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onTap,
-  });
+class _AdminHero extends StatelessWidget {
+  const _AdminHero({required this.uid, required this.fallbackEmail});
 
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onTap;
+  final String uid;
+  final String? fallbackEmail;
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: Material(
-        color: Colors.white.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(14),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(14),
-          child: SizedBox(
-            height: 42,
-            width: 42,
-            child: Icon(icon, color: Colors.white),
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .snapshots(),
+      builder: (context, snapshot) {
+        final data = snapshot.data?.data() ?? <String, dynamic>{};
+        final email = (data['email'] ?? fallbackEmail ?? '').toString();
+        final name = (data['name'] ?? data['firstName'] ?? 'Admin').toString();
+
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(22),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [
+                _AdminDashboardColors.headerStart,
+                _AdminDashboardColors.headerEnd,
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: _AdminDashboardColors.headerStart.withValues(alpha: 0.25),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
-        ),
-      ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const _GlassBadge(
+                icon: Icons.shield_rounded,
+                label: 'Admin Shield',
+              ),
+              const SizedBox(height: 18),
+              Text(
+                'Welcome back, $name!',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 26,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                email.isEmpty ? 'admin@utm.my' : email,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Color(0xFFF1E8FF),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                'Track user growth, coordinate teaching operations, and keep content delivery sharp.',
+                style: TextStyle(
+                  color: const Color(0xFFE8D9F8).withValues(alpha: 0.95),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -1046,12 +1127,14 @@ class _AdminSystemHealthSection extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              const Text(
-                'System Infrastructure & Security',
-                style: TextStyle(
-                  color: _AdminDashboardColors.heading,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
+              const Expanded(
+                child: Text(
+                  'System Infrastructure & Security',
+                  style: TextStyle(
+                    color: _AdminDashboardColors.heading,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ],
@@ -1264,8 +1347,10 @@ class _AdminRoleBreakdownSection extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Wrap(
+                spacing: 12,
+                runSpacing: 8,
+                alignment: WrapAlignment.spaceBetween,
                 children: [
                   _buildLegendItem(
                     color: _AdminDashboardColors.students,

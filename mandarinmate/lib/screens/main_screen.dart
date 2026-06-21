@@ -21,6 +21,7 @@ import 'dart:math' as math;
 import 'package:mandarinmate/models/badge_config_model.dart';
 import 'package:mandarinmate/forum/presentation/pages/forum_page.dart';
 import 'package:mandarinmate/screens/chat_list_screen.dart';
+import 'package:mandarinmate/screens/student_announcement_page.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -254,11 +255,18 @@ class _HomeTabState extends State<_HomeTab> {
                                   _LearnTab.openDailyChallenge(context),
                             ),
                             _StudentActionTile(
-                              icon: Icons.graphic_eq_rounded,
-                              title: 'Pronunciation',
-                              subtitle: 'Audio practice',
-                              color: const Color(0xFF2F80ED),
-                              onTap: () => _LearnTab.openPronunciation(context),
+                              icon: Icons.campaign_rounded,
+                              title: 'Announcements',
+                              subtitle: 'Tutor & Admin updates',
+                              color: _StudentColors.orange,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const StudentAnnouncementPage(),
+                                  ),
+                                );
+                              },
                             ),
                           ],
                         ),
@@ -620,64 +628,6 @@ class _LearnTab extends StatelessWidget {
     );
   }
 
-  static Future<void> openPronunciation(BuildContext context) async {
-    final unitAndVocab = await _firstUnitAndVocab();
-
-    if (unitAndVocab != null) {
-      if (!context.mounted) return;
-      await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => VocabLessonPage(
-            unit: unitAndVocab.unit,
-            vocabItems: unitAndVocab.vocab,
-            focusAudio: true,
-          ),
-        ),
-      );
-    } else {
-      // Fallback to mock data from Unit 1
-      if (mockCourseUnits.isNotEmpty &&
-          mockCourseUnits.first.lessons.isNotEmpty) {
-        final firstLesson = mockCourseUnits.first.lessons.first;
-        final vocabItems = firstLesson.items
-            .where((i) => i.type == LessonType.vocabulary)
-            .map(
-              (i) => VocabItem(
-            chinese: i.chinese,
-            pinyin: i.pinyin,
-            english: i.english,
-            malay: i.english, // Fallback
-          ),
-        )
-            .toList();
-
-        if (!context.mounted) return;
-        final mockUnit = LessonUnit(
-          id: 'mock_u1',
-          unitNumber: 1,
-          title: mockCourseUnits.first.title,
-          titleChinese: '',
-          description: mockCourseUnits.first.subtitle,
-          totalLessons: mockCourseUnits.first.lessons.length,
-          xpReward: 30,
-          order: 1,
-          materials: const [],
-        );
-
-        await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => VocabLessonPage(
-              unit: mockUnit,
-              vocabItems: vocabItems,
-              focusAudio: true,
-            ),
-          ),
-        );
-      }
-    }
-  }
 
   static Future<void> openDailyChallenge(BuildContext context) async {
     // 1. Get current user's completed lessons from Firestore

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mandarinmate/screens/chat_screen.dart';
+import 'package:mandarinmate/screens/student_announcement_page.dart';
+import 'package:mandarinmate/tutor/presentation/pages/tutor_announcement_page.dart';
 
 class ChatListScreen extends StatefulWidget {
   final String role;
@@ -71,6 +73,22 @@ class _ChatListScreenState extends State<ChatListScreen> {
       appBar: AppBar(
         title: const Text('Chats'),
         automaticallyImplyLeading: false,
+        leading: (widget.role == 'student' || widget.role == 'tutor')
+            ? IconButton(
+                icon: const Icon(Icons.campaign_rounded),
+                tooltip: 'Announcements',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => widget.role == 'student'
+                          ? const StudentAnnouncementPage()
+                          : const TutorAnnouncementPage(),
+                    ),
+                  );
+                },
+              )
+            : null,
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance

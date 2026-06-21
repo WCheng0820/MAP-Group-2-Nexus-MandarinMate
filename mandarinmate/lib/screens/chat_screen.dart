@@ -10,6 +10,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:mandarinmate/services/chat_attachment_service.dart';
 import 'package:mandarinmate/services/ai_moderation_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart'; // [NEW] For system tray
+import 'package:mandarinmate/utils/linkify_util.dart';
 
 class ChatScreen extends StatefulWidget {
   final String chatId;
@@ -661,9 +662,14 @@ class _ChatScreenState extends State<ChatScreen> {
                             ),
                           ),
                           child: msgType == 'text'
-                              ? Text(
+                              ? buildLinkifiableText(
                                   message['text'] ?? '',
-                                  style: TextStyle(color: isMe ? Colors.white : Colors.black),
+                                  TextStyle(color: isMe ? Colors.white : Colors.black),
+                                  TextStyle(
+                                    color: isMe ? Colors.white : Colors.blue.shade800,
+                                    fontWeight: FontWeight.bold,
+                                    decoration: TextDecoration.underline,
+                                  ),
                                 )
                               : msgType == 'image'
                                   ? _buildImageMessage(message)

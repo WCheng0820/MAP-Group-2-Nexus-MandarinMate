@@ -54,10 +54,10 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
         body = const TutorStudentsPage();
         break;
       case 3:
-        body = const TutorAnnouncementPage();
+        body = _buildChatComingSoonTab();
         break;
       case 4:
-        body = _buildChatComingSoonTab();
+        body = const ForumPage(themeColor: _TutorColors.green);
         break;
       case 5:
         body = _buildProfileTab(context, user);
@@ -88,12 +88,12 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
             label: 'Students',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.campaign_rounded),
-            label: 'Announcements',
-          ),
-          BottomNavigationBarItem(
             icon: _ChatBadgeIcon(iconData: Icons.chat_bubble_rounded),
             label: 'Chat',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.forum_rounded),
+            label: 'Forum',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.account_circle_rounded),
@@ -187,7 +187,12 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                       subtitle: 'Send updates to students',
                       color: _TutorColors.orange,
                       onTap: () {
-                        setState(() => _currentIndex = 3);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const TutorAnnouncementPage(),
+                          ),
+                        );
                       },
                     ),
                     _TutorActionTile(
@@ -196,7 +201,7 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                       subtitle: 'Direct message student channels',
                       color: _TutorColors.blue,
                       onTap: () {
-                        setState(() => _currentIndex = 4);
+                        setState(() => _currentIndex = 3);
                       },
                     ),
                     _TutorActionTile(
@@ -205,14 +210,7 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                       subtitle: 'Discuss Mandarin topics & guide students',
                       color: const Color(0xFF673AB7),
                       onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const ForumPage(
-                              themeColor: _TutorColors.green,
-                            ),
-                          ),
-                        );
+                        setState(() => _currentIndex = 4);
                       },
                     ),
                   ],
@@ -668,7 +666,12 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                               iconColor: _TutorColors.orange,
                               title: 'Broadcast Announcement',
                               onTap: () {
-                                setState(() => _currentIndex = 3);
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const TutorAnnouncementPage(),
+                                  ),
+                                );
                               },
                             ),
                             const Divider(height: 1, color: Color(0xFFECEFF1)),
@@ -678,14 +681,7 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                               iconColor: const Color(0xFF9C27B0),
                               title: 'Community Forum Feed',
                               onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => const ForumPage(
-                                      themeColor: _TutorColors.green,
-                                    ),
-                                  ),
-                                );
+                                setState(() => _currentIndex = 4);
                               },
                             ),
                             const Divider(height: 1, color: Color(0xFFECEFF1)),
