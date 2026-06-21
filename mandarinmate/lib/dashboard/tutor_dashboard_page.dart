@@ -5,11 +5,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mandarinmate/auth/presentation/bloc/auth_bloc.dart';
 import 'package:mandarinmate/auth/presentation/pages/login_page.dart';
 import 'package:mandarinmate/screens/profile/edit_profile_page.dart'
-    as mandarinmate_edit_profile;
+as mandarinmate_edit_profile;
 import 'package:mandarinmate/tutor/presentation/pages/tutor_announcement_page.dart';
 import 'package:mandarinmate/tutor/presentation/pages/tutor_manage_lessons_hub_page.dart';
 import 'package:mandarinmate/tutor/presentation/pages/tutor_students_page.dart';
 import 'package:mandarinmate/forum/presentation/pages/forum_page.dart';
+import 'package:mandarinmate/screens/chat_list_screen.dart';
 
 class TutorDashboardPage extends StatefulWidget {
   const TutorDashboardPage({super.key});
@@ -33,7 +34,7 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => const LoginPage()),
-      (_) => false,
+          (_) => false,
     );
   }
 
@@ -91,7 +92,7 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
             label: 'Announcements',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.chat_bubble_rounded),
+            icon: _ChatBadgeIcon(iconData: Icons.chat_bubble_rounded),
             label: 'Chat',
           ),
           BottomNavigationBarItem(
@@ -110,9 +111,9 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
         stream: user == null
             ? null
             : FirebaseFirestore.instance
-                  .collection('users')
-                  .doc(user.uid)
-                  .snapshots(),
+            .collection('users')
+            .doc(user.uid)
+            .snapshots(),
         builder: (context, snapshot) {
           final data = snapshot.data?.data() ?? <String, dynamic>{};
           final name = _displayName(data);
@@ -154,74 +155,74 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                   },
                 ),
                 const SizedBox(height: 10),
-                    GridView.count(
-                      crossAxisCount: 2,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisSpacing: 10,
-                      mainAxisSpacing: 10,
-                      childAspectRatio: 1.18,
-                      children: [
-                        _TutorActionTile(
-                          icon: Icons.class_rounded,
-                          title: 'Manage Lessons',
-                          subtitle: 'Manage vocab, materials, and flashcards',
-                          color: _TutorColors.green,
-                          onTap: () {
-                            setState(() => _currentIndex = 1);
-                          },
-                        ),
-                        _TutorActionTile(
-                          icon: Icons.people_alt_rounded,
-                          title: 'Student List',
-                          subtitle: 'View profiles and progress',
-                          color: _TutorColors.teal,
-                          onTap: () {
-                            setState(() => _currentIndex = 2);
-                          },
-                        ),
-                        _TutorActionTile(
-                          icon: Icons.campaign_rounded,
-                          title: 'Announcements',
-                          subtitle: 'Send updates to students',
-                          color: _TutorColors.orange,
-                          onTap: () {
-                            setState(() => _currentIndex = 3);
-                          },
-                        ),
-                        _TutorActionTile(
-                          icon: Icons.chat_bubble_rounded,
-                          title: 'Chat',
-                          subtitle: 'Direct message student channels',
-                          color: _TutorColors.blue,
-                          onTap: () {
-                            setState(() => _currentIndex = 4);
-                          },
-                        ),
-                        _TutorActionTile(
-                          icon: Icons.forum_rounded,
-                          title: 'Community Forum',
-                          subtitle: 'Discuss Mandarin topics & guide students',
-                          color: const Color(0xFF673AB7),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const ForumPage(
-                                  themeColor: _TutorColors.green,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
+                GridView.count(
+                  crossAxisCount: 2,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  childAspectRatio: 1.18,
+                  children: [
+                    _TutorActionTile(
+                      icon: Icons.class_rounded,
+                      title: 'Manage Lessons',
+                      subtitle: 'Manage vocab, materials, and flashcards',
+                      color: _TutorColors.green,
+                      onTap: () {
+                        setState(() => _currentIndex = 1);
+                      },
                     ),
-                    const SizedBox(height: 20),
-                    const _TutorClassroomOverview(),
-                    const SizedBox(height: 20),
-                    const _TutorChecklistPanel(),
+                    _TutorActionTile(
+                      icon: Icons.people_alt_rounded,
+                      title: 'Student List',
+                      subtitle: 'View profiles and progress',
+                      color: _TutorColors.teal,
+                      onTap: () {
+                        setState(() => _currentIndex = 2);
+                      },
+                    ),
+                    _TutorActionTile(
+                      icon: Icons.campaign_rounded,
+                      title: 'Announcements',
+                      subtitle: 'Send updates to students',
+                      color: _TutorColors.orange,
+                      onTap: () {
+                        setState(() => _currentIndex = 3);
+                      },
+                    ),
+                    _TutorActionTile(
+                      icon: Icons.chat_bubble_rounded,
+                      title: 'Chat',
+                      subtitle: 'Direct message student channels',
+                      color: _TutorColors.blue,
+                      onTap: () {
+                        setState(() => _currentIndex = 4);
+                      },
+                    ),
+                    _TutorActionTile(
+                      icon: Icons.forum_rounded,
+                      title: 'Community Forum',
+                      subtitle: 'Discuss Mandarin topics & guide students',
+                      color: const Color(0xFF673AB7),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const ForumPage(
+                              themeColor: _TutorColors.green,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                   ],
                 ),
+                const SizedBox(height: 20),
+                const _TutorClassroomOverview(),
+                const SizedBox(height: 20),
+                const _TutorChecklistPanel(),
+              ],
+            ),
           );
         },
       ),
@@ -229,51 +230,7 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
   }
 
   Widget _buildChatComingSoonTab() {
-    return _TutorPageFrame(
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: _TutorColors.green.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.chat_bubble_rounded,
-                  color: _TutorColors.green,
-                  size: 40,
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Chat Module',
-                style: TextStyle(
-                  color: _TutorColors.deep,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'Direct tutor-student messaging and group discussions are currently in active development.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: _TutorColors.muted,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  height: 1.45,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    return const ChatListScreen(role: 'tutor');
   }
 
   Widget _buildProfileTab(BuildContext context, User? user) {
@@ -282,9 +239,9 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
         stream: user == null
             ? null
             : FirebaseFirestore.instance
-                  .collection('users')
-                  .doc(user.uid)
-                  .snapshots(),
+            .collection('users')
+            .doc(user.uid)
+            .snapshots(),
         builder: (context, snapshot) {
           final data = snapshot.data?.data() ?? <String, dynamic>{};
           final name = _displayName(data);
@@ -336,9 +293,9 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                                     context,
                                     MaterialPageRoute(
                                       builder: (_) =>
-                                          const mandarinmate_edit_profile.EditProfilePage(
-                                            roleColor: _TutorColors.green,
-                                          ),
+                                      const mandarinmate_edit_profile.EditProfilePage(
+                                        roleColor: _TutorColors.green,
+                                      ),
                                     ),
                                   );
                                 },
@@ -380,9 +337,9 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (_) =>
-                                        const mandarinmate_edit_profile.EditProfilePage(
-                                          roleColor: _TutorColors.green,
-                                        ),
+                                    const mandarinmate_edit_profile.EditProfilePage(
+                                      roleColor: _TutorColors.green,
+                                    ),
                                   ),
                                 );
                               },
@@ -626,7 +583,7 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                                       icon: '📢',
                                       title: 'Latest Broadcast Sent',
                                       detail: latestAnnTitle,
-                                      time: latestAnnContent.isNotEmpty 
+                                      time: latestAnnContent.isNotEmpty
                                           ? (latestAnnContent.length > 30 ? '${latestAnnContent.substring(0, 30)}...' : latestAnnContent)
                                           : 'Tap Announcements to broadcast',
                                       bgColor: const Color(0xFFFFF3E0),
@@ -671,9 +628,9 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (_) =>
-                                        const mandarinmate_edit_profile.EditProfilePage(
-                                          roleColor: _TutorColors.green,
-                                        ),
+                                    const mandarinmate_edit_profile.EditProfilePage(
+                                      roleColor: _TutorColors.green,
+                                    ),
                                   ),
                                 );
                               },
@@ -1087,9 +1044,9 @@ class _TutorHeader extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                     builder: (_) =>
-                        const mandarinmate_edit_profile.EditProfilePage(
-                          roleColor: _TutorColors.green,
-                        ),
+                    const mandarinmate_edit_profile.EditProfilePage(
+                      roleColor: _TutorColors.green,
+                    ),
                   ),
                 );
               },
@@ -1596,6 +1553,48 @@ class _TutorChecklistPanelState extends State<_TutorChecklistPanel> {
           ),
         ],
       ),
+    );
+  }
+}
+
+// -----------------------------------------------------
+// SMART CHAT BADGE COMPONENT
+// -----------------------------------------------------
+class _ChatBadgeIcon extends StatelessWidget {
+  final IconData iconData;
+  final Color? color;
+
+  const _ChatBadgeIcon({required this.iconData, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return Icon(iconData, color: color);
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('chats').snapshots(),
+      builder: (context, snapshot) {
+        int unreadCount = 0;
+
+        if (snapshot.hasData) {
+          for (var doc in snapshot.data!.docs) {
+            final data = doc.data() as Map<String, dynamic>;
+
+            // If the message is NOT from us, is unread, and we are part of this chat
+            if (data['lastMessageSenderId'] != currentUser.uid &&
+                data['isLastMessageRead'] == false &&
+                doc.id.contains(currentUser.uid)) {
+              unreadCount++;
+            }
+          }
+        }
+
+        return Badge(
+          isLabelVisible: unreadCount > 0,
+          backgroundColor: Colors.red,
+          child: Icon(iconData, color: color),
+        );
+      },
     );
   }
 }

@@ -118,8 +118,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   bool _isRegistering = false;
 
   AuthBloc({required AuthService authService})
-    : _authService = authService,
-      super(AuthInitial()) {
+      : _authService = authService,
+        super(AuthInitial()) {
     on<AuthAppStarted>(_onAppStarted);
     on<AuthUserChanged>(_onUserChanged);
     on<AuthLoginRequested>(_onLoginRequested);
@@ -130,19 +130,27 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _onAppStarted(
-    AuthAppStarted event,
-    Emitter<AuthState> emit,
-  ) async {
+      AuthAppStarted event,
+      Emitter<AuthState> emit,
+      ) async {
+    emit(AuthLoading());
+
+    // [NEW] Instantly grab the local session if it exists on the phone's hard drive!
+    final currentUser = _authService.currentUser;
+    if (currentUser != null) {
+      add(AuthUserChanged(currentUser));
+    }
+
+    // Keep listening to the stream in case they log out or the token refreshes
     _authSubscription ??= _authService.authStateChanges.listen(
-      (user) => add(AuthUserChanged(user)),
+          (user) => add(AuthUserChanged(user)),
     );
-    add(AuthUserChanged(_authService.currentUser));
   }
 
   Future<void> _onUserChanged(
-    AuthUserChanged event,
-    Emitter<AuthState> emit,
-  ) async {
+      AuthUserChanged event,
+      Emitter<AuthState> emit,
+      ) async {
     // If we are in the middle of a registration process, don't react to auth changes
     if (_isRegistering) {
       return;
@@ -178,9 +186,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _onLoginRequested(
-    AuthLoginRequested event,
-    Emitter<AuthState> emit,
-  ) async {
+      AuthLoginRequested event,
+      Emitter<AuthState> emit,
+      ) async {
     emit(AuthLoading());
     try {
       final isUTMEmail = await _authService.isUTMEmail(event.email);
@@ -217,9 +225,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _onRegisterRequested(
-    AuthRegisterRequested event,
-    Emitter<AuthState> emit,
-  ) async {
+      AuthRegisterRequested event,
+      Emitter<AuthState> emit,
+      ) async {
     emit(AuthLoading());
     try {
       final isUTMEmail = await _authService.isUTMEmail(event.email);
@@ -265,7 +273,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       await _authService.logout();
 
       _isRegistering =
-          false; // Disable flag BEFORE emitting success so it doesn't get squashed
+      false; // Disable flag BEFORE emitting success so it doesn't get squashed
       add(
         const AuthUserChanged(null),
       ); // Ensures future states are recognized properly
@@ -279,9 +287,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _onForgotPasswordRequested(
-    AuthForgotPasswordRequested event,
-    Emitter<AuthState> emit,
-  ) async {
+      AuthForgotPasswordRequested event,
+      Emitter<AuthState> emit,
+      ) async {
     emit(AuthLoading());
     try {
       await _authService.sendPasswordResetEmail(event.email.trim());
@@ -303,9 +311,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _onGoogleSignInRequested(
-    AuthGoogleSignInRequested event,
-    Emitter<AuthState> emit,
-  ) async {
+      AuthGoogleSignInRequested event,
+      Emitter<AuthState> emit,
+      ) async {
     emit(AuthLoading());
     try {
       await _authService.signInWithGoogle();
@@ -315,9 +323,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _onLogoutRequested(
-    AuthLogoutRequested event,
-    Emitter<AuthState> emit,
-  ) async {
+      AuthLogoutRequested event,
+      Emitter<AuthState> emit,
+      ) async {
     emit(AuthLoading());
     try {
       await _authService.logout();

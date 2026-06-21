@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:mandarinmate/services/auth_service.dart';
 import 'package:mandarinmate/utils/app_theme.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -12,7 +10,6 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
-  final AuthService _authService = AuthService();
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
@@ -21,7 +18,8 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
     _setupAnimations();
-    _navigateAfterDelay();
+    // [REMOVED] The rogue 3-second timer and the forced logout!
+    // GoRouter and AuthBloc handle all navigation automatically now.
   }
 
   void _setupAnimations() {
@@ -39,16 +37,6 @@ class _SplashScreenState extends State<SplashScreen>
     );
 
     _animationController.forward();
-  }
-
-  Future<void> _navigateAfterDelay() async {
-    await Future.delayed(const Duration(seconds: 3));
-
-    if (_authService.currentUser != null) {
-      await _authService.logout();
-    }
-    if (!mounted) return;
-    context.go('/auth');
   }
 
   @override
