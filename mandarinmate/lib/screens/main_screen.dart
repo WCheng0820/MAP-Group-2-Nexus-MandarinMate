@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mandarinmate/lessons/domain/lesson_model.dart';
 import 'package:mandarinmate/auth/presentation/bloc/auth_bloc.dart';
-import 'package:mandarinmate/models/user_model.dart';
 import 'package:mandarinmate/screens/profile/edit_profile_page.dart'
 as mandarinmate_edit_profile;
 import 'package:mandarinmate/screens/profile/badges_achievements_page.dart';
@@ -20,6 +19,7 @@ as new_bloc;
 import 'package:mandarinmate/lessons/domain/active_lesson_model.dart';
 import 'dart:math' as math;
 import 'package:mandarinmate/models/badge_config_model.dart';
+import 'package:mandarinmate/forum/presentation/pages/forum_page.dart';
 import 'package:mandarinmate/screens/chat_list_screen.dart';
 
 class MainScreen extends StatefulWidget {
@@ -38,7 +38,7 @@ class _MainScreenState extends State<MainScreen> {
       _HomeTab(onOpenLearn: () => setState(() => _currentIndex = 1)),
       const _LearnTab(),
       const _ChatTab(),
-      const _ForumTab(),
+      ForumPage(themeColor: _StudentColors.orange),
       _ProfileTab(onOpenLearn: () => setState(() => _currentIndex = 1)),
     ];
 
@@ -2244,18 +2244,7 @@ class _ChatTab extends StatelessWidget {
   }
 }
 
-class _ForumTab extends StatelessWidget {
-  const _ForumTab();
 
-  @override
-  Widget build(BuildContext context) {
-    return const _CenteredTab(
-      icon: Icons.forum_rounded,
-      title: 'Forum',
-      subtitle: 'Ask questions and share learning tips.',
-    );
-  }
-}
 
 class _ProfileTab extends StatefulWidget {
   final VoidCallback onOpenLearn;
