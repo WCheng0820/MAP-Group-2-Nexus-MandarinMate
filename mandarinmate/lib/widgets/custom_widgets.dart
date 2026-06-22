@@ -45,7 +45,10 @@ class _CustomTextFieldState extends State<CustomTextField> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(widget.label, style: AppTextStyles.labelLarge),
+        Text(
+          widget.label,
+          style: AppTextStyles.labelLarge.copyWith(color: context.textDeep),
+        ),
         const SizedBox(height: AppDimensions.sm),
         TextFormField(
           controller: widget.controller,
@@ -54,14 +57,39 @@ class _CustomTextFieldState extends State<CustomTextField> {
           obscureText: _obscureText,
           maxLines: widget.isPassword ? 1 : widget.maxLines,
           minLines: widget.minLines,
+          style: TextStyle(color: context.textDeep),
           decoration: InputDecoration(
             hintText: widget.hint,
-            prefixIcon: widget.prefixIcon,
+            hintStyle: AppTextStyles.labelMedium.copyWith(color: context.textMuted),
+            fillColor: context.cardBg,
+            filled: true,
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+              borderSide: BorderSide(color: context.borderTheme),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+              borderSide: const BorderSide(color: AppColors.primaryColor, width: 2),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+              borderSide: const BorderSide(color: AppColors.errorColor),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+              borderSide: const BorderSide(color: AppColors.errorColor, width: 2),
+            ),
+            prefixIcon: widget.prefixIcon != null
+                ? IconTheme(
+                    data: IconThemeData(color: context.textMuted),
+                    child: widget.prefixIcon!,
+                  )
+                : null,
             suffixIcon: widget.isPassword
                 ? IconButton(
                     icon: Icon(
                       _obscureText ? Icons.visibility_off : Icons.visibility,
-                      color: AppColors.textSecondary,
+                      color: context.textMuted,
                     ),
                     onPressed: () {
                       setState(() {
@@ -167,12 +195,12 @@ class RoleCard extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
           border: Border.all(
-            color: isSelected ? color : AppColors.dividerColor,
+            color: isSelected ? color : context.borderTheme,
             width: isSelected ? 2 : 1,
           ),
           color: isSelected
               ? color.withValues(alpha: 0.1)
-              : AppColors.surfaceColor,
+              : context.cardBg,
         ),
         child: Column(
           children: [
@@ -193,7 +221,7 @@ class RoleCard extends StatelessWidget {
             const SizedBox(height: AppDimensions.sm),
             Text(
               description,
-              style: AppTextStyles.bodySmall,
+              style: AppTextStyles.bodySmall.copyWith(color: context.textMuted),
               textAlign: TextAlign.center,
             ),
             if (isSelected)

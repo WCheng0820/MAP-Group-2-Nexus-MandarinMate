@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mandarinmate/utils/linkify_util.dart';
+import 'package:mandarinmate/utils/app_theme.dart';
 
 class StudentAnnouncementPage extends StatelessWidget {
   const StudentAnnouncementPage({super.key});
@@ -15,27 +16,27 @@ class StudentAnnouncementPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: paperColor,
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Announcements',
           style: TextStyle(
-            color: darkTextColor,
+            color: context.textDeep,
             fontWeight: FontWeight.w900,
             fontSize: 20,
           ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: context.cardBg,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: darkTextColor, size: 20),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: context.textDeep, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1.0),
           child: Container(
-            color: const Color(0xFFFFE4CF),
+            color: context.borderTheme,
             height: 1.0,
           ),
         ),
@@ -53,10 +54,10 @@ class StudentAnnouncementPage extends StatelessWidget {
           }
 
           if (snapshot.hasError) {
-            return const Center(
+            return Center(
               child: Text(
                 'Failed to load announcements',
-                style: TextStyle(color: mutedTextColor, fontWeight: FontWeight.w600),
+                style: TextStyle(color: context.textMuted, fontWeight: FontWeight.w600),
               ),
             );
           }
@@ -87,19 +88,19 @@ class StudentAnnouncementPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    const Text(
+                    Text(
                       'No Announcements Yet',
                       style: TextStyle(
-                        color: darkTextColor,
+                        color: context.textDeep,
                         fontSize: 18,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
+                    Text(
                       'You will see updates from tutors and admins here.',
                       style: TextStyle(
-                        color: mutedTextColor,
+                        color: context.textMuted,
                         fontSize: 14,
                       ),
                       textAlign: TextAlign.center,
@@ -128,9 +129,9 @@ class StudentAnnouncementPage extends StatelessWidget {
 
               return Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: context.cardBg,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFFFE4CF)),
+                  border: Border.all(color: context.borderTheme),
                   boxShadow: const [
                     BoxShadow(
                       color: Color(0x0A111827),
@@ -171,8 +172,8 @@ class StudentAnnouncementPage extends StatelessWidget {
                                   children: [
                                     Text(
                                       createdByName,
-                                      style: const TextStyle(
-                                        color: darkTextColor,
+                                      style: TextStyle(
+                                        color: context.textDeep,
                                         fontWeight: FontWeight.w900,
                                         fontSize: 14,
                                       ),
@@ -182,8 +183,8 @@ class StudentAnnouncementPage extends StatelessWidget {
                                       createdAt != null
                                           ? DateFormat('dd MMM yyyy, hh:mm a').format(createdAt)
                                           : 'Just now',
-                                      style: const TextStyle(
-                                        color: mutedTextColor,
+                                      style: TextStyle(
+                                        color: context.textMuted,
                                         fontSize: 11,
                                         fontWeight: FontWeight.w600,
                                       ),
@@ -208,11 +209,11 @@ class StudentAnnouncementPage extends StatelessWidget {
                               ),
                             ],
                           ),
-                          const Divider(height: 24, color: Color(0xFFFFE4CF)),
+                          Divider(height: 24, color: context.borderTheme),
                           Text(
                             title,
-                            style: const TextStyle(
-                              color: darkTextColor,
+                            style: TextStyle(
+                              color: context.textDeep,
                               fontSize: 16,
                               fontWeight: FontWeight.w900,
                             ),
@@ -220,8 +221,8 @@ class StudentAnnouncementPage extends StatelessWidget {
                           const SizedBox(height: 8),
                           Text(
                             body,
-                            style: const TextStyle(
-                              color: mutedTextColor,
+                            style: TextStyle(
+                              color: context.textMuted,
                               fontSize: 14,
                               height: 1.45,
                               fontWeight: FontWeight.w500,
@@ -269,9 +270,9 @@ class StudentAnnouncementPage extends StatelessWidget {
       backgroundColor: Colors.transparent,
       builder: (context) {
         return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+          decoration: BoxDecoration(
+            color: context.cardBg,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
           ),
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -283,7 +284,7 @@ class StudentAnnouncementPage extends StatelessWidget {
                   width: 40,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
+                    color: context.isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300,
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
@@ -310,8 +311,8 @@ class StudentAnnouncementPage extends StatelessWidget {
                       children: [
                         Text(
                           sender,
-                          style: const TextStyle(
-                            color: darkTextColor,
+                          style: TextStyle(
+                            color: context.textDeep,
                             fontWeight: FontWeight.w900,
                             fontSize: 16,
                           ),
@@ -321,8 +322,8 @@ class StudentAnnouncementPage extends StatelessWidget {
                           date != null
                               ? DateFormat('dd MMM yyyy, hh:mm a').format(date)
                               : 'Just now',
-                          style: const TextStyle(
-                            color: mutedTextColor,
+                          style: TextStyle(
+                            color: context.textMuted,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
@@ -333,12 +334,12 @@ class StudentAnnouncementPage extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 20),
-              const Divider(color: Color(0xFFFFE4CF)),
+              Divider(color: context.borderTheme),
               const SizedBox(height: 10),
               Text(
                 title,
-                style: const TextStyle(
-                  color: darkTextColor,
+                style: TextStyle(
+                  color: context.textDeep,
                   fontSize: 20,
                   fontWeight: FontWeight.w900,
                 ),
@@ -349,8 +350,8 @@ class StudentAnnouncementPage extends StatelessWidget {
                   physics: const BouncingScrollPhysics(),
                   child: buildLinkifiableText(
                     body,
-                    const TextStyle(
-                      color: mutedTextColor,
+                    TextStyle(
+                      color: context.textMuted,
                       fontSize: 15,
                       height: 1.5,
                       fontWeight: FontWeight.w500,

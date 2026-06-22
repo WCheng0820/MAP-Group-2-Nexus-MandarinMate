@@ -196,7 +196,7 @@ class _AuthScreenState extends State<AuthScreen> {
         final bool isLoading = state is AuthLoading;
 
         return Scaffold(
-          backgroundColor: AppColors.backgroundColor,
+          backgroundColor: context.scaffoldBg,
           body: Stack(
             children: [
               SingleChildScrollView(
@@ -261,13 +261,16 @@ class _AuthScreenState extends State<AuthScreen> {
                           horizontal: AppDimensions.lg,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.surfaceColor,
+                          color: context.cardBg,
                           borderRadius: BorderRadius.circular(
                             AppDimensions.radiusXL,
                           ),
+                          border: Border.all(color: context.borderTheme),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.shadowColor,
+                              color: context.isDarkMode
+                                  ? Colors.black.withValues(alpha: 0.3)
+                                  : AppColors.shadowColor,
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
@@ -295,7 +298,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                                 .copyWith(
                                                   color: _isLoginTab
                                                       ? AppColors.primaryColor
-                                                      : AppColors.textTertiary,
+                                                      : context.textMuted,
                                                 ),
                                             textAlign: TextAlign.center,
                                           ),
@@ -323,7 +326,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                                 .copyWith(
                                                   color: !_isLoginTab
                                                       ? AppColors.primaryColor
-                                                      : AppColors.textTertiary,
+                                                      : context.textMuted,
                                                 ),
                                             textAlign: TextAlign.center,
                                           ),
@@ -428,7 +431,10 @@ class _AuthScreenState extends State<AuthScreen> {
                     },
                     activeColor: const Color(0xFF6C3BFF),
                   ),
-                  Text('Remember Me', style: AppTextStyles.bodySmall),
+                  Text(
+                    'Remember Me',
+                    style: AppTextStyles.bodySmall.copyWith(color: context.textMuted),
+                  ),
                 ],
               ),
               TextButton(
@@ -438,7 +444,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 child: Text(
                   'Forgot Password?',
                   style: AppTextStyles.labelMedium.copyWith(
-                    color: const Color(0xFF6C3BFF),
+                    color: context.isDarkMode ? Colors.purple.shade200 : const Color(0xFF6C3BFF),
                   ),
                 ),
               ),
@@ -457,14 +463,17 @@ class _AuthScreenState extends State<AuthScreen> {
           // Divider
           Row(
             children: [
-              Expanded(child: Divider(color: AppColors.dividerColor)),
+              Expanded(child: Divider(color: context.borderTheme)),
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppDimensions.md,
                 ),
-                child: Text('or continue with', style: AppTextStyles.bodySmall),
+                child: Text(
+                  'or continue with',
+                  style: AppTextStyles.bodySmall.copyWith(color: context.textMuted),
+                ),
               ),
-              Expanded(child: Divider(color: AppColors.dividerColor)),
+              Expanded(child: Divider(color: context.borderTheme)),
             ],
           ),
           const SizedBox(height: AppDimensions.lg),
@@ -482,12 +491,12 @@ class _AuthScreenState extends State<AuthScreen> {
                   children: [
                     TextSpan(
                       text: 'New to MandarinMate? ',
-                      style: AppTextStyles.bodyMedium,
+                      style: AppTextStyles.bodyMedium.copyWith(color: context.textMuted),
                     ),
                     TextSpan(
                       text: 'Sign Up',
                       style: AppTextStyles.bodyMedium.copyWith(
-                        color: const Color(0xFF6C3BFF),
+                        color: context.isDarkMode ? Colors.purple.shade200 : const Color(0xFF6C3BFF),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -526,25 +535,37 @@ class _AuthScreenState extends State<AuthScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Role', style: AppTextStyles.labelLarge),
+              Text(
+                'Role',
+                style: AppTextStyles.labelLarge.copyWith(color: context.textDeep),
+              ),
               const SizedBox(height: AppDimensions.sm),
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppDimensions.md,
                 ),
                 decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.dividerColor),
+                  color: context.cardBg,
+                  border: Border.all(color: context.borderTheme),
                   borderRadius: BorderRadius.circular(
                     AppDimensions.radiusMedium,
                   ),
                 ),
                 child: DropdownButton<String>(
                   value: _selectedRole,
+                  dropdownColor: context.cardBg,
                   isExpanded: true,
                   underline: const SizedBox.shrink(),
-                  items: const [
-                    DropdownMenuItem(value: 'Student', child: Text('Student')),
-                    DropdownMenuItem(value: 'Tutor', child: Text('Tutor')),
+                  style: TextStyle(color: context.textDeep, fontSize: 14),
+                  items: [
+                    DropdownMenuItem(
+                      value: 'Student',
+                      child: Text('Student', style: TextStyle(color: context.textDeep)),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Tutor',
+                      child: Text('Tutor', style: TextStyle(color: context.textDeep)),
+                    ),
                   ],
                   onChanged: (value) {
                     if (value != null) {
@@ -648,12 +669,12 @@ class _AuthScreenState extends State<AuthScreen> {
                     children: [
                       TextSpan(
                         text: 'I agree to the ',
-                        style: AppTextStyles.bodySmall,
+                        style: AppTextStyles.bodySmall.copyWith(color: context.textMuted),
                       ),
                       TextSpan(
                         text: 'Terms & Conditions',
                         style: AppTextStyles.bodySmall.copyWith(
-                          color: const Color(0xFF6C3BFF),
+                          color: context.isDarkMode ? Colors.purple.shade200 : const Color(0xFF6C3BFF),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -676,14 +697,17 @@ class _AuthScreenState extends State<AuthScreen> {
           // Divider
           Row(
             children: [
-              Expanded(child: Divider(color: AppColors.dividerColor)),
+              Expanded(child: Divider(color: context.borderTheme)),
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppDimensions.md,
                 ),
-                child: Text('or continue with', style: AppTextStyles.bodySmall),
+                child: Text(
+                  'or continue with',
+                  style: AppTextStyles.bodySmall.copyWith(color: context.textMuted),
+                ),
               ),
-              Expanded(child: Divider(color: AppColors.dividerColor)),
+              Expanded(child: Divider(color: context.borderTheme)),
             ],
           ),
           const SizedBox(height: AppDimensions.lg),
@@ -701,12 +725,12 @@ class _AuthScreenState extends State<AuthScreen> {
                   children: [
                     TextSpan(
                       text: 'Already have an account? ',
-                      style: AppTextStyles.bodyMedium,
+                      style: AppTextStyles.bodyMedium.copyWith(color: context.textMuted),
                     ),
                     TextSpan(
                       text: 'Log In',
                       style: AppTextStyles.bodyMedium.copyWith(
-                        color: const Color(0xFF6C3BFF),
+                        color: context.isDarkMode ? Colors.purple.shade200 : const Color(0xFF6C3BFF),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -725,7 +749,7 @@ class _AuthScreenState extends State<AuthScreen> {
     return OutlinedButton(
       style: OutlinedButton.styleFrom(
         minimumSize: const Size.fromHeight(AppDimensions.buttonHeight),
-        side: const BorderSide(color: AppColors.dividerColor),
+        side: BorderSide(color: context.borderTheme),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
         ),
@@ -751,7 +775,10 @@ class _AuthScreenState extends State<AuthScreen> {
             ),
           ),
           const SizedBox(width: AppDimensions.md),
-          Text('Google Account', style: AppTextStyles.bodyMedium),
+          Text(
+            'Google Account',
+            style: AppTextStyles.bodyMedium.copyWith(color: context.textDeep),
+          ),
         ],
       ),
     );

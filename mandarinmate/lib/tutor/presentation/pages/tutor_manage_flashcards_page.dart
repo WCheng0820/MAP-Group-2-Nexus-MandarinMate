@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:mandarinmate/utils/app_theme.dart';
 import 'tutor_create_flashcards_page.dart';
 import 'tutor_edit_flashcards_page.dart';
 
@@ -20,7 +21,7 @@ class _TutorManageFlashcardsPageState extends State<TutorManageFlashcardsPage> {
     final user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF9F5),
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
         backgroundColor: _orange,
         foregroundColor: Colors.white,
@@ -87,10 +88,10 @@ class _TutorManageFlashcardsPageState extends State<TutorManageFlashcardsPage> {
 
                     return Card(
                       elevation: 0,
-                      color: Colors.white,
+                      color: context.cardBg,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(color: Colors.grey.shade200),
+                        side: BorderSide(color: context.borderTheme),
                       ),
                       child: Padding(
                         padding: const EdgeInsets.all(16),
@@ -128,9 +129,10 @@ class _TutorManageFlashcardsPageState extends State<TutorManageFlashcardsPage> {
                                           Expanded(
                                             child: Text(
                                               title,
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.w700,
+                                                color: context.textDeep,
                                               ),
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
@@ -144,7 +146,7 @@ class _TutorManageFlashcardsPageState extends State<TutorManageFlashcardsPage> {
                                           description,
                                           style: TextStyle(
                                             fontSize: 13,
-                                            color: Colors.grey.shade600,
+                                            color: context.textMuted,
                                           ),
                                           maxLines: 2,
                                           overflow: TextOverflow.ellipsis,
@@ -212,7 +214,7 @@ class _TutorManageFlashcardsPageState extends State<TutorManageFlashcardsPage> {
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
-      backgroundColor: Colors.white,
+      backgroundColor: context.cardBg,
       builder: (context) {
         return SafeArea(
           child: Padding(
@@ -222,8 +224,14 @@ class _TutorManageFlashcardsPageState extends State<TutorManageFlashcardsPage> {
               children: [
                 ListTile(
                   leading: const Icon(Icons.add_circle, color: _orange),
-                  title: const Text('Add New Flashcard Set'),
-                  subtitle: const Text('Create a new flashcard set for a level'),
+                  title: Text(
+                    'Add New Flashcard Set',
+                    style: TextStyle(color: context.textDeep),
+                  ),
+                  subtitle: Text(
+                    'Create a new flashcard set for a level',
+                    style: TextStyle(color: context.textMuted),
+                  ),
                   onTap: () {
                     Navigator.pop(context);
                     Navigator.push(
@@ -246,15 +254,22 @@ class _TutorManageFlashcardsPageState extends State<TutorManageFlashcardsPage> {
     showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Flashcard Set'),
-        content: Text('Are you sure you want to delete "$title"? All cards will be deleted.'),
+        backgroundColor: context.cardBg,
+        title: Text('Delete Flashcard Set', style: TextStyle(color: context.textDeep)),
+        content: Text(
+          'Are you sure you want to delete "$title"? All cards will be deleted.',
+          style: TextStyle(color: context.textMuted),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () async {
               try {
                 // Delete all cards first

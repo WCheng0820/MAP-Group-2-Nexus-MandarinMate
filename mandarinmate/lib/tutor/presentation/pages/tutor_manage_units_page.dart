@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:mandarinmate/utils/app_theme.dart';
 import 'tutor_generate_unit_page.dart';
 import 'tutor_edit_vocabulary_page.dart';
 
@@ -19,7 +20,7 @@ class _TutorManageUnitsPageState extends State<TutorManageUnitsPage> {
     final user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6FBF8),
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
         backgroundColor: _green,
         foregroundColor: Colors.white,
@@ -78,10 +79,10 @@ class _TutorManageUnitsPageState extends State<TutorManageUnitsPage> {
 
                     return Card(
                       elevation: 0,
-                      color: Colors.white,
+                      color: context.cardBg,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(color: Colors.grey.shade200),
+                        side: BorderSide(color: context.borderTheme),
                       ),
                       margin: const EdgeInsets.only(bottom: 12),
                       child: Padding(
@@ -98,9 +99,10 @@ class _TutorManageUnitsPageState extends State<TutorManageUnitsPage> {
                                     children: [
                                       Text(
                                         title,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold,
+                                          color: context.textDeep,
                                         ),
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
@@ -111,7 +113,7 @@ class _TutorManageUnitsPageState extends State<TutorManageUnitsPage> {
                                           'Created: ${createdAt.toString().split('.')[0]}',
                                           style: TextStyle(
                                             fontSize: 12,
-                                            color: Colors.grey.shade600,
+                                            color: context.textMuted,
                                           ),
                                         ),
                                       ],
@@ -173,12 +175,15 @@ class _TutorManageUnitsPageState extends State<TutorManageUnitsPage> {
       builder: (dialogContext) {
         final titleController = TextEditingController(text: currentTitle);
         return AlertDialog(
-          title: const Text('Edit Unit Title'),
+          backgroundColor: context.cardBg,
+          title: Text('Edit Unit Title', style: TextStyle(color: context.textDeep)),
           content: TextField(
             controller: titleController,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
+            style: TextStyle(color: context.textDeep),
+            decoration: InputDecoration(
+              border: const OutlineInputBorder(),
               labelText: 'Unit Title',
+              labelStyle: TextStyle(color: context.textMuted),
             ),
           ),
           actions: [
@@ -222,15 +227,22 @@ class _TutorManageUnitsPageState extends State<TutorManageUnitsPage> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Unit'),
-        content: Text('Are you sure you want to delete "$title"? This cannot be undone.'),
+        backgroundColor: context.cardBg,
+        title: Text('Delete Unit', style: TextStyle(color: context.textDeep)),
+        content: Text(
+          'Are you sure you want to delete "$title"? This cannot be undone.',
+          style: TextStyle(color: context.textMuted),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () async {
               try {
                 // Try to delete all vocabulary items first
@@ -284,7 +296,7 @@ class _TutorManageUnitsPageState extends State<TutorManageUnitsPage> {
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
-      backgroundColor: Colors.white,
+      backgroundColor: context.cardBg,
       builder: (context) {
         return SafeArea(
           child: Padding(
@@ -294,8 +306,14 @@ class _TutorManageUnitsPageState extends State<TutorManageUnitsPage> {
               children: [
                 ListTile(
                   leading: const Icon(Icons.add_circle, color: _green),
-                  title: const Text('Generate with AI'),
-                  subtitle: const Text('Let AI create vocabulary from a title'),
+                  title: Text(
+                    'Generate with AI',
+                    style: TextStyle(color: context.textDeep),
+                  ),
+                  subtitle: Text(
+                    'Let AI create vocabulary from a title',
+                    style: TextStyle(color: context.textMuted),
+                  ),
                   onTap: () {
                     Navigator.pop(context);
                     Navigator.push(

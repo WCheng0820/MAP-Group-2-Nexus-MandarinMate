@@ -547,9 +547,9 @@ class _HomeContinueLessonCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.cardBg,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFFFE4CF)),
+          border: Border.all(color: context.borderTheme),
           boxShadow: [
             BoxShadow(
               color: _StudentColors.orange.withValues(alpha: 0.05),
@@ -582,16 +582,16 @@ class _HomeContinueLessonCard extends StatelessWidget {
                 children: [
                   Text(
                     nextLesson.title,
-                    style: const TextStyle(
-                      color: _StudentColors.deep,
+                    style: TextStyle(
+                      color: context.textDeep,
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
                   Text(
                     targetUnit?.title ?? '',
-                    style: const TextStyle(
-                      color: _StudentColors.muted,
+                    style: TextStyle(
+                      color: context.textMuted,
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                     ),
@@ -640,7 +640,7 @@ class _StarredItemsRow extends StatelessWidget {
             width: 120,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.cardBg,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: color.withValues(alpha: 0.3), width: 2),
             ),
@@ -653,14 +653,15 @@ class _StarredItemsRow extends StatelessWidget {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
+                    color: context.textDeep,
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
                   ),
                 ),
                 Text(
                   type,
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                  style: TextStyle(color: context.textMuted, fontSize: 12),
                 ),
               ],
             ),
@@ -739,19 +740,19 @@ class _RecentBadgesRow extends StatelessWidget {
             width: 120,
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.cardBg,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: unlocked
-                    ? const Color(0xFFFFD54F).withOpacity(0.4)
-                    : const Color(0xFFECEFF1),
+                    ? const Color(0xFFFFD54F).withValues(alpha: 0.4)
+                    : (context.isDarkMode ? const Color(0xFF2C2C2C) : const Color(0xFFECEFF1)),
                 width: unlocked ? 1.5 : 1,
               ),
               boxShadow: [
                 BoxShadow(
                   color: unlocked
-                      ? Colors.amber.withOpacity(0.04)
-                      : Colors.black.withOpacity(0.01),
+                      ? Colors.amber.withValues(alpha: 0.04)
+                      : Colors.black.withValues(alpha: 0.01),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),
@@ -775,8 +776,8 @@ class _RecentBadgesRow extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: unlocked
-                        ? const Color(0xFF263238)
-                        : const Color(0xFFB0BEC5),
+                        ? context.textDeep
+                        : context.textMuted,
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                   ),
@@ -1063,12 +1064,12 @@ class _LessonsList extends StatelessWidget {
         // Remove the heading completely for standard units
         if (communityUnits.isNotEmpty) {
           sections.add(
-            const Padding(
-              padding: EdgeInsets.only(top: 20, bottom: 12),
+            Padding(
+              padding: const EdgeInsets.only(top: 20, bottom: 12),
               child: Text(
                 'Community Lessons',
                 style: TextStyle(
-                  color: Color(0xFF1a1a1a),
+                  color: context.textDeep,
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
                 ),
@@ -1105,7 +1106,7 @@ class _StudentPageFrame extends StatelessWidget {
         gradient: LinearGradient(
           colors: [
             context.scaffoldBg,
-            context.isDarkMode ? const Color(0xFF1F120A) : const Color(0xFFFFEFE4),
+            context.isDarkMode ? Colors.black : const Color(0xFFFFEFE4),
           ],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
@@ -1181,7 +1182,7 @@ class _StudentHeader extends StatelessWidget {
         NotificationBadgeIcon(
           role: 'student',
           themeColor: _StudentColors.orange,
-          iconColor: _StudentColors.deep,
+          iconColor: context.textDeep,
         ),
       ],
     );
@@ -2939,10 +2940,10 @@ class _ProfileTabState extends State<_ProfileTab> {
                                     crossAxisAlignment:
                                     CrossAxisAlignment.start,
                                     children: [
-                                      const Text(
+                                      Text(
                                         'Current Level',
                                         style: TextStyle(
-                                          color: Color(0xFF90A4AE),
+                                          color: context.textMuted,
                                           fontSize: 12,
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -2950,8 +2951,8 @@ class _ProfileTabState extends State<_ProfileTab> {
                                       const SizedBox(height: 4),
                                       Text(
                                         'Level $level · ${_getLevelName(level)}',
-                                        style: const TextStyle(
-                                          color: Color(0xFF263238),
+                                        style: TextStyle(
+                                          color: context.textDeep,
                                           fontSize: 18,
                                           fontWeight: FontWeight.w900,
                                         ),
@@ -3032,10 +3033,10 @@ class _ProfileTabState extends State<_ProfileTab> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text(
+                                Text(
                                   'Badges',
                                   style: TextStyle(
-                                    color: Color(0xFF263238),
+                                    color: context.textDeep,
                                     fontSize: 18,
                                     fontWeight: FontWeight.w900,
                                   ),
@@ -3102,10 +3103,10 @@ class _ProfileTabState extends State<_ProfileTab> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Learning Stats',
                               style: TextStyle(
-                                color: Color(0xFF263238),
+                                color: context.textDeep,
                                 fontSize: 18,
                                 fontWeight: FontWeight.w900,
                               ),
@@ -3159,10 +3160,10 @@ class _ProfileTabState extends State<_ProfileTab> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Recent Activity',
                               style: TextStyle(
-                                color: Color(0xFF263238),
+                                color: context.textDeep,
                                 fontSize: 18,
                                 fontWeight: FontWeight.w900,
                               ),
@@ -3452,7 +3453,7 @@ class _ProfileTabState extends State<_ProfileTab> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FB),
+        color: context.isDarkMode ? const Color(0xFF252525) : const Color(0xFFF8F9FB),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: context.borderTheme),
       ),
@@ -3465,7 +3466,7 @@ class _ProfileTabState extends State<_ProfileTab> {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: bgColor,
+                  color: context.isDarkMode ? iconColor.withValues(alpha: 0.18) : bgColor,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(icon, style: const TextStyle(fontSize: 18)),
@@ -3473,8 +3474,8 @@ class _ProfileTabState extends State<_ProfileTab> {
               const SizedBox(width: 8),
               Text(
                 value,
-                style: const TextStyle(
-                  color: Color(0xFF263238),
+                style: TextStyle(
+                  color: context.textDeep,
                   fontSize: 20,
                   fontWeight: FontWeight.w900,
                 ),
@@ -3484,8 +3485,8 @@ class _ProfileTabState extends State<_ProfileTab> {
           const SizedBox(height: 6),
           Text(
             label,
-            style: const TextStyle(
-              color: Color(0xFF78909C),
+            style: TextStyle(
+              color: context.textMuted,
               fontSize: 10,
               fontWeight: FontWeight.bold,
             ),
@@ -3520,8 +3521,8 @@ class _ProfileTabState extends State<_ProfileTab> {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFF263238),
+                  style: TextStyle(
+                    color: context.textDeep,
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                   ),
@@ -3529,8 +3530,8 @@ class _ProfileTabState extends State<_ProfileTab> {
                 const SizedBox(height: 2),
                 Text(
                   time,
-                  style: const TextStyle(
-                    color: Color(0xFF90A4AE),
+                  style: TextStyle(
+                    color: context.textMuted,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
@@ -3576,16 +3577,16 @@ class _ProfileTabState extends State<_ProfileTab> {
             Expanded(
               child: Text(
                 title,
-                style: const TextStyle(
-                  color: Color(0xFF37474F),
+                style: TextStyle(
+                  color: context.textDeep,
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                 ),
               ),
             ),
-            const Icon(
+            Icon(
               Icons.chevron_right_rounded,
-              color: Color(0xFF90A4AE),
+              color: context.textMuted,
               size: 22,
             ),
           ],
@@ -3660,14 +3661,14 @@ class _ProfileTabState extends State<_ProfileTab> {
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF37474F),
+                  color: context.textDeep,
                 ),
               ),
               Text(
                 '$xpRequired XP',
-                style: const TextStyle(fontSize: 10, color: Color(0xFF90A4AE)),
+                style: TextStyle(fontSize: 10, color: context.textMuted),
               ),
             ],
           ),
@@ -4018,14 +4019,14 @@ class _CoursePathViewState extends State<_CoursePathView> {
                                               ? unit.color.withValues(
                                             alpha: 0.5,
                                           )
-                                              : Colors.grey.shade300),
+                                              : (context.isDarkMode ? const Color(0xFF3C3C3C) : Colors.grey.shade300)),
                                           shape: BoxShape.circle,
                                           border: isCompleted
                                               ? null
                                               : Border.all(
                                             color: isUnlocked
                                                 ? unit.color
-                                                : Colors.grey.shade400,
+                                                : (context.isDarkMode ? const Color(0xFF4C4C4C) : Colors.grey.shade400),
                                             width: 3,
                                           ),
                                         ),
@@ -4041,9 +4042,9 @@ class _CoursePathViewState extends State<_CoursePathView> {
                                           color: Colors.white,
                                           size: 18,
                                         )
-                                            : const Icon(
+                                            : Icon(
                                           Icons.lock,
-                                          color: Colors.grey,
+                                          color: context.isDarkMode ? Colors.grey.shade600 : Colors.grey,
                                           size: 16,
                                         )),
                                       ),
@@ -4057,7 +4058,7 @@ class _CoursePathViewState extends State<_CoursePathView> {
                                               unit.lessons[index].id,
                                             )
                                                 ? unit.color
-                                                : Colors.grey.shade200,
+                                                : (context.isDarkMode ? const Color(0xFF2C2C2C) : Colors.grey.shade200),
                                           ),
                                         ),
                                     ],
@@ -4095,10 +4096,11 @@ class _CoursePathViewState extends State<_CoursePathView> {
                                         child: Container(
                                           padding: const EdgeInsets.all(16),
                                           decoration: BoxDecoration(
-                                            color: Colors.white,
+                                            color: context.cardBg,
                                             borderRadius: BorderRadius.circular(
                                               16,
                                             ),
+                                            border: Border.all(color: context.borderTheme),
                                             boxShadow: [
                                               BoxShadow(
                                                 color: Colors.black.withValues(
@@ -4124,7 +4126,8 @@ class _CoursePathViewState extends State<_CoursePathView> {
                                                       maxLines: 1,
                                                       overflow:
                                                       TextOverflow.ellipsis,
-                                                      style: const TextStyle(
+                                                      style: TextStyle(
+                                                        color: context.textDeep,
                                                         fontSize: 18,
                                                         fontWeight:
                                                         FontWeight.bold,
@@ -4159,7 +4162,7 @@ class _CoursePathViewState extends State<_CoursePathView> {
                                               Text(
                                                 lesson.subtitle,
                                                 style: TextStyle(
-                                                  color: Colors.grey.shade600,
+                                                  color: context.textMuted,
                                                 ),
                                               ),
                                             ],
@@ -4189,9 +4192,9 @@ class _CoursePathViewState extends State<_CoursePathView> {
                               ? () => setState(() => _currentPage--)
                               : null,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
+                            backgroundColor: context.cardBg,
                             foregroundColor: _StudentColors.orange,
-                            disabledForegroundColor: Colors.grey.shade400,
+                            disabledForegroundColor: context.isDarkMode ? Colors.grey.shade700 : Colors.grey.shade400,
                             elevation: 0,
                             minimumSize: const Size(100, 44),
                             padding: const EdgeInsets.symmetric(
@@ -4202,8 +4205,8 @@ class _CoursePathViewState extends State<_CoursePathView> {
                               borderRadius: BorderRadius.circular(16),
                               side: BorderSide(
                                 color: _currentPage > 0
-                                    ? const Color(0xFFFFDFC2)
-                                    : Colors.grey.shade200,
+                                    ? context.borderTheme
+                                    : (context.isDarkMode ? const Color(0xFF2C2C2C) : Colors.grey.shade200),
                                 width: 2,
                               ),
                             ),
@@ -4222,8 +4225,8 @@ class _CoursePathViewState extends State<_CoursePathView> {
                         ),
                         Text(
                           'Page ${_currentPage + 1} of $totalPages',
-                          style: const TextStyle(
-                            color: _StudentColors.deep,
+                          style: TextStyle(
+                            color: context.textDeep,
                             fontWeight: FontWeight.w900,
                             fontSize: 14,
                           ),
@@ -4233,9 +4236,9 @@ class _CoursePathViewState extends State<_CoursePathView> {
                               ? () => setState(() => _currentPage++)
                               : null,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
+                            backgroundColor: context.cardBg,
                             foregroundColor: _StudentColors.orange,
-                            disabledForegroundColor: Colors.grey.shade400,
+                            disabledForegroundColor: context.isDarkMode ? Colors.grey.shade700 : Colors.grey.shade400,
                             elevation: 0,
                             minimumSize: const Size(100, 44),
                             padding: const EdgeInsets.symmetric(
@@ -4246,8 +4249,8 @@ class _CoursePathViewState extends State<_CoursePathView> {
                               borderRadius: BorderRadius.circular(16),
                               side: BorderSide(
                                 color: _currentPage < totalPages - 1
-                                    ? const Color(0xFFFFDFC2)
-                                    : Colors.grey.shade200,
+                                    ? context.borderTheme
+                                    : (context.isDarkMode ? const Color(0xFF2C2C2C) : Colors.grey.shade200),
                                 width: 2,
                               ),
                             ),
@@ -4370,24 +4373,26 @@ class _WeeklyProgressChart extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFFFE4CF)),
-        boxShadow: const [
+        border: Border.all(color: context.borderTheme),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x0D111827),
+            color: context.isDarkMode
+                ? Colors.black.withValues(alpha: 0.2)
+                : const Color(0x0D111827),
             blurRadius: 12,
-            offset: Offset(0, 7),
+            offset: const Offset(0, 7),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Weekly Activity (XP)',
             style: TextStyle(
-              color: _StudentColors.deep,
+              color: context.textDeep,
               fontSize: 18,
               fontWeight: FontWeight.w900,
             ),
@@ -4432,7 +4437,7 @@ class _WeeklyProgressChart extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: isToday
                               ? _StudentColors.red.withValues(alpha: 0.08)
-                              : const Color(0xFFF1F5F9),
+                              : (context.isDarkMode ? const Color(0xFF2C2C2C) : const Color(0xFFF1F5F9)),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         alignment: Alignment.bottomCenter,
@@ -4456,7 +4461,7 @@ class _WeeklyProgressChart extends StatelessWidget {
                         style: TextStyle(
                           color: isToday
                               ? _StudentColors.red
-                              : _StudentColors.muted,
+                              : context.textMuted,
                           fontSize: 12,
                           fontWeight: isToday
                               ? FontWeight.w900
@@ -4531,14 +4536,14 @@ class _WordOfTheDayCardState extends State<_WordOfTheDayCard> {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFFFDFC2), width: 1.5),
-        boxShadow: const [
+        border: Border.all(color: context.borderTheme, width: 1.5),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x0D111827),
+            color: context.isDarkMode ? Colors.black.withValues(alpha: 0.15) : const Color(0x0D111827),
             blurRadius: 16,
-            offset: Offset(0, 6),
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -4550,9 +4555,11 @@ class _WordOfTheDayCardState extends State<_WordOfTheDayCard> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFF0E0),
+                  color: context.isDarkMode ? const Color(0xFF33200D) : const Color(0xFFFFF0E0),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFFFD5B0)),
+                  border: Border.all(
+                    color: context.isDarkMode ? const Color(0xFF5C3A1A) : const Color(0xFFFFD5B0),
+                  ),
                 ),
                 child: const Row(
                   children: [
@@ -4588,8 +4595,8 @@ class _WordOfTheDayCardState extends State<_WordOfTheDayCard> {
           const SizedBox(height: 14),
           Text(
             quote['chinese']!,
-            style: const TextStyle(
-              color: _StudentColors.deep,
+            style: TextStyle(
+              color: context.textDeep,
               fontSize: 22,
               fontWeight: FontWeight.w900,
               fontFamily: 'serif',
@@ -4598,20 +4605,20 @@ class _WordOfTheDayCardState extends State<_WordOfTheDayCard> {
           const SizedBox(height: 6),
           Text(
             quote['pinyin']!,
-            style: const TextStyle(
-              color: _StudentColors.muted,
+            style: TextStyle(
+              color: context.textMuted,
               fontSize: 13,
               fontStyle: FontStyle.italic,
               fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 10),
-          const Divider(color: Color(0xFFF2F4F7)),
+          Divider(color: context.borderTheme),
           const SizedBox(height: 6),
           Text(
             quote['english']!,
-            style: const TextStyle(
-              color: _StudentColors.deep,
+            style: TextStyle(
+              color: context.textDeep,
               fontSize: 13,
               fontWeight: FontWeight.w600,
               height: 1.4,
@@ -4620,8 +4627,8 @@ class _WordOfTheDayCardState extends State<_WordOfTheDayCard> {
           const SizedBox(height: 4),
           Text(
             '💡 Hint: ${quote['meaning']}',
-            style: const TextStyle(
-              color: Color(0xFF2E7D32),
+            style: TextStyle(
+              color: context.isDarkMode ? Colors.green.shade300 : const Color(0xFF2E7D32),
               fontSize: 11,
               fontWeight: FontWeight.bold,
             ),
@@ -4668,16 +4675,52 @@ class _StudentAnnouncementsSection extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 20),
-            const Row(
+            Row(
               children: [
-                Icon(Icons.campaign_rounded, color: _StudentColors.red, size: 22),
-                SizedBox(width: 8),
-                Text(
-                  'Announcements',
-                  style: TextStyle(
-                    color: _StudentColors.deep,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
+                const Icon(Icons.campaign_rounded, color: _StudentColors.red, size: 22),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Announcements',
+                    style: TextStyle(
+                      color: context.textDeep,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const StudentAnnouncementPage(),
+                      ),
+                    );
+                  },
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'View all',
+                        style: TextStyle(
+                          color: _StudentColors.red,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                      SizedBox(width: 4),
+                      Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 12,
+                        color: _StudentColors.red,
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -4703,9 +4746,9 @@ class _StudentAnnouncementsSection extends StatelessWidget {
                     width: 280,
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: context.cardBg,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFFFFE4CF)),
+                      border: Border.all(color: context.borderTheme),
                       boxShadow: const [
                         BoxShadow(
                           color: Color(0x0A111827),
@@ -4725,8 +4768,8 @@ class _StudentAnnouncementsSection extends StatelessWidget {
                                 title,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: _StudentColors.deep,
+                                style: TextStyle(
+                                  color: context.textDeep,
                                   fontWeight: FontWeight.w900,
                                   fontSize: 14,
                                 ),
@@ -4735,8 +4778,8 @@ class _StudentAnnouncementsSection extends StatelessWidget {
                             if (createdAt != null)
                               Text(
                                 '${createdAt.day}/${createdAt.month}',
-                                style: const TextStyle(
-                                  color: _StudentColors.muted,
+                                style: TextStyle(
+                                  color: context.textMuted,
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -4749,8 +4792,8 @@ class _StudentAnnouncementsSection extends StatelessWidget {
                             body,
                             maxLines: 3,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: _StudentColors.muted,
+                            style: TextStyle(
+                              color: context.textMuted,
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                               height: 1.35,
@@ -4815,73 +4858,91 @@ class _StudentLeaderboardPreview extends StatelessWidget {
         final entries = _leaderboardEntriesFromDocs(docs);
         final top3 = entries.take(3).toList();
 
-        return Container(
-          padding: const EdgeInsets.all(16),
-          margin: const EdgeInsets.only(top: 20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFFFE4CF)),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x0D111827),
-                blurRadius: 12,
-                offset: Offset(0, 7),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Row(
-                children: [
-                  Icon(Icons.emoji_events_rounded, color: Colors.amber, size: 22),
-                  SizedBox(width: 8),
-                  Text(
-                    'Top Performers Spotlight',
-                    style: TextStyle(
-                      color: _StudentColors.deep,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
+        return GestureDetector(
+          onTap: () {
+            final uid = FirebaseAuth.instance.currentUser?.uid;
+            showModalBottomSheet<void>(
+              context: context,
+              showDragHandle: true,
+              backgroundColor: context.cardBg,
+              builder: (_) => _LeaderboardSheet(currentUid: uid),
+            );
+          },
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.only(top: 20),
+            decoration: BoxDecoration(
+              color: context.cardBg,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: context.borderTheme),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x0D111827),
+                  blurRadius: 12,
+                  offset: Offset(0, 7),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.emoji_events_rounded, color: Colors.amber, size: 22),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Top Performers Spotlight',
+                        style: TextStyle(
+                          color: context.textDeep,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  if (top3.length > 1)
-                    _buildPodiumColumn(
-                      context: context,
-                      entry: top3[1],
-                      rank: 2,
-                      height: 70,
-                      color: const Color(0xFFB0BEC5),
-                      badgeIcon: Icons.star_border_purple500_rounded,
+                    const Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 14,
+                      color: _StudentColors.orange,
                     ),
-                  if (top3.isNotEmpty)
-                    _buildPodiumColumn(
-                      context: context,
-                      entry: top3[0],
-                      rank: 1,
-                      height: 95,
-                      color: const Color(0xFFFFD54F),
-                      badgeIcon: Icons.workspace_premium_rounded,
-                    ),
-                  if (top3.length > 2)
-                    _buildPodiumColumn(
-                      context: context,
-                      entry: top3[2],
-                      rank: 3,
-                      height: 55,
-                      color: const Color(0xFFFFAB91),
-                      badgeIcon: Icons.military_tech_rounded,
-                    ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    if (top3.length > 1)
+                      _buildPodiumColumn(
+                        context: context,
+                        entry: top3[1],
+                        rank: 2,
+                        height: 70,
+                        color: const Color(0xFFB0BEC5),
+                        badgeIcon: Icons.star_border_purple500_rounded,
+                      ),
+                    if (top3.isNotEmpty)
+                      _buildPodiumColumn(
+                        context: context,
+                        entry: top3[0],
+                        rank: 1,
+                        height: 95,
+                        color: const Color(0xFFFFD54F),
+                        badgeIcon: Icons.workspace_premium_rounded,
+                      ),
+                    if (top3.length > 2)
+                      _buildPodiumColumn(
+                        context: context,
+                        entry: top3[2],
+                        rank: 3,
+                        height: 55,
+                        color: const Color(0xFFFFAB91),
+                        badgeIcon: Icons.military_tech_rounded,
+                      ),
+                  ],
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -4901,11 +4962,11 @@ class _StudentLeaderboardPreview extends StatelessWidget {
       children: [
         CircleAvatar(
           radius: rank == 1 ? 22 : 18,
-          backgroundColor: color.withOpacity(0.2),
+          backgroundColor: color.withValues(alpha: 0.2),
           child: Text(
             entry.name.isEmpty ? '?' : entry.name[0].toUpperCase(),
             style: TextStyle(
-              color: _StudentColors.deep,
+              color: context.textDeep,
               fontWeight: FontWeight.bold,
               fontSize: rank == 1 ? 16 : 14,
             ),
@@ -4917,15 +4978,15 @@ class _StudentLeaderboardPreview extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            color: _StudentColors.deep,
+            color: context.textDeep,
             fontWeight: rank == 1 ? FontWeight.w900 : FontWeight.w700,
             fontSize: rank == 1 ? 12 : 11,
           ),
         ),
         Text(
           '${entry.xp} XP',
-          style: const TextStyle(
-            color: _StudentColors.muted,
+          style: TextStyle(
+            color: context.textMuted,
             fontSize: 10,
             fontWeight: FontWeight.bold,
           ),
@@ -4936,7 +4997,7 @@ class _StudentLeaderboardPreview extends StatelessWidget {
           height: height,
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [color, color.withOpacity(0.75)],
+              colors: [color, color.withValues(alpha: 0.75)],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:mandarinmate/utils/app_theme.dart';
 
 class TutorEditVocabularyPage extends StatefulWidget {
   final String unitDocId;
@@ -22,7 +23,7 @@ class _TutorEditVocabularyPageState extends State<TutorEditVocabularyPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF6FBF8),
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
         backgroundColor: _green,
         foregroundColor: Colors.white,
@@ -79,10 +80,10 @@ class _TutorEditVocabularyPageState extends State<TutorEditVocabularyPage> {
 
               return Card(
                 elevation: 0,
-                color: Colors.white,
+                color: context.cardBg,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: Colors.grey.shade200),
+                  side: BorderSide(color: context.borderTheme),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
@@ -98,9 +99,10 @@ class _TutorEditVocabularyPageState extends State<TutorEditVocabularyPage> {
                               children: [
                                 Text(
                                   word,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
+                                    color: context.textDeep,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
@@ -109,7 +111,7 @@ class _TutorEditVocabularyPageState extends State<TutorEditVocabularyPage> {
                                     pronunciation,
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: Colors.grey.shade600,
+                                      color: context.textMuted,
                                       fontStyle: FontStyle.italic,
                                     ),
                                   ),
@@ -157,7 +159,7 @@ class _TutorEditVocabularyPageState extends State<TutorEditVocabularyPage> {
                       const SizedBox(height: 8),
                       Text(
                         meaning,
-                        style: const TextStyle(fontSize: 14),
+                        style: TextStyle(fontSize: 14, color: context.textDeep),
                       ),
                     ],
                   ),
@@ -181,59 +183,45 @@ class _TutorEditVocabularyPageState extends State<TutorEditVocabularyPage> {
         final exampleCtrl = TextEditingController();
         final exampleMeaningCtrl = TextEditingController();
 
+        Widget vocabTextField(TextEditingController ctrl, String label, {bool isOptional = false}) {
+          return TextField(
+            controller: ctrl,
+            style: TextStyle(color: context.textDeep),
+            decoration: InputDecoration(
+              labelText: isOptional ? '$label (Optional)' : label,
+              labelStyle: TextStyle(color: context.textMuted),
+              filled: true,
+              fillColor: context.cardBg,
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: context.borderTheme),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _green, width: 2),
+              ),
+            ),
+          );
+        }
+
         return AlertDialog(
-          title: const Text('Add Vocabulary'),
+          backgroundColor: context.cardBg,
+          title: Text('Add Vocabulary', style: TextStyle(color: context.textDeep)),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextField(
-                  controller: wordCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Word (Mandarin)',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
+                vocabTextField(wordCtrl, 'Word (Mandarin)'),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: pronunciationCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Pronunciation (Pinyin)',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
+                vocabTextField(pronunciationCtrl, 'Pronunciation (Pinyin)'),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: meaningCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Meaning',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
+                vocabTextField(meaningCtrl, 'Meaning'),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: listeningCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Listening Text (Optional)',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
+                vocabTextField(listeningCtrl, 'Listening Text', isOptional: true),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: exampleCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Example Sentence (Optional)',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
+                vocabTextField(exampleCtrl, 'Example Sentence', isOptional: true),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: exampleMeaningCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Example Meaning (Optional)',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
+                vocabTextField(exampleMeaningCtrl, 'Example Meaning', isOptional: true),
               ],
             ),
           ),
@@ -324,59 +312,45 @@ class _TutorEditVocabularyPageState extends State<TutorEditVocabularyPage> {
         final exampleMeaningCtrl =
             TextEditingController(text: data['exampleMeaning'] ?? '');
 
+        Widget vocabTextField(TextEditingController ctrl, String label, {bool isOptional = false}) {
+          return TextField(
+            controller: ctrl,
+            style: TextStyle(color: context.textDeep),
+            decoration: InputDecoration(
+              labelText: isOptional ? '$label (Optional)' : label,
+              labelStyle: TextStyle(color: context.textMuted),
+              filled: true,
+              fillColor: context.cardBg,
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: context.borderTheme),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _green, width: 2),
+              ),
+            ),
+          );
+        }
+
         return AlertDialog(
-          title: const Text('Edit Vocabulary'),
+          backgroundColor: context.cardBg,
+          title: Text('Edit Vocabulary', style: TextStyle(color: context.textDeep)),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextField(
-                  controller: wordCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Word (Mandarin)',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
+                vocabTextField(wordCtrl, 'Word (Mandarin)'),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: pronunciationCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Pronunciation (Pinyin)',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
+                vocabTextField(pronunciationCtrl, 'Pronunciation (Pinyin)'),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: meaningCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Meaning',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
+                vocabTextField(meaningCtrl, 'Meaning'),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: listeningCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Listening Text (Optional)',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
+                vocabTextField(listeningCtrl, 'Listening Text', isOptional: true),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: exampleCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Example Sentence (Optional)',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
+                vocabTextField(exampleCtrl, 'Example Sentence', isOptional: true),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: exampleMeaningCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Example Meaning (Optional)',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
+                vocabTextField(exampleMeaningCtrl, 'Example Meaning', isOptional: true),
               ],
             ),
           ),
@@ -452,15 +426,19 @@ class _TutorEditVocabularyPageState extends State<TutorEditVocabularyPage> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Vocabulary'),
-        content: Text('Are you sure you want to delete "$word"?'),
+        backgroundColor: context.cardBg,
+        title: Text('Delete Vocabulary', style: TextStyle(color: context.textDeep)),
+        content: Text('Are you sure you want to delete "$word"?', style: TextStyle(color: context.textMuted)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () async {
               try {
                 await FirebaseFirestore.instance

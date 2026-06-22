@@ -4,6 +4,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:mandarinmate/lessons/domain/lesson_model.dart';
 import 'package:mandarinmate/tutor/presentation/pages/tutor_create_lesson_page.dart';
+import 'package:mandarinmate/utils/app_theme.dart';
 
 
 class TutorLessonsPage extends StatefulWidget {
@@ -19,12 +20,12 @@ class _TutorLessonsPageState extends State<TutorLessonsPage> {
 
   static const Color _purple = Color(0xFF6C3BFF);
 
-  static Widget _sectionHeader(String title) {
+  Widget _sectionHeader(BuildContext context, String title) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
       child: Text(
         title,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: context.textDeep),
       ),
     );
   }
@@ -41,7 +42,7 @@ class _TutorLessonsPageState extends State<TutorLessonsPage> {
     final user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F8FF),
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
         backgroundColor: _purple,
         foregroundColor: Colors.white,
@@ -78,7 +79,7 @@ class _TutorLessonsPageState extends State<TutorLessonsPage> {
           : ListView(
               padding: EdgeInsets.zero,
               children: [
-                _sectionHeader('Your Learning Materials'),
+                _sectionHeader(context, 'Your Learning Materials'),
                 StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                   stream: FirebaseFirestore.instance
                       .collection('lessons')
@@ -156,10 +157,10 @@ class _TutorLessonsPageState extends State<TutorLessonsPage> {
 
                             return Card(
                               elevation: 0,
-                              color: Colors.white,
+                              color: context.cardBg,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16),
-                                side: BorderSide(color: Colors.grey.shade200),
+                                side: BorderSide(color: context.borderTheme),
                               ),
                               child: Padding(
                                 padding: const EdgeInsets.all(16),
@@ -196,14 +197,14 @@ class _TutorLessonsPageState extends State<TutorLessonsPage> {
                                       ],
                                     ),
                                     const SizedBox(height: 12),
-                                    Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                                    Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: context.textDeep)),
                                     if (titleChinese.isNotEmpty) ...[
                                       const SizedBox(height: 4),
-                                      Text(titleChinese, style: TextStyle(fontSize: 15, color: Colors.grey.shade700, fontWeight: FontWeight.w500)),
+                                      Text(titleChinese, style: TextStyle(fontSize: 15, color: context.textMuted, fontWeight: FontWeight.w500)),
                                     ],
                                     if (description.isNotEmpty) ...[
                                       const SizedBox(height: 10),
-                                      Text(description, style: TextStyle(color: Colors.grey.shade600)),
+                                      Text(description, style: TextStyle(color: context.textMuted)),
                                     ],
                                     if (materials.isNotEmpty) ...[
                                       const SizedBox(height: 12),
@@ -213,7 +214,10 @@ class _TutorLessonsPageState extends State<TutorLessonsPage> {
                                         children: [
                                           Chip(
                                             avatar: const Icon(Icons.attach_file, size: 16),
-                                            label: Text('${materials.length} material${materials.length == 1 ? '' : 's'}'),
+                                            label: Text(
+                                              '${materials.length} material${materials.length == 1 ? '' : 's'}',
+                                              style: TextStyle(color: context.textDeep),
+                                            ),
                                             backgroundColor: _purple.withValues(alpha: 0.08),
                                           ),
                                         ],
@@ -260,8 +264,8 @@ class _TutorLessonsPageState extends State<TutorLessonsPage> {
                               padding: const EdgeInsets.symmetric(horizontal: 4),
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: i == _currentPage ? _purple : Colors.grey.shade200,
-                                  foregroundColor: i == _currentPage ? Colors.white : Colors.black,
+                                  backgroundColor: i == _currentPage ? _purple : (context.isDarkMode ? const Color(0xFF2C2C2C) : Colors.grey.shade200),
+                                  foregroundColor: i == _currentPage ? Colors.white : context.textDeep,
                                   minimumSize: const Size(40, 36),
                                 ),
                                 onPressed: () => setState(() => _currentPage = i),
@@ -295,8 +299,9 @@ class _TutorLessonsPageState extends State<TutorLessonsPage> {
           context: context,
           builder: (context) {
             return AlertDialog(
-              title: const Text('Delete Learning Materials'),
-              content: Text('Are you sure you want to delete "$title"?'),
+              backgroundColor: context.cardBg,
+              title: Text('Delete Learning Materials', style: TextStyle(color: context.textDeep)),
+              content: Text('Are you sure you want to delete "$title"?', style: TextStyle(color: context.textMuted)),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context, false),

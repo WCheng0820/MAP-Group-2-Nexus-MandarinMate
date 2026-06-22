@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mandarinmate/utils/app_theme.dart';
 import 'tutor_manage_units_page.dart';
 import 'tutor_lessons_page.dart';
 import 'tutor_manage_flashcards_page.dart';
@@ -17,7 +18,7 @@ class TutorManageLessonsHubPage extends StatelessWidget {
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
-      backgroundColor: Colors.white,
+      backgroundColor: context.cardBg,
       builder: (context) {
         return SafeArea(
           child: Padding(
@@ -27,8 +28,14 @@ class TutorManageLessonsHubPage extends StatelessWidget {
               children: [
                 ListTile(
                   leading: const Icon(Icons.book_rounded, color: _green),
-                  title: const Text('Add Vocab Unit (AI Generate)'),
-                  subtitle: const Text('Let AI create vocabulary from a title'),
+                  title: Text(
+                    'Add Vocab Unit (AI Generate)',
+                    style: TextStyle(color: context.textDeep),
+                  ),
+                  subtitle: Text(
+                    'Let AI create vocabulary from a title',
+                    style: TextStyle(color: context.textMuted),
+                  ),
                   onTap: () {
                     Navigator.pop(context);
                     Navigator.push(
@@ -41,8 +48,14 @@ class TutorManageLessonsHubPage extends StatelessWidget {
                 ),
                 ListTile(
                   leading: const Icon(Icons.menu_book_rounded, color: _purple),
-                  title: const Text('Create Learning Materials'),
-                  subtitle: const Text('Create a new material set (PDFs, videos, links)'),
+                  title: Text(
+                    'Create Learning Materials',
+                    style: TextStyle(color: context.textDeep),
+                  ),
+                  subtitle: Text(
+                    'Create a new material set (PDFs, videos, links)',
+                    style: TextStyle(color: context.textMuted),
+                  ),
                   onTap: () {
                     Navigator.pop(context);
                     Navigator.push(
@@ -55,8 +68,14 @@ class TutorManageLessonsHubPage extends StatelessWidget {
                 ),
                 ListTile(
                   leading: const Icon(Icons.style_rounded, color: _orange),
-                  title: const Text('Add New Flashcard Set'),
-                  subtitle: const Text('Create a new flashcard level and add cards'),
+                  title: Text(
+                    'Add New Flashcard Set',
+                    style: TextStyle(color: context.textDeep),
+                  ),
+                  subtitle: Text(
+                    'Create a new flashcard level and add cards',
+                    style: TextStyle(color: context.textMuted),
+                  ),
                   onTap: () {
                     Navigator.pop(context);
                     Navigator.push(
@@ -78,7 +97,7 @@ class TutorManageLessonsHubPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF6FBF8),
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
         automaticallyImplyLeading: false,
         backgroundColor: _green,
@@ -103,9 +122,13 @@ class TutorManageLessonsHubPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Choose what to manage:',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: context.textDeep,
+              ),
             ),
             const SizedBox(height: 16),
             Expanded(
@@ -188,9 +211,9 @@ class _ManageCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.cardBg,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(color: context.borderTheme),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.05),
@@ -220,9 +243,10 @@ class _ManageCard extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
+                        color: context.textDeep,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -230,7 +254,7 @@ class _ManageCard extends StatelessWidget {
                       subtitle,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey.shade600,
+                        color: context.textMuted,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,

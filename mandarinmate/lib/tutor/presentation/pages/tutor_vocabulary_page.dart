@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:mandarinmate/utils/app_theme.dart';
 
 import '../../domain/vocabulary_entry.dart';
 import '../../services/vocabulary_draft_service.dart';
@@ -23,7 +24,7 @@ class TutorVocabularyPage extends StatelessWidget {
     final user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6FBF8),
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
         backgroundColor: _green,
         foregroundColor: Colors.white,
@@ -90,14 +91,14 @@ class TutorVocabularyPage extends StatelessWidget {
                 return ListView(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                   children: [
-                    const Text(
+                    Text(
                       'Vocabulary Bank',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.textDeep),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       'Create vocabulary with meaning, pronunciation, listening, and quiz data.',
-                      style: TextStyle(color: Colors.grey.shade700),
+                      style: TextStyle(color: context.textMuted),
                     ),
                     const SizedBox(height: 16),
                     if (snapshot.connectionState == ConnectionState.waiting)
@@ -108,11 +109,14 @@ class TutorVocabularyPage extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: context.cardBg,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.grey.shade200),
+                          border: Border.all(color: context.borderTheme),
                         ),
-                        child: const Text('No vocabulary entries created yet.'),
+                        child: Text(
+                          'No vocabulary entries created yet.',
+                          style: TextStyle(color: context.textDeep),
+                        ),
                       )
                     else
                       ...entries.map(
@@ -120,10 +124,10 @@ class TutorVocabularyPage extends StatelessWidget {
                           padding: const EdgeInsets.only(bottom: 12),
                           child: Card(
                             elevation: 0,
-                            color: Colors.white,
+                            color: context.cardBg,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
-                              side: BorderSide(color: Colors.grey.shade200),
+                              side: BorderSide(color: context.borderTheme),
                             ),
                             child: Padding(
                               padding: const EdgeInsets.all(16),
@@ -139,9 +143,10 @@ class TutorVocabularyPage extends StatelessWidget {
                                           children: [
                                             Text(
                                               entry.word,
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 fontSize: 18,
                                                 fontWeight: FontWeight.w800,
+                                                color: context.textDeep,
                                               ),
                                             ),
                                             if (entry.pronunciation.isNotEmpty) ...[
@@ -149,7 +154,7 @@ class TutorVocabularyPage extends StatelessWidget {
                                               Text(
                                                 entry.pronunciation,
                                                 style: TextStyle(
-                                                  color: Colors.grey.shade700,
+                                                  color: context.textMuted,
                                                   fontWeight: FontWeight.w500,
                                                 ),
                                               ),
@@ -176,8 +181,12 @@ class TutorVocabularyPage extends StatelessWidget {
                                           final confirm = await showDialog<bool>(
                                             context: context,
                                             builder: (dialogContext) => AlertDialog(
-                                              title: const Text('Delete vocabulary?'),
-                                              content: Text('Delete "${entry.word}" from the vocabulary bank?'),
+                                              backgroundColor: context.cardBg,
+                                              title: Text('Delete vocabulary?', style: TextStyle(color: context.textDeep)),
+                                              content: Text(
+                                                'Delete "${entry.word}" from the vocabulary bank?',
+                                                style: TextStyle(color: context.textMuted),
+                                              ),
                                               actions: [
                                                 TextButton(
                                                   onPressed: () => Navigator.pop(dialogContext, false),
@@ -200,22 +209,22 @@ class TutorVocabularyPage extends StatelessWidget {
                                     ],
                                   ),
                                   const SizedBox(height: 10),
-                                  Text(
+                                   Text(
                                     entry.meaning,
-                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: context.textDeep),
                                   ),
                                   if (entry.listeningText.isNotEmpty) ...[
                                     const SizedBox(height: 8),
                                     Text(
                                       'Listening: ${entry.listeningText}',
-                                      style: TextStyle(color: Colors.grey.shade700),
+                                      style: TextStyle(color: context.textMuted),
                                     ),
                                   ],
                                   if (entry.exampleSentence.isNotEmpty) ...[
                                     const SizedBox(height: 8),
                                     Text(
                                       'Example: ${entry.exampleSentence}',
-                                      style: TextStyle(color: Colors.grey.shade700),
+                                      style: TextStyle(color: context.textMuted),
                                     ),
                                   ],
                                   const SizedBox(height: 10),
@@ -223,10 +232,16 @@ class TutorVocabularyPage extends StatelessWidget {
                                     spacing: 8,
                                     runSpacing: 8,
                                     children: [
-                                      Chip(label: Text('Quiz options: ${entry.quizOptions.length}')),
-                                      Chip(label: Text('Source: ${entry.source}')),
+                                      Chip(
+                                        label: Text('Quiz options: ${entry.quizOptions.length}', style: TextStyle(color: context.textDeep)),
+                                      ),
+                                      Chip(
+                                        label: Text('Source: ${entry.source}', style: TextStyle(color: context.textDeep)),
+                                      ),
                                       if (entry.audioUrl.isNotEmpty)
-                                        const Chip(label: Text('Audio attached')),
+                                        Chip(
+                                          label: Text('Audio attached', style: TextStyle(color: context.textDeep)),
+                                        ),
                                     ],
                                   ),
                                 ],
@@ -355,18 +370,20 @@ class _TutorVocabularyEditorPageState extends State<TutorVocabularyEditorPage> {
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
+        backgroundColor: context.cardBg,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.restore_page_rounded, color: _green),
-            SizedBox(width: 10),
-            Text('Unsaved Draft Found', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Icon(Icons.restore_page_rounded, color: _green),
+            const SizedBox(width: 10),
+            Text('Unsaved Draft Found', style: TextStyle(fontWeight: FontWeight.bold, color: context.textDeep)),
           ],
         ),
         content: Text(
           savedWord.isNotEmpty
               ? 'We found an autosaved draft for the word "$savedWord". Would you like to restore it and continue editing?'
               : 'We found an autosaved draft from your last session. Would you like to restore it and continue editing?',
+          style: TextStyle(color: context.textMuted),
         ),
         actions: [
           TextButton(
@@ -375,7 +392,13 @@ class _TutorVocabularyEditorPageState extends State<TutorVocabularyEditorPage> {
               _setupAutoSaveListeners();
               Navigator.pop(ctx);
             },
-            child: Text('Discard Draft', style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.bold)),
+            child: Text(
+              'Discard Draft',
+              style: TextStyle(
+                color: context.isDarkMode ? Colors.red.shade300 : Colors.red.shade700,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -577,10 +600,30 @@ class _TutorVocabularyEditorPageState extends State<TutorVocabularyEditorPage> {
     return TextFormField(
       controller: controller,
       maxLines: maxLines,
+      style: TextStyle(color: context.textDeep),
       decoration: InputDecoration(
         labelText: label,
+        labelStyle: TextStyle(color: context.textMuted),
         hintText: hintText,
-        border: const OutlineInputBorder(),
+        hintStyle: TextStyle(color: context.textMuted),
+        filled: true,
+        fillColor: context.cardBg,
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: context.borderTheme),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: _green, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 1),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 2),
+        ),
       ),
       validator: validator ??
           (value) {
@@ -595,7 +638,7 @@ class _TutorVocabularyEditorPageState extends State<TutorVocabularyEditorPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF6FBF8),
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
         backgroundColor: _green,
         foregroundColor: Colors.white,
@@ -660,15 +703,27 @@ class _TutorVocabularyEditorPageState extends State<TutorVocabularyEditorPage> {
             ],
             DropdownButtonFormField<int>(
               initialValue: _correctAnswerIndex,
-              decoration: const InputDecoration(
+              dropdownColor: context.cardBg,
+              style: TextStyle(color: context.textDeep),
+              decoration: InputDecoration(
                 labelText: 'Correct Answer',
-                border: OutlineInputBorder(),
+                labelStyle: TextStyle(color: context.textMuted),
+                filled: true,
+                fillColor: context.cardBg,
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: context.borderTheme),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: _green, width: 2),
+                ),
               ),
-              items: const [
-                DropdownMenuItem(value: 0, child: Text('Option 1')),
-                DropdownMenuItem(value: 1, child: Text('Option 2')),
-                DropdownMenuItem(value: 2, child: Text('Option 3')),
-                DropdownMenuItem(value: 3, child: Text('Option 4')),
+              items: [
+                DropdownMenuItem(value: 0, child: Text('Option 1', style: TextStyle(color: context.textDeep))),
+                DropdownMenuItem(value: 1, child: Text('Option 2', style: TextStyle(color: context.textDeep))),
+                DropdownMenuItem(value: 2, child: Text('Option 3', style: TextStyle(color: context.textDeep))),
+                DropdownMenuItem(value: 3, child: Text('Option 4', style: TextStyle(color: context.textDeep))),
               ],
               onChanged: (value) {
                 if (value == null) return;

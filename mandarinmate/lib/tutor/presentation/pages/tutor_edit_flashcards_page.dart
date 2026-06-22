@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:mandarinmate/utils/app_theme.dart';
 
 class TutorEditFlashcardsPage extends StatefulWidget {
   final String docId;
@@ -43,7 +44,7 @@ class _TutorEditFlashcardsPageState extends State<TutorEditFlashcardsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF9F5),
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
         backgroundColor: _orange,
         foregroundColor: Colors.white,
@@ -89,20 +90,38 @@ class _TutorEditFlashcardsPageState extends State<TutorEditFlashcardsPage> {
           children: [
             TextField(
               controller: _titleController,
+              style: TextStyle(color: context.textDeep),
               decoration: InputDecoration(
                 labelText: 'Set Title',
-                border: OutlineInputBorder(
+                labelStyle: TextStyle(color: context.textMuted),
+                filled: true,
+                fillColor: context.cardBg,
+                enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: context.borderTheme),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: _orange, width: 2),
                 ),
               ),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _descriptionController,
+              style: TextStyle(color: context.textDeep),
               decoration: InputDecoration(
                 labelText: 'Description',
-                border: OutlineInputBorder(
+                labelStyle: TextStyle(color: context.textMuted),
+                filled: true,
+                fillColor: context.cardBg,
+                enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: context.borderTheme),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: _orange, width: 2),
                 ),
               ),
               maxLines: 2,
@@ -110,7 +129,7 @@ class _TutorEditFlashcardsPageState extends State<TutorEditFlashcardsPage> {
             const SizedBox(height: 24),
             Text(
               'Flashcards',
-              style: Theme.of(context).textTheme.titleLarge,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(color: context.textDeep),
             ),
             const SizedBox(height: 12),
             StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -136,7 +155,7 @@ class _TutorEditFlashcardsPageState extends State<TutorEditFlashcardsPage> {
                       padding: const EdgeInsets.symmetric(vertical: 24),
                       child: Text(
                         'No cards yet. Tap + to add one.',
-                        style: TextStyle(color: Colors.grey.shade600),
+                        style: TextStyle(color: context.textMuted),
                       ),
                     ),
                   );
@@ -157,10 +176,10 @@ class _TutorEditFlashcardsPageState extends State<TutorEditFlashcardsPage> {
 
                     return Card(
                       elevation: 0,
-                      color: Colors.white,
+                      color: context.cardBg,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(color: Colors.grey.shade200),
+                        side: BorderSide(color: context.borderTheme),
                       ),
                       child: Padding(
                         padding: const EdgeInsets.all(16),
@@ -224,9 +243,10 @@ class _TutorEditFlashcardsPageState extends State<TutorEditFlashcardsPage> {
                             const SizedBox(height: 12),
                             Text(
                               chinese,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
+                                color: context.textDeep,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -234,7 +254,7 @@ class _TutorEditFlashcardsPageState extends State<TutorEditFlashcardsPage> {
                               '$pinyin • $english • $malay',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Colors.grey.shade600,
+                                color: context.textMuted,
                               ),
                             ),
                           ],
@@ -277,15 +297,19 @@ class _TutorEditFlashcardsPageState extends State<TutorEditFlashcardsPage> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Card'),
-        content: const Text('Are you sure you want to delete this card?'),
+        backgroundColor: context.cardBg,
+        title: Text('Delete Card', style: TextStyle(color: context.textDeep)),
+        content: Text('Are you sure you want to delete this card?', style: TextStyle(color: context.textMuted)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () async {
               final scaffoldMessenger = ScaffoldMessenger.of(context);
               await FirebaseFirestore.instance
@@ -303,7 +327,7 @@ class _TutorEditFlashcardsPageState extends State<TutorEditFlashcardsPage> {
                 Navigator.pop(dialogContext);
               }
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+            child: const Text('Delete'),
           ),
         ],
       ),
@@ -338,43 +362,41 @@ class _AddCardDialogState extends State<_AddCardDialog> {
 
   @override
   Widget build(BuildContext context) {
+    Widget dialogTextField(TextEditingController ctrl, String label) {
+      return TextField(
+        controller: ctrl,
+        style: TextStyle(color: context.textDeep),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: TextStyle(color: context.textMuted),
+          filled: true,
+          fillColor: context.cardBg,
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: context.borderTheme),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: Color(0xFFFF8A21), width: 2),
+          ),
+        ),
+      );
+    }
+
     return AlertDialog(
-      title: const Text('Add New Card'),
+      backgroundColor: context.cardBg,
+      title: Text('Add New Card', style: TextStyle(color: context.textDeep)),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(
-              controller: _chineseCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Chinese',
-                border: OutlineInputBorder(),
-              ),
-            ),
+            dialogTextField(_chineseCtrl, 'Chinese'),
             const SizedBox(height: 12),
-            TextField(
-              controller: _pinyinCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Pinyin',
-                border: OutlineInputBorder(),
-              ),
-            ),
+            dialogTextField(_pinyinCtrl, 'Pinyin'),
             const SizedBox(height: 12),
-            TextField(
-              controller: _englishCtrl,
-              decoration: const InputDecoration(
-                labelText: 'English',
-                border: OutlineInputBorder(),
-              ),
-            ),
+            dialogTextField(_englishCtrl, 'English'),
             const SizedBox(height: 12),
-            TextField(
-              controller: _malayCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Malay',
-                border: OutlineInputBorder(),
-              ),
-            ),
+            dialogTextField(_malayCtrl, 'Malay'),
           ],
         ),
       ),
@@ -495,43 +517,41 @@ class _EditCardDialogState extends State<_EditCardDialog> {
 
   @override
   Widget build(BuildContext context) {
+    Widget dialogTextField(TextEditingController ctrl, String label) {
+      return TextField(
+        controller: ctrl,
+        style: TextStyle(color: context.textDeep),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: TextStyle(color: context.textMuted),
+          filled: true,
+          fillColor: context.cardBg,
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: context.borderTheme),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: Color(0xFFFF8A21), width: 2),
+          ),
+        ),
+      );
+    }
+
     return AlertDialog(
-      title: const Text('Edit Card'),
+      backgroundColor: context.cardBg,
+      title: Text('Edit Card', style: TextStyle(color: context.textDeep)),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(
-              controller: _chineseCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Chinese',
-                border: OutlineInputBorder(),
-              ),
-            ),
+            dialogTextField(_chineseCtrl, 'Chinese'),
             const SizedBox(height: 12),
-            TextField(
-              controller: _pinyinCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Pinyin',
-                border: OutlineInputBorder(),
-              ),
-            ),
+            dialogTextField(_pinyinCtrl, 'Pinyin'),
             const SizedBox(height: 12),
-            TextField(
-              controller: _englishCtrl,
-              decoration: const InputDecoration(
-                labelText: 'English',
-                border: OutlineInputBorder(),
-              ),
-            ),
+            dialogTextField(_englishCtrl, 'English'),
             const SizedBox(height: 12),
-            TextField(
-              controller: _malayCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Malay',
-                border: OutlineInputBorder(),
-              ),
-            ),
+            dialogTextField(_malayCtrl, 'Malay'),
           ],
         ),
       ),

@@ -566,13 +566,13 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                               value: 'Universiti Teknologi Malaysia (UTM)',
                               icon: Icons.school_rounded,
                             ),
-                            const Divider(height: 1, color: Color(0xFFECEFF1)),
+                            Divider(height: 1, color: context.borderTheme),
                             _buildClassroomRow(
                               label: 'Organization',
                               value: 'Nexus Mandarin Club',
                               icon: Icons.group_work_rounded,
                             ),
-                            const Divider(height: 1, color: Color(0xFFECEFF1)),
+                            Divider(height: 1, color: context.borderTheme),
                             _buildClassroomRow(
                               label: 'Course Code',
                               value: 'NEXUS-MANDARIN-1',
@@ -666,7 +666,7 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                                 );
                               },
                             ),
-                            const Divider(height: 1, color: Color(0xFFECEFF1)),
+                            Divider(height: 1, color: context.borderTheme),
                             _buildTutorNavigationRow(
                               icon: Icons.edit_note_rounded,
                               iconBg: const Color(0xFFE1F5FE),
@@ -684,7 +684,7 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                                 );
                               },
                             ),
-                            const Divider(height: 1, color: Color(0xFFECEFF1)),
+                            Divider(height: 1, color: context.borderTheme),
                             _buildTutorNavigationRow(
                               icon: Icons.class_rounded,
                               iconBg: const Color(0xFFE3F2FD),
@@ -694,7 +694,7 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                                 setState(() => _currentIndex = 1);
                               },
                             ),
-                            const Divider(height: 1, color: Color(0xFFECEFF1)),
+                            Divider(height: 1, color: context.borderTheme),
                             _buildTutorNavigationRow(
                               icon: Icons.people_alt_rounded,
                               iconBg: const Color(0xFFE0F2F1),
@@ -704,7 +704,7 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                                 setState(() => _currentIndex = 2);
                               },
                             ),
-                            const Divider(height: 1, color: Color(0xFFECEFF1)),
+                            Divider(height: 1, color: context.borderTheme),
                             _buildTutorNavigationRow(
                               icon: Icons.campaign_rounded,
                               iconBg: const Color(0xFFFFF3E0),
@@ -719,7 +719,7 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                                 );
                               },
                             ),
-                            const Divider(height: 1, color: Color(0xFFECEFF1)),
+                            Divider(height: 1, color: context.borderTheme),
                             _buildTutorNavigationRow(
                               icon: Icons.forum_rounded,
                               iconBg: const Color(0xFFF3E5F5),
@@ -729,7 +729,7 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                                 setState(() => _currentIndex = 4);
                               },
                             ),
-                            const Divider(height: 1, color: Color(0xFFECEFF1)),
+                            Divider(height: 1, color: context.borderTheme),
                             _buildTutorNavigationRow(
                               icon: Icons.logout_rounded,
                               iconBg: const Color(0xFFFFF0F0),
@@ -759,9 +759,9 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE6F3EE)),
+        border: Border.all(color: context.borderTheme),
         boxShadow: const [
           BoxShadow(
             color: Color(0x08111827),
@@ -864,7 +864,7 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFFF0F4F2),
+              color: context.isDarkMode ? const Color(0xFF1E332E) : const Color(0xFFF0F4F2),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, size: 18, color: _TutorColors.green),
@@ -918,10 +918,10 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
           Container(
             width: 36,
             height: 36,
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            decoration: BoxDecoration(
+              color: context.cardBg,
               shape: BoxShape.circle,
-              boxShadow: [
+              boxShadow: const [
                 BoxShadow(
                   color: Colors.black12,
                   blurRadius: 4,
@@ -1352,9 +1352,9 @@ class _TutorClassroomOverview extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE6F3EE)),
+        border: Border.all(color: context.borderTheme),
         boxShadow: const [
           BoxShadow(
             color: Color(0x08111827),
@@ -1473,9 +1473,9 @@ class _TutorChecklistPanelState extends State<_TutorChecklistPanel> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE6F3EE)),
+        border: Border.all(color: context.borderTheme),
         boxShadow: const [
           BoxShadow(
             color: Color(0x08111827),

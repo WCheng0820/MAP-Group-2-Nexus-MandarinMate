@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:mandarinmate/tutor/services/vocabulary_draft_service.dart';
 import 'tutor_manage_units_page.dart';
 import 'package:mandarinmate/services/notification_service.dart';
+import 'package:mandarinmate/utils/app_theme.dart';
 
 
 class TutorGenerateUnitPage extends StatefulWidget {
@@ -216,21 +217,27 @@ class _TutorGenerateUnitPageState extends State<TutorGenerateUnitPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 12),
-        Text('Preview: $previewTitle', style: const TextStyle(fontWeight: FontWeight.w700)),
+        Text('Preview: $previewTitle', style: TextStyle(fontWeight: FontWeight.w700, color: context.textDeep)),
         const SizedBox(height: 8),
         if (vocab.isEmpty)
-          const Text('No vocabulary items were returned.'),
+          Text('No vocabulary items were returned.', style: TextStyle(color: context.textMuted)),
         for (final item in vocab.take(10))
           if (item is Map)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 6.0),
-              child: Text('${item['word'] ?? ''} — ${item['pronunciation'] ?? ''} — ${item['meaning'] ?? ''}'),
+              child: Text(
+                '${item['word'] ?? ''} — ${item['pronunciation'] ?? ''} — ${item['meaning'] ?? ''}',
+                style: TextStyle(color: context.textDeep),
+              ),
             ),
         const SizedBox(height: 8),
         if (quiz is Map) ...[
-          const Text('Summary Quiz:', style: TextStyle(fontWeight: FontWeight.w700)),
+          Text('Summary Quiz:', style: TextStyle(fontWeight: FontWeight.w700, color: context.textDeep)),
           const SizedBox(height: 4),
-          Text((quiz['question'] ?? '').toString().isEmpty ? 'No summary quiz returned.' : quiz['question'].toString()),
+          Text(
+            (quiz['question'] ?? '').toString().isEmpty ? 'No summary quiz returned.' : quiz['question'].toString(),
+            style: TextStyle(color: context.textDeep),
+          ),
         ],
       ],
     );
@@ -258,21 +265,22 @@ class _TutorGenerateUnitPageState extends State<TutorGenerateUnitPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 12),
-        const Text('Edit Unit Before Saving:', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+        Text('Edit Unit Before Saving:', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: context.textDeep)),
         const SizedBox(height: 12),
-        const Text('Title:', style: TextStyle(fontWeight: FontWeight.w600)),
+        Text('Title:', style: TextStyle(fontWeight: FontWeight.w600, color: context.textDeep)),
         const SizedBox(height: 4),
         TextField(
           controller: TextEditingController(text: previewTitle),
           enabled: false,
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
+          style: TextStyle(color: context.textMuted),
+          decoration: InputDecoration(
+            border: const OutlineInputBorder(),
             filled: true,
-            fillColor: Color(0xFFF5F5F5),
+            fillColor: context.isDarkMode ? const Color(0xFF2C2C2C) : const Color(0xFFF5F5F5),
           ),
         ),
         const SizedBox(height: 12),
-        const Text('Vocabulary Items:', style: TextStyle(fontWeight: FontWeight.w600)),
+        Text('Vocabulary Items:', style: TextStyle(fontWeight: FontWeight.w600, color: context.textDeep)),
         const SizedBox(height: 8),
         ..._vocabWordControllers.asMap().entries.map((e) {
           final idx = e.key;
@@ -280,21 +288,32 @@ class _TutorGenerateUnitPageState extends State<TutorGenerateUnitPage> {
             padding: const EdgeInsets.only(bottom: 12),
             child: Container(
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade300),
+                border: Border.all(color: context.borderTheme),
                 borderRadius: BorderRadius.circular(8),
               ),
               padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Item ${idx + 1}:', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
+                  Text('Item ${idx + 1}:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: context.textDeep)),
                   const SizedBox(height: 8),
                   TextField(
                     controller: _vocabWordControllers[idx],
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
+                    style: TextStyle(color: context.textDeep),
+                    decoration: InputDecoration(
                       labelText: 'Word',
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      labelStyle: TextStyle(color: context.textMuted),
+                      filled: true,
+                      fillColor: context.cardBg,
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: context.borderTheme),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: _green, width: 2),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     ),
                     onChanged: (value) {
                       setState(() {
@@ -305,10 +324,21 @@ class _TutorGenerateUnitPageState extends State<TutorGenerateUnitPage> {
                   const SizedBox(height: 8),
                   TextField(
                     controller: _vocabMeaningControllers[idx],
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
+                    style: TextStyle(color: context.textDeep),
+                    decoration: InputDecoration(
                       labelText: 'Meaning',
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      labelStyle: TextStyle(color: context.textMuted),
+                      filled: true,
+                      fillColor: context.cardBg,
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: context.borderTheme),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: _green, width: 2),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     ),
                     onChanged: (value) {
                       setState(() {
@@ -319,10 +349,21 @@ class _TutorGenerateUnitPageState extends State<TutorGenerateUnitPage> {
                   const SizedBox(height: 8),
                   TextField(
                     controller: _vocabPronounceControllers[idx],
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
+                    style: TextStyle(color: context.textDeep),
+                    decoration: InputDecoration(
                       labelText: 'Pronunciation',
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      labelStyle: TextStyle(color: context.textMuted),
+                      filled: true,
+                      fillColor: context.cardBg,
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: context.borderTheme),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: _green, width: 2),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     ),
                     onChanged: (value) {
                       setState(() {
@@ -342,7 +383,7 @@ class _TutorGenerateUnitPageState extends State<TutorGenerateUnitPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF6FBF8),
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
         backgroundColor: _green,
         foregroundColor: Colors.white,
@@ -353,9 +394,26 @@ class _TutorGenerateUnitPageState extends State<TutorGenerateUnitPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('Unit Title (Mandarin or English)', style: TextStyle(fontWeight: FontWeight.w600)),
+            Text('Unit Title (Mandarin or English)', style: TextStyle(fontWeight: FontWeight.w600, color: context.textDeep)),
             const SizedBox(height: 8),
-            TextField(controller: _titleController, decoration: const InputDecoration(border: OutlineInputBorder(), hintText: 'e.g. Food')),
+            TextField(
+              controller: _titleController,
+              style: TextStyle(color: context.textDeep),
+              decoration: InputDecoration(
+                hintText: 'e.g. Food',
+                hintStyle: TextStyle(color: context.textMuted),
+                filled: true,
+                fillColor: context.cardBg,
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: context.borderTheme),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: _green, width: 2),
+                ),
+              ),
+            ),
             const SizedBox(height: 12),
             ElevatedButton(
               onPressed: _loading ? null : _generate,
@@ -371,8 +429,17 @@ class _TutorGenerateUnitPageState extends State<TutorGenerateUnitPage> {
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(8)),
-                child: Text(_errorMessage!, style: const TextStyle(color: Colors.red, fontSize: 12)),
+                decoration: BoxDecoration(
+                  color: context.isDarkMode ? const Color(0xFF3F1F1F) : Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  _errorMessage!,
+                  style: TextStyle(
+                    color: context.isDarkMode ? Colors.red.shade300 : Colors.red,
+                    fontSize: 12,
+                  ),
+                ),
               ),
             ],
             if (_lastGenerated != null) ...[

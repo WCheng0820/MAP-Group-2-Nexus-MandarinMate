@@ -20,11 +20,23 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
   static const Color _teal = Color(0xFF0A5745);
 
   bool _weeklyClassReport = true;
+  late Stream<QuerySnapshot<Map<String, dynamic>>> _studentsStream;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _loadReportSetting();
+    _studentsStream = FirebaseFirestore.instance
+        .collection('users')
+        .where('role', isEqualTo: 'student')
+        .snapshots();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadReportSetting() async {
@@ -59,10 +71,7 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
       body: user == null
           ? const Center(child: Text('Please log in again to view students.'))
           : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: FirebaseFirestore.instance
-                  .collection('users')
-                  .where('role', isEqualTo: 'student')
-                  .snapshots(),
+              stream: _studentsStream,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(
@@ -192,13 +201,19 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                           margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                           padding: const EdgeInsets.all(18),
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFEAF5F0), Color(0xFFD0ECD8)],
+                            gradient: LinearGradient(
+                              colors: context.isDarkMode
+                                  ? [const Color(0xFF09392E), const Color(0xFF04201A)]
+                                  : [const Color(0xFFEAF5F0), const Color(0xFFD0ECD8)],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: const Color(0xFFBFE0CB)),
+                            border: Border.all(
+                              color: context.isDarkMode
+                                  ? const Color(0xFF114D3E)
+                                  : const Color(0xFFBFE0CB),
+                            ),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withValues(alpha: 0.02),
@@ -214,37 +229,39 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                                 children: [
                                   Container(
                                     padding: const EdgeInsets.all(6),
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFF0F6E56),
+                                    decoration: BoxDecoration(
+                                      color: context.isDarkMode ? const Color(0xFF34D399) : const Color(0xFF0F6E56),
                                       shape: BoxShape.circle,
                                     ),
-                                    child: const Icon(
+                                    child: Icon(
                                       Icons.analytics_rounded,
-                                      color: Colors.white,
+                                      color: context.isDarkMode ? Colors.black : Colors.white,
                                       size: 16,
                                     ),
                                   ),
                                   const SizedBox(width: 8),
-                                  const Text(
-                                    'WEEKLY CLASS ANALYTICS REPORT',
-                                    style: TextStyle(
-                                      color: Color(0xFF0F6E56),
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w900,
-                                      letterSpacing: 0.5,
+                                  Expanded(
+                                    child: Text(
+                                      'WEEKLY CLASS ANALYTICS REPORT',
+                                      style: TextStyle(
+                                        color: context.isDarkMode ? const Color(0xFF34D399) : const Color(0xFF0F6E56),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: 0.5,
+                                      ),
                                     ),
                                   ),
-                                  const Spacer(),
+                                  const SizedBox(width: 8),
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                     decoration: BoxDecoration(
-                                      color: Colors.white.withValues(alpha: 0.6),
+                                      color: context.isDarkMode ? Colors.white.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.6),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
-                                    child: const Text(
+                                    child: Text(
                                       'Active',
                                       style: TextStyle(
-                                        color: Color(0xFF0F6E56),
+                                        color: context.isDarkMode ? const Color(0xFF34D399) : const Color(0xFF0F6E56),
                                         fontSize: 10,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -253,10 +270,10 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                                 ],
                               ),
                               const SizedBox(height: 12),
-                              const Text(
+                              Text(
                                 'Class performance is on track this week!',
                                 style: TextStyle(
-                                  color: Color(0xFF1E293B),
+                                  color: context.textDeep,
                                   fontSize: 15,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -266,8 +283,8 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                                 '• Overall engagement increased by +12% since last Monday.\n'
                                 '• Top active student: $topStudentName (${topStudentXp > 0 ? '$topStudentXp XP' : 'N/A'}).\n'
                                 '• Average class activity: ${avgXp.toStringAsFixed(0)} XP per student.',
-                                style: const TextStyle(
-                                  color: Color(0xFF475569),
+                                style: TextStyle(
+                                  color: context.textMuted,
                                   fontSize: 13,
                                   height: 1.5,
                                   fontWeight: FontWeight.w500,
@@ -285,23 +302,32 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                         child: Column(
                           children: [
                             TextField(
+                              controller: _searchController,
                               onChanged: (value) => setState(() => _searchQuery = value.trim().toLowerCase()),
+                              style: TextStyle(color: context.textDeep),
                               decoration: InputDecoration(
                                 hintText: 'Search student name or email...',
-                                prefixIcon: const Icon(Icons.search_rounded, color: _green),
+                                hintStyle: TextStyle(color: context.textMuted),
+                                prefixIcon: Icon(
+                                  Icons.search_rounded,
+                                  color: context.isDarkMode ? Colors.tealAccent : _green,
+                                ),
                                 filled: true,
-                                fillColor: Colors.white,
+                                fillColor: context.cardBg,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16),
-                                  borderSide: BorderSide(color: Colors.grey.shade200),
+                                  borderSide: BorderSide(color: context.borderTheme),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16),
-                                  borderSide: BorderSide(color: Colors.grey.shade200),
+                                  borderSide: BorderSide(color: context.borderTheme),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16),
-                                  borderSide: const BorderSide(color: _green, width: 1.5),
+                                  borderSide: BorderSide(
+                                    color: context.isDarkMode ? Colors.tealAccent : _green,
+                                    width: 1.5,
+                                  ),
                                 ),
                               ),
                             ),
@@ -447,6 +473,7 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
 
   Widget _buildSortChip(String label, String value) {
     final isSelected = _sortBy == value;
+    final activeGreen = context.isDarkMode ? const Color(0xFF34D399) : _green;
     return ChoiceChip(
       label: Text(label),
       selected: isSelected,
@@ -455,17 +482,17 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
           setState(() => _sortBy = value);
         }
       },
-      selectedColor: _green.withValues(alpha: 0.12),
-      checkmarkColor: _green,
+      selectedColor: activeGreen.withValues(alpha: 0.12),
+      checkmarkColor: activeGreen,
       labelStyle: TextStyle(
-        color: isSelected ? _green : context.textMuted,
+        color: isSelected ? activeGreen : context.textMuted,
         fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
         fontSize: 12,
       ),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(999),
         side: BorderSide(
-          color: isSelected ? _green.withValues(alpha: 0.24) : Colors.grey.shade200,
+          color: isSelected ? activeGreen.withValues(alpha: 0.24) : context.borderTheme,
         ),
       ),
       backgroundColor: context.cardBg,
@@ -486,11 +513,11 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
   }) {
     Widget rankIndicator;
     if (rank == 1) {
-      rankIndicator = Tooltip(message: 'First Place', child: Text('🏆', style: TextStyle(fontSize: 24)));
+      rankIndicator = const Tooltip(message: 'First Place', child: Text('🏆', style: TextStyle(fontSize: 24)));
     } else if (rank == 2) {
-      rankIndicator = Tooltip(message: 'Second Place', child: Text('🥈', style: TextStyle(fontSize: 24)));
+      rankIndicator = const Tooltip(message: 'Second Place', child: Text('🥈', style: TextStyle(fontSize: 24)));
     } else if (rank == 3) {
-      rankIndicator = Tooltip(message: 'Third Place', child: Text('🥉', style: TextStyle(fontSize: 24)));
+      rankIndicator = const Tooltip(message: 'Third Place', child: Text('🥉', style: TextStyle(fontSize: 24)));
     } else {
       rankIndicator = Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -501,7 +528,7 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
         child: Text(
           '#$rank',
           style: TextStyle(
-            color: Colors.grey.shade600,
+            color: context.isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600,
             fontWeight: FontWeight.w700,
             fontSize: 12,
           ),
@@ -510,6 +537,7 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
     }
 
     final initial = name.isNotEmpty ? name[0].toUpperCase() : 'S';
+    final activeGreen = context.isDarkMode ? const Color(0xFF34D399) : _green;
 
     return Material(
       color: context.cardBg,
@@ -517,8 +545,8 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
-        splashColor: _green.withValues(alpha: 0.08),
-        highlightColor: _green.withValues(alpha: 0.04),
+        splashColor: activeGreen.withValues(alpha: 0.08),
+        highlightColor: activeGreen.withValues(alpha: 0.04),
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -538,11 +566,11 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                 children: [
                   CircleAvatar(
                     radius: 24,
-                    backgroundColor: _green.withValues(alpha: 0.12),
+                    backgroundColor: activeGreen.withValues(alpha: 0.12),
                     child: Text(
                       initial,
-                      style: const TextStyle(
-                        color: _green,
+                      style: TextStyle(
+                        color: activeGreen,
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
                       ),
@@ -604,8 +632,8 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                   ),
                   Text(
                     '${(progress * 100).toInt()}%',
-                    style: const TextStyle(
-                      color: _green,
+                    style: TextStyle(
+                      color: activeGreen,
                       fontWeight: FontWeight.w800,
                       fontSize: 12,
                     ),
@@ -618,8 +646,8 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                 child: LinearProgressIndicator(
                   value: progress,
                   minHeight: 6,
-                  backgroundColor: Colors.grey.shade100,
-                  color: _green,
+                  backgroundColor: context.isDarkMode ? Colors.grey.shade800 : Colors.grey.shade100,
+                  color: activeGreen,
                 ),
               ),
             ],
@@ -634,9 +662,11 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
         decoration: BoxDecoration(
-          color: const Color(0xFFF3FAF6),
+          color: context.isDarkMode ? const Color(0xFF0E2822) : const Color(0xFFF3FAF6),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE5F5EC)),
+          border: Border.all(
+            color: context.isDarkMode ? const Color(0xFF1B493D) : const Color(0xFFE5F5EC),
+          ),
         ),
         child: Column(
           children: [
@@ -687,10 +717,12 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
+      backgroundColor: context.cardBg,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (sheetContext) {
+        final activeGreen = sheetContext.isDarkMode ? const Color(0xFF34D399) : _green;
         return SafeArea(
           child: DraggableScrollableSheet(
             expand: false,
@@ -709,7 +741,7 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: _green.withValues(alpha: 0.1),
+                          color: activeGreen.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
@@ -719,8 +751,8 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                             const SizedBox(width: 6),
                             Text(
                               'Leaderboard Rank #$rank',
-                              style: const TextStyle(
-                                color: _green,
+                              style: TextStyle(
+                                color: activeGreen,
                                 fontWeight: FontWeight.w800,
                                 fontSize: 13,
                               ),
@@ -740,15 +772,17 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                   Container(
                     padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [_green, _teal],
+                      gradient: LinearGradient(
+                        colors: sheetContext.isDarkMode
+                            ? [const Color(0xFF09392E), const Color(0xFF04201A)]
+                            : [_green, _teal],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: _green.withValues(alpha: 0.2),
+                          color: activeGreen.withValues(alpha: 0.2),
                           blurRadius: 12,
                           offset: const Offset(0, 6),
                         ),
@@ -802,7 +836,7 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                   Text(
                     'Performance Matrix',
                     style: TextStyle(
-                      color: context.textDeep,
+                      color: sheetContext.textDeep,
                       fontSize: 16,
                       fontWeight: FontWeight.w900,
                     ),
@@ -830,9 +864,11 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF3FAF6),
+                      color: sheetContext.isDarkMode ? const Color(0xFF0E2822) : const Color(0xFFF3FAF6),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFE5F5EC)),
+                      border: Border.all(
+                        color: sheetContext.isDarkMode ? const Color(0xFF1B493D) : const Color(0xFFE5F5EC),
+                      ),
                     ),
                     child: Column(
                       children: [
@@ -842,15 +878,15 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                             Text(
                               'Mastery to Level Up',
                               style: TextStyle(
-                                color: context.textDeep,
+                                color: sheetContext.textDeep,
                                 fontWeight: FontWeight.w800,
                                 fontSize: 13,
                               ),
                             ),
                             Text(
                               '${(progress * 250).toInt()} / 250 XP (${(progress * 100).toInt()}%)',
-                              style: const TextStyle(
-                                color: _green,
+                              style: TextStyle(
+                                color: activeGreen,
                                 fontWeight: FontWeight.w900,
                                 fontSize: 13,
                               ),
@@ -863,8 +899,8 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                           child: LinearProgressIndicator(
                             value: progress,
                             minHeight: 8,
-                            backgroundColor: Colors.grey.shade200,
-                            color: _green,
+                            backgroundColor: sheetContext.isDarkMode ? Colors.grey.shade800 : Colors.grey.shade200,
+                            color: activeGreen,
                           ),
                         ),
                       ],
@@ -878,15 +914,15 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                       Text(
                         'Class Participation & Milestones',
                         style: TextStyle(
-                          color: context.textDeep,
+                          color: sheetContext.textDeep,
                           fontSize: 16,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const Tooltip(
+                      Tooltip(
                         message: 'Tutors can tap on a lesson card below to inspect answer accuracies.',
-                        child: Icon(Icons.info_outline_rounded, color: _green, size: 16),
+                        child: Icon(Icons.info_outline_rounded, color: activeGreen, size: 16),
                       ),
                     ],
                   ),
@@ -901,22 +937,22 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                               const SizedBox(height: 8),
                               Text(
                                 'No lessons completed yet.',
-                                style: TextStyle(color: context.textMuted, fontWeight: FontWeight.w600),
+                                style: TextStyle(color: sheetContext.textMuted, fontWeight: FontWeight.w600),
                               ),
                             ],
                           ),
                         )
                       : Container(
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: sheetContext.cardBg,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.grey.shade100),
+                            border: Border.all(color: sheetContext.borderTheme),
                           ),
                           child: ListView.separated(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             itemCount: completedLessons.length,
-                            separatorBuilder: (context, index) => Divider(height: 1, color: Colors.grey.shade100),
+                            separatorBuilder: (context, index) => Divider(height: 1, color: context.borderTheme),
                             itemBuilder: (context, index) {
                               final lessonId = completedLessons[index].toString();
                               final lessonTitle = _getLessonName(lessonId);
@@ -929,17 +965,20 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                                   studentUid: studentUid,
                                   lessonId: lessonId,
                                 ),
-                                leading: const Icon(Icons.check_circle_rounded, color: _green, size: 20),
+                                leading: Icon(Icons.check_circle_rounded, color: activeGreen, size: 20),
                                 title: Text(
                                   lessonTitle,
                                   style: TextStyle(
-                                    color: context.textDeep,
+                                    color: sheetContext.textDeep,
                                     fontWeight: FontWeight.w700,
                                     fontSize: 13,
                                   ),
                                 ),
-                                subtitle: const Text('Tap to view evaluation details & accuracy'),
-                                trailing: const Icon(Icons.chevron_right_rounded, color: _green, size: 20),
+                                subtitle: Text(
+                                  'Tap to view evaluation details & accuracy',
+                                  style: TextStyle(color: sheetContext.textMuted),
+                                ),
+                                trailing: Icon(Icons.chevron_right_rounded, color: activeGreen, size: 20),
                               );
                             },
                           ),
@@ -1048,19 +1087,23 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
     showDialog(
       context: context,
       builder: (dialogContext) {
+        final activeGreen = dialogContext.isDarkMode ? const Color(0xFF34D399) : _green;
         return AlertDialog(
+          backgroundColor: dialogContext.cardBg,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           titlePadding: EdgeInsets.zero,
           contentPadding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
           title: Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [_green, _teal],
+                colors: dialogContext.isDarkMode
+                    ? [const Color(0xFF09392E), const Color(0xFF04201A)]
+                    : [_green, _teal],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.only(
+              borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(24),
                 topRight: Radius.circular(24),
               ),
@@ -1094,16 +1137,16 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w900,
-                      color: context.textDeep,
+                      color: dialogContext.textDeep,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     lessonTitle,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: _green,
+                      color: activeGreen,
                     ),
                   ),
                   const Divider(height: 24),
@@ -1112,12 +1155,12 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: _green.withValues(alpha: 0.1),
+                          color: activeGreen.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.insights_rounded,
-                          color: _green,
+                          color: activeGreen,
                           size: 26,
                         ),
                       ),
@@ -1129,7 +1172,7 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                             Text(
                               'Mastery Accuracy',
                               style: TextStyle(
-                                color: context.textMuted,
+                                color: dialogContext.textMuted,
                                 fontWeight: FontWeight.w600,
                                 fontSize: 13,
                               ),
@@ -1140,13 +1183,13 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.w900,
-                                color: context.textDeep,
+                                color: dialogContext.textDeep,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      _buildPerformanceBadge(accuracy),
+                      _buildPerformanceBadge(dialogContext, accuracy),
                     ],
                   ),
                   const SizedBox(height: 20),
@@ -1155,7 +1198,7 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w800,
-                      color: context.textDeep,
+                      color: dialogContext.textDeep,
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -1194,13 +1237,13 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                           margin: const EdgeInsets.only(bottom: 8),
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF7FBF9),
+                            color: dialogContext.isDarkMode ? const Color(0xFF0E2822) : const Color(0xFFF7FBF9),
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: context.borderTheme),
+                            border: Border.all(color: dialogContext.borderTheme),
                           ),
                           child: Row(
                             children: [
-                              Icon(itemIcon, color: _green, size: 20),
+                              Icon(itemIcon, color: activeGreen, size: 20),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Column(
@@ -1211,7 +1254,7 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                                       style: TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w800,
-                                        color: context.textDeep,
+                                        color: dialogContext.textDeep,
                                       ),
                                     ),
                                     const SizedBox(height: 2),
@@ -1223,7 +1266,7 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
                                         fontSize: 12,
-                                        color: context.textMuted,
+                                        color: dialogContext.textMuted,
                                       ),
                                     ),
                                   ],
@@ -1234,7 +1277,7 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                                 Text(
                                   '$itemAccuracy%',
                                   style: TextStyle(
-                                    color: isCorrect ? _green : Colors.red,
+                                    color: isCorrect ? activeGreen : Colors.red,
                                     fontWeight: FontWeight.w800,
                                     fontSize: 13,
                                   ),
@@ -1242,7 +1285,7 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                               else
                                 Icon(
                                   isCorrect ? Icons.check_circle_rounded : Icons.cancel_rounded,
-                                  color: isCorrect ? _green : Colors.red,
+                                  color: isCorrect ? activeGreen : Colors.red,
                                   size: 18,
                                 ),
                             ],
@@ -1254,22 +1297,26 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
                     Column(
                       children: [
                         _buildSimulatedItemRow(
+                          dialogContext,
                           title: 'Vocabulary Recognition',
                           subtitle: 'Words & Meanings match',
                           isCorrect: accuracy >= 78,
                         ),
                         _buildSimulatedItemRow(
+                          dialogContext,
                           title: 'Listening Comprehension',
                           subtitle: 'Audio-to-English quizzes',
                           isCorrect: accuracy >= 85,
                         ),
                         _buildSimulatedItemRow(
+                          dialogContext,
                           title: 'Oral Pronunciation',
                           subtitle: 'Spoken pinyin matching',
                           score: accuracy,
                           isCorrect: accuracy >= 80,
                         ),
                         _buildSimulatedItemRow(
+                          dialogContext,
                           title: 'Summary Quiz Question',
                           subtitle: 'Multiple-choice test',
                           isCorrect: accuracy >= 90,
@@ -1284,7 +1331,7 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
               style: TextButton.styleFrom(
-                foregroundColor: _green,
+                foregroundColor: activeGreen,
                 textStyle: const TextStyle(fontWeight: FontWeight.w800),
               ),
               child: const Text('Close Report'),
@@ -1295,23 +1342,23 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
     );
   }
 
-  Widget _buildPerformanceBadge(int accuracy) {
+  Widget _buildPerformanceBadge(BuildContext context, int accuracy) {
     String label;
     Color bgColor;
     Color textColor;
 
     if (accuracy >= 95) {
       label = 'Excellent';
-      bgColor = const Color(0xFFE6F4EA);
-      textColor = const Color(0xFF137333);
+      bgColor = context.isDarkMode ? const Color(0xFF0A3622) : const Color(0xFFE6F4EA);
+      textColor = context.isDarkMode ? const Color(0xFF6FF09B) : const Color(0xFF137333);
     } else if (accuracy >= 85) {
       label = 'Mastery';
-      bgColor = const Color(0xFFE8F0FE);
-      textColor = const Color(0xFF1A73E8);
+      bgColor = context.isDarkMode ? const Color(0xFF0F2D59) : const Color(0xFFE8F0FE);
+      textColor = context.isDarkMode ? const Color(0xFF75A7F8) : const Color(0xFF1A73E8);
     } else {
       label = 'Passing';
-      bgColor = const Color(0xFFFEF7E0);
-      textColor = const Color(0xFFB06000);
+      bgColor = context.isDarkMode ? const Color(0xFF423306) : const Color(0xFFFEF7E0);
+      textColor = context.isDarkMode ? const Color(0xFFF8C345) : const Color(0xFFB06000);
     }
 
     return Container(
@@ -1331,23 +1378,27 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
     );
   }
 
-  Widget _buildSimulatedItemRow({
+  Widget _buildSimulatedItemRow(
+    BuildContext context, {
     required String title,
     required String subtitle,
     required bool isCorrect,
     int? score,
   }) {
+    final activeGreen = context.isDarkMode ? const Color(0xFF34D399) : _green;
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7FBF9),
+        color: context.isDarkMode ? const Color(0xFF0E2822) : const Color(0xFFF7FBF9),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFEAF5F0)),
+        border: Border.all(
+          color: context.isDarkMode ? const Color(0xFF1B493D) : const Color(0xFFEAF5F0),
+        ),
       ),
       child: Row(
         children: [
-          const Icon(Icons.assessment_outlined, color: _green, size: 20),
+          Icon(Icons.assessment_outlined, color: activeGreen, size: 20),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -1377,7 +1428,7 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
             Text(
               '$score%',
               style: TextStyle(
-                color: isCorrect ? _green : Colors.red,
+                color: isCorrect ? activeGreen : Colors.red,
                 fontWeight: FontWeight.w800,
                 fontSize: 13,
               ),
@@ -1385,7 +1436,7 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
           else
             Icon(
               isCorrect ? Icons.check_circle_rounded : Icons.cancel_rounded,
-              color: isCorrect ? _green : Colors.red,
+              color: isCorrect ? activeGreen : Colors.red,
               size: 18,
             ),
         ],
@@ -1405,9 +1456,4 @@ class _TutorStudentsPageState extends State<TutorStudentsPage> {
     }
     return fallback;
   }
-}
-
-class _TutorColors {
-  static const deep = Color(0xFF1C2433);
-  static const muted = Color(0xFF6B7280);
 }

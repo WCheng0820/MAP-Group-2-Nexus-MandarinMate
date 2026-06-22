@@ -55,11 +55,15 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundColor,
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
-        title: const Text('Forgot Password'),
+        title: const Text(
+          'Forgot Password',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
         backgroundColor: AppColors.primaryColor,
         elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Stack(
         children: [
@@ -79,11 +83,14 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
               ),
               padding: const EdgeInsets.all(AppDimensions.xl),
               decoration: BoxDecoration(
-                color: AppColors.surfaceColor,
+                color: context.cardBg,
                 borderRadius: BorderRadius.circular(AppDimensions.radiusXL),
+                border: Border.all(color: context.borderTheme),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.shadowColor,
+                    color: context.isDarkMode
+                        ? Colors.black.withValues(alpha: 0.3)
+                        : AppColors.shadowColor,
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -94,14 +101,14 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 children: [
                   Text(
                     'Reset your password',
-                    style: AppTextStyles.headlineMedium,
+                    style: AppTextStyles.headlineMedium.copyWith(color: context.textDeep),
                   ),
                   const SizedBox(height: AppDimensions.sm),
-                  const Text(
+                  Text(
                     'Enter your registered email and we will send you a reset link.',
                     style: TextStyle(
                       fontSize: 15,
-                      color: AppColors.textSecondary,
+                      color: context.textMuted,
                     ),
                   ),
                   const SizedBox(height: AppDimensions.xl),

@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:mandarinmate/lessons/domain/lesson_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:mandarinmate/services/notification_service.dart';
+import 'package:mandarinmate/utils/app_theme.dart';
 
 
 class TutorCreateLearningMaterialsPage extends StatefulWidget {
@@ -71,7 +72,7 @@ class _TutorCreateLearningMaterialsPageState extends State<TutorCreateLearningMa
     final user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F8FF),
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
         backgroundColor: _purple,
         foregroundColor: Colors.white,
@@ -157,6 +158,7 @@ class _TutorCreateLearningMaterialsPageState extends State<TutorCreateLearningMa
       controller: controller,
       maxLines: maxLines,
       textInputAction: TextInputAction.next,
+      style: TextStyle(color: context.textDeep),
       validator: (value) {
         if ((value ?? '').trim().isEmpty) {
           return '$label is required';
@@ -165,9 +167,25 @@ class _TutorCreateLearningMaterialsPageState extends State<TutorCreateLearningMa
       },
       decoration: InputDecoration(
         labelText: label,
+        labelStyle: TextStyle(color: context.textMuted),
         filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+        fillColor: context.cardBg,
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: context.borderTheme),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: _purple, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Colors.red, width: 1),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Colors.red, width: 2),
+        ),
       ),
     );
   }
@@ -180,6 +198,7 @@ class _TutorCreateLearningMaterialsPageState extends State<TutorCreateLearningMa
       controller: controller,
       keyboardType: TextInputType.number,
       textInputAction: TextInputAction.next,
+      style: TextStyle(color: context.textDeep),
       validator: (value) {
         final text = (value ?? '').trim();
         if (text.isEmpty) {
@@ -192,9 +211,25 @@ class _TutorCreateLearningMaterialsPageState extends State<TutorCreateLearningMa
       },
       decoration: InputDecoration(
         labelText: label,
+        labelStyle: TextStyle(color: context.textMuted),
         filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+        fillColor: context.cardBg,
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: context.borderTheme),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: _purple, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Colors.red, width: 1),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Colors.red, width: 2),
+        ),
       ),
     );
   }
@@ -203,21 +238,21 @@ class _TutorCreateLearningMaterialsPageState extends State<TutorCreateLearningMa
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: context.borderTheme),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Learning Materials',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: context.textDeep),
           ),
           const SizedBox(height: 6),
           Text(
             'Add article links or upload PDF and video files to support your Mandarin learning materials.',
-            style: TextStyle(color: Colors.grey.shade700, height: 1.4),
+            style: TextStyle(color: context.textMuted, height: 1.4),
           ),
           const SizedBox(height: 16),
           Wrap(
@@ -251,13 +286,13 @@ class _TutorCreateLearningMaterialsPageState extends State<TutorCreateLearningMa
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFFAF9FF),
+                color: context.isDarkMode ? const Color(0xFF252525) : const Color(0xFFFAF9FF),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.grey.shade200),
+                border: Border.all(color: context.borderTheme),
               ),
               child: Text(
                 'No learning materials added yet.',
-                style: TextStyle(color: Colors.grey.shade700),
+                style: TextStyle(color: context.textMuted),
               ),
             )
           else
@@ -276,9 +311,9 @@ class _TutorCreateLearningMaterialsPageState extends State<TutorCreateLearningMa
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFAF9FF),
+        color: context.isDarkMode ? const Color(0xFF252525) : const Color(0xFFFAF9FF),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: context.borderTheme),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -299,9 +334,10 @@ class _TutorCreateLearningMaterialsPageState extends State<TutorCreateLearningMa
               children: [
                 Text(
                   material.title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 15,
+                    color: context.textDeep,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -316,7 +352,7 @@ class _TutorCreateLearningMaterialsPageState extends State<TutorCreateLearningMa
                   const SizedBox(height: 6),
                   Text(
                     material.description,
-                    style: TextStyle(color: Colors.grey.shade700, height: 1.4),
+                    style: TextStyle(color: context.textMuted, height: 1.4),
                   ),
                 ],
                 const SizedBox(height: 8),
@@ -324,8 +360,8 @@ class _TutorCreateLearningMaterialsPageState extends State<TutorCreateLearningMa
                   material.statusText,
                   style: TextStyle(
                     color: material.requiresUpload
-                        ? Colors.orange.shade700
-                        : Colors.grey.shade600,
+                        ? (context.isDarkMode ? Colors.orange.shade300 : Colors.orange.shade700)
+                        : context.textMuted,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
@@ -348,35 +384,43 @@ class _TutorCreateLearningMaterialsPageState extends State<TutorCreateLearningMa
     final descriptionController = TextEditingController();
     final urlController = TextEditingController();
 
+    Widget materialTextField(TextEditingController ctrl, String label, {int maxLines = 1, bool isOptional = false}) {
+      return TextField(
+        controller: ctrl,
+        style: TextStyle(color: context.textDeep),
+        maxLines: maxLines,
+        decoration: InputDecoration(
+          labelText: isOptional ? '$label (optional)' : label,
+          labelStyle: TextStyle(color: context.textMuted),
+          filled: true,
+          fillColor: context.cardBg,
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: context.borderTheme),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: _purple, width: 2),
+          ),
+        ),
+      );
+    }
+
     final material = await showDialog<_DraftMaterial>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Add Article Link'),
+          backgroundColor: context.cardBg,
+          title: Text('Add Article Link', style: TextStyle(color: context.textDeep)),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextField(
-                  controller: titleController,
-                  textInputAction: TextInputAction.next,
-                  decoration: const InputDecoration(labelText: 'Title'),
-                ),
+                materialTextField(titleController, 'Title'),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: descriptionController,
-                  textInputAction: TextInputAction.next,
-                  maxLines: 3,
-                  decoration: const InputDecoration(
-                    labelText: 'Description (optional)',
-                  ),
-                ),
+                materialTextField(descriptionController, 'Description', maxLines: 3, isOptional: true),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: urlController,
-                  keyboardType: TextInputType.url,
-                  decoration: const InputDecoration(labelText: 'Article URL'),
-                ),
+                materialTextField(urlController, 'Article URL'),
               ],
             ),
           ),
@@ -477,11 +521,34 @@ class _TutorCreateLearningMaterialsPageState extends State<TutorCreateLearningMa
     );
     final descriptionController = TextEditingController();
 
+    Widget materialTextField(TextEditingController ctrl, String label, {int maxLines = 1, bool isOptional = false}) {
+      return TextField(
+        controller: ctrl,
+        style: TextStyle(color: context.textDeep),
+        maxLines: maxLines,
+        decoration: InputDecoration(
+          labelText: isOptional ? '$label (optional)' : label,
+          labelStyle: TextStyle(color: context.textMuted),
+          filled: true,
+          fillColor: context.cardBg,
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: context.borderTheme),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: _purple, width: 2),
+          ),
+        ),
+      );
+    }
+
     final material = await showDialog<_DraftMaterial>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: Text('Add ${_labelForMaterial(type)}'),
+          backgroundColor: context.cardBg,
+          title: Text('Add ${_labelForMaterial(type)}', style: TextStyle(color: context.textDeep)),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -490,24 +557,14 @@ class _TutorCreateLearningMaterialsPageState extends State<TutorCreateLearningMa
                 Text(
                   fileName,
                   style: TextStyle(
-                    color: Colors.grey.shade700,
+                    color: context.textMuted,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: titleController,
-                  textInputAction: TextInputAction.next,
-                  decoration: const InputDecoration(labelText: 'Title'),
-                ),
+                materialTextField(titleController, 'Title'),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: descriptionController,
-                  maxLines: 3,
-                  decoration: const InputDecoration(
-                    labelText: 'Description (optional)',
-                  ),
-                ),
+                materialTextField(descriptionController, 'Description', maxLines: 3, isOptional: true),
               ],
             ),
           ),
@@ -558,17 +615,21 @@ class _TutorCreateLearningMaterialsPageState extends State<TutorCreateLearningMa
     final confirm = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Remove Material'),
-        content: Text('Are you sure you want to remove "${material.title}"?'),
+        backgroundColor: context.cardBg,
+        title: Text('Remove Material', style: TextStyle(color: context.textDeep)),
+        content: Text('Are you sure you want to remove "${material.title}"?', style: TextStyle(color: context.textMuted)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Remove', style: TextStyle(color: Colors.white)),
+            child: const Text('Remove'),
           ),
         ],
       ),

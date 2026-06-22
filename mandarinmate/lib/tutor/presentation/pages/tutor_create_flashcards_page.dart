@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mandarinmate/services/notification_service.dart';
+import 'package:mandarinmate/utils/app_theme.dart';
 
 
 class TutorCreateFlashcardsPage extends StatefulWidget {
@@ -156,77 +157,64 @@ class _TutorCreateFlashcardsPageState extends State<TutorCreateFlashcardsPage> {
   }
 
   Widget _buildFlashcardFields(int index) {
+    Widget flashcardTextFormField(TextEditingController ctrl, String label) {
+      return TextFormField(
+        controller: ctrl,
+        style: TextStyle(color: context.textDeep),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: TextStyle(color: context.textMuted),
+          filled: true,
+          fillColor: context.cardBg,
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: context.borderTheme),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: _orange, width: 2),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.red, width: 1),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.red, width: 2),
+          ),
+        ),
+        validator: (value) {
+          if (value == null || value.trim().isEmpty) {
+            return '$label is required';
+          }
+          return null;
+        },
+      );
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: context.borderTheme),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Flashcard ${index + 1}',
-            style: const TextStyle(fontWeight: FontWeight.w800),
+            style: TextStyle(fontWeight: FontWeight.w800, color: context.textDeep),
           ),
           const SizedBox(height: 10),
-          TextFormField(
-            controller: _chineseControllers[index],
-            decoration: const InputDecoration(
-              labelText: 'Chinese',
-              border: OutlineInputBorder(),
-            ),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Chinese is required';
-              }
-              return null;
-            },
-          ),
+          flashcardTextFormField(_chineseControllers[index], 'Chinese'),
           const SizedBox(height: 10),
-          TextFormField(
-            controller: _pinyinControllers[index],
-            decoration: const InputDecoration(
-              labelText: 'Pinyin',
-              border: OutlineInputBorder(),
-            ),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Pinyin is required';
-              }
-              return null;
-            },
-          ),
+          flashcardTextFormField(_pinyinControllers[index], 'Pinyin'),
           const SizedBox(height: 10),
-          TextFormField(
-            controller: _malayControllers[index],
-            decoration: const InputDecoration(
-              labelText: 'Malay meaning',
-              border: OutlineInputBorder(),
-            ),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Malay meaning is required';
-              }
-              return null;
-            },
-          ),
+          flashcardTextFormField(_malayControllers[index], 'Malay meaning'),
           const SizedBox(height: 10),
-          TextFormField(
-            controller: _englishControllers[index],
-            decoration: const InputDecoration(
-              labelText: 'English meaning',
-              border: OutlineInputBorder(),
-            ),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'English meaning is required';
-              }
-              return null;
-            },
-          ),
+          flashcardTextFormField(_englishControllers[index], 'English meaning'),
         ],
       ),
     );
@@ -236,8 +224,54 @@ class _TutorCreateFlashcardsPageState extends State<TutorCreateFlashcardsPage> {
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
 
+    Widget buildTextField(TextEditingController ctrl, String label, {bool isNumber = false, bool isRequired = false, int maxLines = 1}) {
+      return TextFormField(
+        controller: ctrl,
+        keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+        maxLines: maxLines,
+        style: TextStyle(color: context.textDeep),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: TextStyle(color: context.textMuted),
+          filled: true,
+          fillColor: context.cardBg,
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: context.borderTheme),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: _orange, width: 2),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.red, width: 1),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.red, width: 2),
+          ),
+        ),
+        validator: isRequired
+            ? (value) {
+                if (isNumber) {
+                  final parsed = int.tryParse((value ?? '').trim());
+                  if (parsed == null || parsed <= 0) {
+                    return 'Enter a valid $label';
+                  }
+                } else {
+                  if (value == null || value.trim().isEmpty) {
+                    return '$label is required';
+                  }
+                }
+                return null;
+              }
+            : null,
+      );
+    }
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF9F5),
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
         backgroundColor: _orange,
         foregroundColor: Colors.white,
@@ -249,47 +283,21 @@ class _TutorCreateFlashcardsPageState extends State<TutorCreateFlashcardsPage> {
               key: _formKey,
               child: ListView(
                 padding: const EdgeInsets.all(16),
-                children: [
-                  TextFormField(
-                    controller: _levelNumberController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Level number',
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) {
-                      final parsed = int.tryParse((value ?? '').trim());
-                      if (parsed == null || parsed <= 0) {
-                        return 'Enter a valid level number';
-                      }
-                      return null;
-                    },
+              children: [
+                buildTextField(_levelNumberController, 'Level number', isNumber: true, isRequired: true),
+                const SizedBox(height: 12),
+                buildTextField(_levelTitleController, 'Level title (optional)'),
+                const SizedBox(height: 12),
+                buildTextField(_levelDescriptionController, 'Level description (optional)', maxLines: 2),
+                const SizedBox(height: 16),
+                Text(
+                  'Add $_cardsPerLevel flashcards',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 16,
+                    color: context.textDeep,
                   ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _levelTitleController,
-                    decoration: const InputDecoration(
-                      labelText: 'Level title (optional)',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _levelDescriptionController,
-                    maxLines: 2,
-                    decoration: const InputDecoration(
-                      labelText: 'Level description (optional)',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Add $_cardsPerLevel flashcards',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 16,
-                    ),
-                  ),
+                ),
                   const SizedBox(height: 10),
                   for (var i = 0; i < _cardsPerLevel; i++)
                     _buildFlashcardFields(i),

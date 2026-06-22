@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:mandarinmate/utils/app_theme.dart';
 
 class BadgeItem {
   final String id;
@@ -286,7 +287,7 @@ class _BadgesAchievementsPageState extends State<BadgesAchievementsPage> {
   Widget build(BuildContext context) {
     if (isLoading) {
       return Scaffold(
-        backgroundColor: const Color(0xFFF9FAFC),
+        backgroundColor: context.scaffoldBg,
         appBar: AppBar(
           title: const Text('Badges & Achievements'),
           flexibleSpace: Container(
@@ -313,7 +314,7 @@ class _BadgesAchievementsPageState extends State<BadgesAchievementsPage> {
 
   Widget _buildStudentView(List<BadgeItem> badges, int unlockedCount) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFC),
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
         title: const Text(
           'Badges & Achievements',
@@ -424,19 +425,19 @@ class _BadgesAchievementsPageState extends State<BadgesAchievementsPage> {
                   onTap: () => _showBadgeDetails(context, badge),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: context.cardBg,
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(
                         color: badge.unlocked
-                            ? const Color(0xFFFFD54F).withOpacity(0.5)
-                            : const Color(0xFFECEFF1),
+                            ? const Color(0xFFFFD54F).withValues(alpha: 0.5)
+                            : context.borderTheme,
                         width: badge.unlocked ? 2 : 1,
                       ),
                       boxShadow: [
                         BoxShadow(
                           color: badge.unlocked
-                              ? Colors.amber.withOpacity(0.06)
-                              : Colors.black.withOpacity(0.02),
+                              ? Colors.amber.withValues(alpha: 0.06)
+                              : Colors.black.withValues(alpha: 0.02),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -452,8 +453,8 @@ class _BadgesAchievementsPageState extends State<BadgesAchievementsPage> {
                             height: 70,
                             decoration: BoxDecoration(
                               color: badge.unlocked
-                                  ? const Color(0xFFFFF9C4).withOpacity(0.5)
-                                  : const Color(0xFFF5F5F5),
+                                  ? const Color(0xFFFFF9C4).withValues(alpha: 0.5)
+                                  : (context.isDarkMode ? const Color(0xFF2C2C2C) : const Color(0xFFF5F5F5)),
                               shape: BoxShape.circle,
                               border: badge.unlocked
                                   ? Border.all(
@@ -478,8 +479,8 @@ class _BadgesAchievementsPageState extends State<BadgesAchievementsPage> {
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: badge.unlocked
-                                  ? const Color(0xFF263238)
-                                  : const Color(0xFF90A4AE),
+                                  ? context.textDeep
+                                  : context.textMuted,
                               fontSize: 15,
                               fontWeight: FontWeight.w900,
                             ),
@@ -492,16 +493,16 @@ class _BadgesAchievementsPageState extends State<BadgesAchievementsPage> {
                             ),
                             decoration: BoxDecoration(
                               color: badge.unlocked
-                                  ? const Color(0xFFE8F5E9)
-                                  : const Color(0xFFECEFF1),
+                                  ? (context.isDarkMode ? const Color(0xFF1B2E1E) : const Color(0xFFE8F5E9))
+                                  : (context.isDarkMode ? const Color(0xFF252525) : const Color(0xFFECEFF1)),
                               borderRadius: BorderRadius.circular(99),
                             ),
                             child: Text(
                               badge.unlocked ? 'Unlocked' : 'Locked',
                               style: TextStyle(
                                 color: badge.unlocked
-                                    ? const Color(0xFF2E7D32)
-                                    : const Color(0xFF78909C),
+                                    ? (context.isDarkMode ? Colors.green.shade300 : const Color(0xFF2E7D32))
+                                    : (context.isDarkMode ? Colors.grey.shade400 : const Color(0xFF78909C)),
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -522,7 +523,7 @@ class _BadgesAchievementsPageState extends State<BadgesAchievementsPage> {
 
   Widget _buildAdminView(List<BadgeItem> badges, int unlockedCount) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
         backgroundColor: const Color(0xFF7B1FA2),
         elevation: 0,
@@ -535,8 +536,9 @@ class _BadgesAchievementsPageState extends State<BadgesAchievementsPage> {
           children: [
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.cardBg,
                 borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: context.borderTheme),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.05),
@@ -549,18 +551,18 @@ class _BadgesAchievementsPageState extends State<BadgesAchievementsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Badge Unlock Thresholds',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF2D3748),
+                      color: context.textDeep,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Edit the values below to adjust when badges unlock for students.',
-                    style: TextStyle(fontSize: 14, color: Color(0xFF718096)),
+                    style: TextStyle(fontSize: 14, color: context.textMuted),
                   ),
                   if (saveMessage != null) ...[
                     const SizedBox(height: 12),
@@ -625,8 +627,9 @@ class _BadgesAchievementsPageState extends State<BadgesAchievementsPage> {
       final fields = _getFieldsForBadge(badge.id);
       return Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.cardBg,
           borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: context.borderTheme),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.05),
@@ -650,17 +653,17 @@ class _BadgesAchievementsPageState extends State<BadgesAchievementsPage> {
                     children: [
                       Text(
                         badge.title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF2D3748),
+                          color: context.textDeep,
                         ),
                       ),
                       Text(
                         badge.description,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
-                          color: Color(0xFF718096),
+                          color: context.textMuted,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -681,22 +684,32 @@ class _BadgesAchievementsPageState extends State<BadgesAchievementsPage> {
                   children: [
                     Text(
                       label,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF718096),
+                        color: context.textMuted,
                       ),
                     ),
                     const SizedBox(height: 6),
                     TextField(
                       controller: controllers[key],
                       keyboardType: TextInputType.number,
+                      style: TextStyle(color: context.textDeep),
                       decoration: InputDecoration(
                         hintText: '0',
+                        hintStyle: TextStyle(color: context.textMuted),
+                        filled: true,
+                        fillColor: context.cardBg,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(
-                            color: Color(0xFFE2E8F0),
+                          borderSide: BorderSide(
+                            color: context.borderTheme,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: context.borderTheme,
                           ),
                         ),
                         contentPadding: const EdgeInsets.symmetric(
@@ -722,9 +735,9 @@ class _BadgesAchievementsPageState extends State<BadgesAchievementsPage> {
       backgroundColor: Colors.transparent,
       builder: (context) {
         return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+          decoration: BoxDecoration(
+            color: context.cardBg,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
           ),
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom + 16,
@@ -741,7 +754,7 @@ class _BadgesAchievementsPageState extends State<BadgesAchievementsPage> {
                       width: 48,
                       height: 5,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFCFD8DC),
+                        color: context.isDarkMode ? const Color(0xFF455A64) : const Color(0xFFCFD8DC),
                         borderRadius: BorderRadius.circular(99),
                       ),
                     ),
@@ -752,7 +765,7 @@ class _BadgesAchievementsPageState extends State<BadgesAchievementsPage> {
                       decoration: BoxDecoration(
                         color: badge.unlocked
                             ? const Color(0xFFFFF9C4)
-                            : const Color(0xFFF5F5F5),
+                            : (context.isDarkMode ? const Color(0xFF2C2C2C) : const Color(0xFFF5F5F5)),
                         shape: BoxShape.circle,
                         border: badge.unlocked
                             ? Border.all(
@@ -774,8 +787,8 @@ class _BadgesAchievementsPageState extends State<BadgesAchievementsPage> {
                     const SizedBox(height: 16),
                     Text(
                       badge.title,
-                      style: const TextStyle(
-                        color: Color(0xFF263238),
+                      style: TextStyle(
+                        color: context.textDeep,
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
                       ),
@@ -788,16 +801,16 @@ class _BadgesAchievementsPageState extends State<BadgesAchievementsPage> {
                       ),
                       decoration: BoxDecoration(
                         color: badge.unlocked
-                            ? const Color(0xFFE8F5E9)
-                            : const Color(0xFFFFEBEE),
+                            ? (context.isDarkMode ? const Color(0xFF1B2E1E) : const Color(0xFFE8F5E9))
+                            : (context.isDarkMode ? const Color(0xFF3E1F21) : const Color(0xFFFFEBEE)),
                         borderRadius: BorderRadius.circular(99),
                       ),
                       child: Text(
                         badge.unlocked ? 'Unlocked!' : 'Locked',
                         style: TextStyle(
                           color: badge.unlocked
-                              ? const Color(0xFF2E7D32)
-                              : const Color(0xFFE93A2F),
+                              ? (context.isDarkMode ? Colors.green.shade300 : const Color(0xFF2E7D32))
+                              : (context.isDarkMode ? Colors.red.shade300 : const Color(0xFFE93A2F)),
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
                         ),
@@ -807,8 +820,8 @@ class _BadgesAchievementsPageState extends State<BadgesAchievementsPage> {
                     Text(
                       badge.description,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Color(0xFF546E7A),
+                      style: TextStyle(
+                        color: context.textMuted,
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                         height: 1.4,
@@ -819,17 +832,17 @@ class _BadgesAchievementsPageState extends State<BadgesAchievementsPage> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8F9FB),
+                        color: context.isDarkMode ? const Color(0xFF252525) : const Color(0xFFF8F9FB),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFECEFF1)),
+                        border: Border.all(color: context.borderTheme),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'HOW TO UNLOCK',
                             style: TextStyle(
-                              color: Color(0xFF78909C),
+                              color: context.textMuted,
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 1.1,
@@ -838,8 +851,8 @@ class _BadgesAchievementsPageState extends State<BadgesAchievementsPage> {
                           const SizedBox(height: 6),
                           Text(
                             badge.unlockCriteria,
-                            style: const TextStyle(
-                              color: Color(0xFF37474F),
+                            style: TextStyle(
+                              color: context.textDeep,
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
                             ),
