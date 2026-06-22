@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:mandarinmate/screens/announcement_create_edit_page.dart';
 import 'package:mandarinmate/utils/linkify_util.dart';
 import 'package:mandarinmate/utils/app_theme.dart';
+import 'package:mandarinmate/utils/app_language.dart';
 
 class AdminAnnouncementsPage extends StatefulWidget {
   const AdminAnnouncementsPage({super.key});
@@ -21,7 +22,7 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
       backgroundColor: context.scaffoldBg,
       appBar: AppBar(
         title: Text(
-          'Admin Announcements',
+          AppLanguage.t('manage_announcements'),
           style: TextStyle(
             color: context.isDarkMode ? context.textDeep : Colors.white,
             fontSize: 24,
@@ -47,7 +48,7 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
         backgroundColor: context.isDarkMode ? const Color(0xFF8B5CF6) : _primary,
         foregroundColor: context.isDarkMode ? Colors.black : Colors.white,
         icon: const Icon(Icons.add_rounded),
-        label: const Text('New Announcement'),
+        label: Text(AppLanguage.t('new_announcement_btn')),
       ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
         stream: FirebaseFirestore.instance
@@ -61,14 +62,14 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
             );
           }
           if (snapshot.hasError) {
-            return const Center(
-              child: Text('Failed to load announcements.'),
+            return Center(
+              child: Text(AppLanguage.t('failed_load_announcements')),
             );
           }
 
           final docs = snapshot.data?.docs ?? const [];
           if (docs.isEmpty) {
-            return const Center(child: Text('No announcements yet.'));
+            return Center(child: Text(AppLanguage.t('no_announcements_yet')));
           }
 
           return ListView.separated(
@@ -178,17 +179,17 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
       builder: (dialogContext) => AlertDialog(
         backgroundColor: dialogContext.cardBg,
         title: Text(
-          'Delete Announcement',
+          AppLanguage.t('delete_announcement'),
           style: TextStyle(color: dialogContext.textDeep),
         ),
         content: Text(
-          'Are you sure you want to delete "$title"?',
+          '${AppLanguage.t('delete_announcement_confirm')} ($title)',
           style: TextStyle(color: dialogContext.textMuted),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+            child: Text(AppLanguage.t('cancel')),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -196,7 +197,7 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
               Navigator.pop(dialogContext);
               _deleteAnnouncement(docId);
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+            child: Text(AppLanguage.t('delete'), style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -211,13 +212,13 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
           .delete();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Announcement deleted successfully.')),
+          SnackBar(content: Text(AppLanguage.t('announcement_deleted'))),
         );
       }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to delete announcement.')),
+          SnackBar(content: Text(AppLanguage.t('failed_delete_announcement'))),
         );
       }
     }

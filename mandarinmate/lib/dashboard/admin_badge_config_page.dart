@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:mandarinmate/utils/app_theme.dart';
+import 'package:mandarinmate/utils/app_language.dart';
 
 class AdminBadgeConfigPage extends StatefulWidget {
   const AdminBadgeConfigPage({super.key});
@@ -142,13 +143,13 @@ class _AdminBadgeConfigPageState extends State<AdminBadgeConfigPage> {
       if (mounted) {
         setState(() {
           isSaving = false;
-          saveMessage = '✓ Saved successfully!';
+          saveMessage = '✓ ' + AppLanguage.t('badge_save_success');
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Badge configurations saved!'),
+          SnackBar(
+            content: Text(AppLanguage.t('badge_save_success')),
             backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
+            duration: const Duration(seconds: 2),
           ),
         );
         // Clear message after 3 seconds
@@ -192,7 +193,7 @@ class _AdminBadgeConfigPageState extends State<AdminBadgeConfigPage> {
       appBar: AppBar(
         backgroundColor: context.isDarkMode ? context.cardBg : themeColor,
         elevation: 0,
-        title: const Text('Badge Configuration'),
+        title: Text(AppLanguage.t('badge_config')),
         centerTitle: true,
         foregroundColor: context.isDarkMode ? context.textDeep : Colors.white,
       ),
@@ -225,7 +226,7 @@ class _AdminBadgeConfigPageState extends State<AdminBadgeConfigPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Badge Unlock Thresholds',
+                          AppLanguage.t('badge_thresholds'),
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -234,7 +235,7 @@ class _AdminBadgeConfigPageState extends State<AdminBadgeConfigPage> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Edit the values below to adjust when badges unlock for students. Changes apply immediately.',
+                          AppLanguage.t('badge_thresholds_desc'),
                           style: TextStyle(
                             fontSize: 14,
                             color: context.textMuted,
@@ -295,9 +296,9 @@ class _AdminBadgeConfigPageState extends State<AdminBadgeConfigPage> {
                                 strokeWidth: 2,
                               ),
                             )
-                          : const Text(
-                              'Save All Changes',
-                              style: TextStyle(
+                          : Text(
+                              AppLanguage.t('save_all_changes'),
+                              style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -330,13 +331,13 @@ class BadgeInfo {
   String getFieldLabel(String field) {
     switch (field) {
       case 'xpThreshold':
-        return 'XP Required';
+        return AppLanguage.t('badge_xp_req');
       case 'lessonThreshold':
-        return 'Lessons Required';
+        return AppLanguage.t('badge_lesson_req');
       case 'streakThreshold':
-        return 'Streak Days Required';
+        return AppLanguage.t('badge_streak_req');
       case 'levelThreshold':
-        return 'Level Required';
+        return AppLanguage.t('badge_level_req');
       default:
         return field;
     }

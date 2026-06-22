@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mandarinmate/utils/app_theme.dart';
+import 'package:mandarinmate/utils/app_language.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mandarinmate/auth/presentation/bloc/auth_bloc.dart';
@@ -93,30 +94,30 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         unselectedItemColor: context.textMuted,
         selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700),
         unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
-        items: const [
+        items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home_rounded),
-            label: 'Home',
+            icon: const Icon(Icons.home_rounded),
+            label: AppLanguage.t('home'),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.group_rounded),
-            label: 'Users',
+            icon: const Icon(Icons.group_rounded),
+            label: AppLanguage.t('users_nav'),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.menu_book_rounded),
-            label: 'Lessons',
+            icon: const Icon(Icons.menu_book_rounded),
+            label: AppLanguage.t('lessons_nav'),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.campaign_rounded),
-            label: 'Announcements',
+            icon: const Icon(Icons.campaign_rounded),
+            label: AppLanguage.t('announcements'),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.insights_rounded),
-            label: 'Analytics',
+            icon: const Icon(Icons.insights_rounded),
+            label: AppLanguage.t('analytics_nav'),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person_rounded),
-            label: 'Profile',
+            icon: const Icon(Icons.person_rounded),
+            label: AppLanguage.t('profile'),
           ),
         ],
       ),
@@ -152,10 +153,10 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                   fallbackEmail: user.email,
                 ),
                 const SizedBox(height: 22),
-                const _SectionTitle(
-                  title: 'Real-time analytics',
+                _SectionTitle(
+                  title: AppLanguage.t('realtime_analytics'),
                   subtitle:
-                      'A live view of users currently registered across the platform.',
+                      AppLanguage.t('realtime_analytics_sub'),
                 ),
                 const SizedBox(height: 14),
                 const _RealtimeAnalyticsSection(),
@@ -165,39 +166,39 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 const _AdminRoleBreakdownSection(),
                 const SizedBox(height: 22),
                 _SectionTitle(
-                  title: 'Management hub',
+                  title: AppLanguage.t('system_management'),
                   subtitle:
-                      'Move quickly between moderation, lesson curation, announcements, and reporting.',
-                  actionLabel: 'Open users',
+                      AppLanguage.t('management_hub_sub'),
+                  actionLabel: AppLanguage.t('open_users'),
                   onAction: () => setState(() => _currentIndex = 1),
                 ),
                 const SizedBox(height: 14),
                 _ManagementGrid(
                   actions: [
                     _ManagementActionData(
-                      title: 'Manage Users',
-                      subtitle: 'Roles, accounts, and moderation tools',
+                      title: AppLanguage.t('manage_users'),
+                      subtitle: AppLanguage.t('manage_users_sub'),
                       icon: Icons.group_rounded,
                       color: _AdminDashboardColors.students,
                       onTap: () => setState(() => _currentIndex = 1),
                     ),
                     _ManagementActionData(
-                      title: 'Manage Lessons',
-                      subtitle: 'Curriculum, units, and XP rewards',
+                      title: AppLanguage.t('manage_lessons'),
+                      subtitle: AppLanguage.t('manage_lessons_sub'),
                       icon: Icons.menu_book_rounded,
                       color: _AdminDashboardColors.primaryAction,
                       onTap: () => setState(() => _currentIndex = 2),
                     ),
                     _ManagementActionData(
-                      title: 'Announcements',
-                      subtitle: 'Publish updates to students and tutors',
+                      title: AppLanguage.t('announcements'),
+                      subtitle: AppLanguage.t('publish_announcements_sub'),
                       icon: Icons.campaign_rounded,
                       color: _AdminDashboardColors.admins,
                       onTap: () => setState(() => _currentIndex = 3),
                     ),
                     _ManagementActionData(
-                      title: 'Analytics',
-                      subtitle: 'Review activity and learning trends',
+                      title: AppLanguage.t('analytics_nav'),
+                      subtitle: AppLanguage.t('review_analytics_sub'),
                       icon: Icons.insights_rounded,
                       color: _AdminDashboardColors.tutors,
                       onTap: () => setState(() => _currentIndex = 4),
@@ -206,10 +207,10 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 ),
                 const SizedBox(height: 22),
                 _SectionTitle(
-                  title: 'Recent users',
+                  title: AppLanguage.t('recent_users'),
                   subtitle:
-                      'A quick preview of the newest accounts joining MandarinMate.',
-                  actionLabel: 'View all',
+                      AppLanguage.t('recent_users_sub'),
+                  actionLabel: AppLanguage.t('view_all'),
                   onAction: () => setState(() => _currentIndex = 1),
                 ),
                 const SizedBox(height: 14),
@@ -236,8 +237,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   void _handleLogout() {
     context.read<AuthBloc>().add(AuthLogoutRequested());
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Logout successful'),
+      SnackBar(
+        content: Text(AppLanguage.t('logout_msg')),
         backgroundColor: Colors.green,
       ),
     );
@@ -291,7 +292,7 @@ class _AdminHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Hi, $name',
+                AppLanguage.t('welcome') + ', ' + name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
@@ -364,13 +365,13 @@ class _AdminHero extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const _GlassBadge(
+              _GlassBadge(
                 icon: Icons.shield_rounded,
-                label: 'Admin Shield',
+                label: AppLanguage.t('admin_shield'),
               ),
               const SizedBox(height: 18),
               Text(
-                'Welcome back, $name!',
+                AppLanguage.t('welcome_back') + name + '!',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
@@ -393,7 +394,7 @@ class _AdminHero extends StatelessWidget {
               ),
               const SizedBox(height: 14),
               Text(
-                'Track user growth, coordinate teaching operations, and keep content delivery sharp.',
+                AppLanguage.t('admin_hero_desc'),
                 style: TextStyle(
                   color: const Color(0xFFE8D9F8).withValues(alpha: 0.95),
                   fontSize: 13,
@@ -487,25 +488,25 @@ class _RealtimeAnalyticsSection extends StatelessWidget {
 
         final cards = [
           _MetricCardData(
-            label: 'Total Users',
+            label: AppLanguage.t('total_users'),
             value: docs.length.toString(),
             color: _AdminDashboardColors.headerStart,
             icon: Icons.groups_rounded,
           ),
           _MetricCardData(
-            label: 'Students',
+            label: AppLanguage.t('students_count'),
             value: students.toString(),
             color: _AdminDashboardColors.students,
             icon: Icons.school_rounded,
           ),
           _MetricCardData(
-            label: 'Tutors',
+            label: AppLanguage.t('tutors_count'),
             value: tutors.toString(),
             color: _AdminDashboardColors.tutors,
             icon: Icons.cast_for_education_rounded,
           ),
           _MetricCardData(
-            label: 'Admins',
+            label: AppLanguage.t('admins_count'),
             value: admins.toString(),
             color: _AdminDashboardColors.admins,
             icon: Icons.admin_panel_settings_rounded,
@@ -1086,7 +1087,7 @@ class _AdminSystemHealthSection extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'System Infrastructure & Security',
+                  AppLanguage.t('system_infra'),
                   style: TextStyle(
                     color: context.textDeep,
                     fontSize: 16,
@@ -1101,8 +1102,8 @@ class _AdminSystemHealthSection extends StatelessWidget {
             context,
             icon: Icons.cloud_done_rounded,
             iconColor: Colors.green,
-            label: 'Firebase Services',
-            value: 'Connected & Secure',
+            label: AppLanguage.t('firebase_services'),
+            value: AppLanguage.t('connected_secure'),
             badgeColor: Colors.green.shade50,
             badgeTextColor: Colors.green.shade700,
           ),
@@ -1111,8 +1112,8 @@ class _AdminSystemHealthSection extends StatelessWidget {
             context,
             icon: Icons.security_rounded,
             iconColor: Colors.blue,
-            label: 'Firestore Database Rules',
-            value: 'Enforced (v2)',
+            label: AppLanguage.t('firestore_rules'),
+            value: AppLanguage.t('enforced_v2'),
             badgeColor: Colors.blue.shade50,
             badgeTextColor: Colors.blue.shade700,
           ),
@@ -1121,8 +1122,8 @@ class _AdminSystemHealthSection extends StatelessWidget {
             context,
             icon: Icons.shield_rounded,
             iconColor: Colors.purple,
-            label: 'User Auth Validation',
-            value: 'UTM Email Domain Only',
+            label: AppLanguage.t('auth_validation'),
+            value: AppLanguage.t('utm_domain'),
             badgeColor: Colors.purple.shade50,
             badgeTextColor: Colors.purple.shade700,
           ),
@@ -1187,7 +1188,7 @@ class _AdminSystemHealthSection extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Text(
-                'Active',
+                AppLanguage.t('active_status'),
                 style: TextStyle(
                   color: badgeTextColor,
                   fontSize: 10,
@@ -1272,7 +1273,7 @@ class _AdminRoleBreakdownSection extends StatelessWidget {
                   ),
                   const SizedBox(width: 10),
                   Text(
-                    'User Distribution Proportion',
+                    AppLanguage.t('user_dist'),
                     style: TextStyle(
                       color: context.textDeep,
                       fontSize: 16,

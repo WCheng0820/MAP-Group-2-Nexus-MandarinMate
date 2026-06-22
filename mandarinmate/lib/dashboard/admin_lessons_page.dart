@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mandarinmate/utils/app_theme.dart';
+import 'package:mandarinmate/utils/app_language.dart';
 
 class AdminLessonsPage extends StatelessWidget {
   const AdminLessonsPage({super.key});
@@ -13,9 +14,9 @@ class AdminLessonsPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: context.scaffoldBg,
       appBar: AppBar(
-        title: const Text(
-          'Admin Lessons',
-          style: TextStyle(
+        title: Text(
+          AppLanguage.t('manage_lessons'),
+          style: const TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w900,
           ),
@@ -42,7 +43,7 @@ class AdminLessonsPage extends StatelessWidget {
             );
           }
           if (snapshot.hasError) {
-            return const Center(child: Text('Failed to load lessons.'));
+            return Center(child: Text(AppLanguage.t('failed_load_lessons')));
           }
 
           final docs = snapshot.data?.docs ?? const [];
@@ -57,7 +58,7 @@ class AdminLessonsPage extends StatelessWidget {
                     size: 42,
                   ),
                   const SizedBox(height: 8),
-                  const Text('No lessons yet.'),
+                  Text(AppLanguage.t('no_lessons_yet')),
                 ],
               ),
             );
@@ -91,7 +92,7 @@ class AdminLessonsPage extends StatelessWidget {
                     vertical: 10,
                   ),
                   title: Text(
-                    title.isEmpty ? 'Untitled lesson' : title,
+                    title.isEmpty ? AppLanguage.t('untitled_lesson') : title,
                     style: TextStyle(color: context.textDeep, fontWeight: FontWeight.w700),
                   ),
                   subtitle: Column(
@@ -115,10 +116,10 @@ class AdminLessonsPage extends StatelessWidget {
                         spacing: 8,
                         runSpacing: 6,
                         children: [
-                          _Badge(text: 'Unit $unitNumber'),
-                          _Badge(text: 'Lessons $totalLessons'),
-                          _Badge(text: 'XP $xpReward'),
-                          _Badge(text: 'Order $order'),
+                          _Badge(text: '${AppLanguage.t('label_unit_number')} $unitNumber'),
+                          _Badge(text: '${AppLanguage.t('label_total_lessons')} $totalLessons'),
+                          _Badge(text: '${AppLanguage.t('xp')} $xpReward'),
+                          _Badge(text: '${AppLanguage.t('label_order')} $order'),
                         ],
                       ),
                     ],
@@ -132,9 +133,9 @@ class AdminLessonsPage extends StatelessWidget {
                         await _deleteLesson(context, doc.id, title);
                       }
                     },
-                    itemBuilder: (_) => const [
-                      PopupMenuItem(value: 'edit', child: Text('Edit')),
-                      PopupMenuItem(value: 'delete', child: Text('Delete')),
+                    itemBuilder: (_) => [
+                      PopupMenuItem(value: 'edit', child: Text(AppLanguage.t('edit'))),
+                      PopupMenuItem(value: 'delete', child: Text(AppLanguage.t('delete'))),
                     ],
                   ),
                 ),
@@ -181,7 +182,7 @@ class AdminLessonsPage extends StatelessWidget {
               return AlertDialog(
                 backgroundColor: context.cardBg,
                 title: Text(
-                  docId == null ? 'Add Lesson' : 'Edit Lesson',
+                  docId == null ? AppLanguage.t('add_lesson') : AppLanguage.t('edit_lesson'),
                   style: TextStyle(color: context.textDeep),
                 ),
                 content: SizedBox(
@@ -195,21 +196,21 @@ class AdminLessonsPage extends StatelessWidget {
                         _input(
                           context: context,
                           controller: titleCtrl,
-                          label: 'Title',
+                          label: AppLanguage.t('label_title'),
                           validator: _required,
                         ),
                         const SizedBox(height: 10),
                         _input(
                           context: context,
                           controller: titleChineseCtrl,
-                          label: 'Title Chinese',
+                          label: AppLanguage.t('label_title_chinese'),
                           validator: _required,
                         ),
                         const SizedBox(height: 10),
                         _input(
                           context: context,
                           controller: descriptionCtrl,
-                          label: 'Description',
+                          label: AppLanguage.t('label_description'),
                           maxLines: 3,
                           validator: _required,
                         ),
@@ -217,7 +218,7 @@ class AdminLessonsPage extends StatelessWidget {
                         _input(
                           context: context,
                           controller: unitCtrl,
-                          label: 'Unit Number',
+                          label: AppLanguage.t('label_unit_number'),
                           isNumber: true,
                           validator: _required,
                         ),
@@ -225,7 +226,7 @@ class AdminLessonsPage extends StatelessWidget {
                         _input(
                           context: context,
                           controller: totalLessonsCtrl,
-                          label: 'Total Lessons',
+                          label: AppLanguage.t('label_total_lessons'),
                           isNumber: true,
                           validator: _required,
                         ),
@@ -233,7 +234,7 @@ class AdminLessonsPage extends StatelessWidget {
                         _input(
                           context: context,
                           controller: xpCtrl,
-                          label: 'XP Reward',
+                          label: AppLanguage.t('label_xp_reward'),
                           isNumber: true,
                           validator: _required,
                         ),
@@ -241,7 +242,7 @@ class AdminLessonsPage extends StatelessWidget {
                         _input(
                           context: context,
                           controller: orderCtrl,
-                          label: 'Order',
+                          label: AppLanguage.t('label_order'),
                           isNumber: true,
                           validator: _required,
                         ),
@@ -253,7 +254,7 @@ class AdminLessonsPage extends StatelessWidget {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Cancel'),
+                  child: Text(AppLanguage.t('cancel')),
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(backgroundColor: _primary),
@@ -262,7 +263,7 @@ class AdminLessonsPage extends StatelessWidget {
                       Navigator.pop(context, true);
                     }
                   },
-                  child: const Text('Save'),
+                  child: Text(AppLanguage.t('save')),
                 ),
               ],
             );
@@ -325,17 +326,17 @@ class AdminLessonsPage extends StatelessWidget {
             context: context,
             builder: (_) => AlertDialog(
               backgroundColor: context.cardBg,
-              title: Text('Delete Lesson', style: TextStyle(color: context.textDeep)),
-              content: Text('Delete "$title"?', style: TextStyle(color: context.textMuted)),
+              title: Text(AppLanguage.t('delete_lesson'), style: TextStyle(color: context.textDeep)),
+              content: Text('${AppLanguage.t('delete_lesson_confirm')} ($title)', style: TextStyle(color: context.textMuted)),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Cancel'),
+                  child: Text(AppLanguage.t('cancel')),
                 ),
                 ElevatedButton(
                   onPressed: () => Navigator.pop(context, true),
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                  child: const Text('Delete'),
+                  child: Text(AppLanguage.t('delete')),
                 ),
               ],
             ),
@@ -358,7 +359,7 @@ class AdminLessonsPage extends StatelessWidget {
 
   String? _required(String? value) {
     if ((value ?? '').trim().isEmpty) {
-      return 'Required';
+      return AppLanguage.t('validation_required');
     }
     return null;
   }

@@ -145,8 +145,8 @@ class _AppSettingsPageState extends State<AppSettingsPage> {
   void _logout() {
     context.read<AuthBloc>().add(AuthLogoutRequested());
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Logout successful'),
+      SnackBar(
+        content: Text(AppLanguage.t('logout_msg')),
         backgroundColor: Colors.green,
         behavior: SnackBarBehavior.floating,
       ),
@@ -277,17 +277,17 @@ class _AppSettingsPageState extends State<AppSettingsPage> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Your privacy is our priority. In MandarinMate, we only collect essential usage statistics to optimize your learning path. We never share your credentials or speech samples with third-party service providers without your explicit consent.',
+                    AppLanguage.t('privacy_policy_desc'),
                     style: TextStyle(fontSize: 14, height: 1.5, color: context.textMuted),
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Active Data Storage:',
+                    AppLanguage.t('active_data_storage'),
                     style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: context.textDeep),
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    '• Firestore Database (XP progression, streaks, completed lessons)\n• Supabase Storage (Profile photos, vocabulary materials)\n• Local cache (Shared preferences toggles)',
+                    AppLanguage.t('privacy_data_storage'),
                     style: TextStyle(fontSize: 14, height: 1.5, color: context.textMuted),
                   ),
                 ],
@@ -318,30 +318,27 @@ class _AppSettingsPageState extends State<AppSettingsPage> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'MandarinMate Support Center',
+                    AppLanguage.t('support_center'),
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: context.textDeep),
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'For technical assistance, feedback, or content issues, feel free to contact us:',
+                    AppLanguage.t('support_contact_desc'),
                     style: TextStyle(fontSize: 14, height: 1.4, color: context.textMuted),
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    '📧 Email: support@mandarinmate.utm.my\n📍 Office: Nexus Mandarin Club, UTM Johor Bahru',
+                    AppLanguage.t('support_contact_info'),
                     style: TextStyle(fontSize: 14, height: 1.5, color: context.textMuted),
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    'Frequently Asked Questions (FAQ)',
+                    AppLanguage.t('support_faq_title'),
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: context.textDeep),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Q: How does the Daily Challenge work?\n'
-                    'A: Complete a short randomized quiz daily to earn extra XP and secure your learning streak!\n\n'
-                    'Q: How can I change my email address?\n'
-                    'A: Email adjustments require administrator approval. Contact support for official updates.',
+                    AppLanguage.t('support_faq_content'),
                     style: TextStyle(fontSize: 13, height: 1.4, color: context.textMuted),
                   ),
                 ],
@@ -764,7 +761,9 @@ class _AppSettingsPageState extends State<AppSettingsPage> {
                       MyApp.themeNotifier.value = val ? ThemeMode.dark : ThemeMode.light;
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text(val ? 'Dark mode enabled.' : 'Light mode enabled.'),
+                          content: Text(val
+                              ? AppLanguage.t('dark_mode_enabled')
+                              : AppLanguage.t('light_mode_enabled')),
                           duration: const Duration(seconds: 1),
                         ),
                       );

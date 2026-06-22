@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:mandarinmate/utils/app_theme.dart';
+import 'package:mandarinmate/utils/app_language.dart';
 
 class AdminAnalyticsPage extends StatelessWidget {
   const AdminAnalyticsPage({super.key});
@@ -12,9 +13,9 @@ class AdminAnalyticsPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: context.scaffoldBg,
       appBar: AppBar(
-        title: const Text(
-          'Admin Analytics',
-          style: TextStyle(
+        title: Text(
+          AppLanguage.t('sys_analytics'),
+          style: const TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w900,
           ),
@@ -32,7 +33,7 @@ class AdminAnalyticsPage extends StatelessWidget {
             );
           }
           if (usersSnapshot.hasError) {
-            return const Center(child: Text('Failed to load analytics.'));
+            return Center(child: Text(AppLanguage.t('failed_load_analytics')));
           }
 
           final users = usersSnapshot.data?.docs ?? const [];
@@ -96,18 +97,18 @@ class AdminAnalyticsPage extends StatelessWidget {
                     children: [
                       _StatGrid(
                         items: [
-                          _StatData('Total Users', users.length.toString()),
-                          _StatData('Students', students.length.toString()),
-                          _StatData('Tutors', tutors.toString()),
-                          _StatData('Admins', admins.toString()),
-                          _StatData('Avg Student XP', avgXp.toStringAsFixed(1)),
-                          _StatData('Total Lessons', totalLessons.toString()),
+                          _StatData(AppLanguage.t('total_users'), users.length.toString()),
+                          _StatData(AppLanguage.t('students_count'), students.length.toString()),
+                          _StatData(AppLanguage.t('tutors_count'), tutors.toString()),
+                          _StatData(AppLanguage.t('admins_count'), admins.toString()),
+                          _StatData(AppLanguage.t('avg_student_xp'), avgXp.toStringAsFixed(1)),
+                          _StatData(AppLanguage.t('total_lessons'), totalLessons.toString()),
                           _StatData(
-                            'Total Announcements',
+                            AppLanguage.t('total_announcements'),
                             totalAnnouncements.toString(),
                           ),
                           _StatData(
-                            'Top Student XP',
+                            AppLanguage.t('top_student_xp'),
                             topStudent == null
                                 ? '0'
                                 : _extractXp(topStudent.data()).toString(),
@@ -126,7 +127,7 @@ class AdminAnalyticsPage extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Top Student',
+                              AppLanguage.t('top_student'),
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
@@ -135,7 +136,7 @@ class AdminAnalyticsPage extends StatelessWidget {
                             ),
                             const SizedBox(height: 10),
                             if (topStudent == null)
-                              Text('No student data.', style: TextStyle(color: context.textMuted))
+                              Text(AppLanguage.t('no_student_data'), style: TextStyle(color: context.textMuted))
                             else
                               _topStudentTile(context, topStudent.data()),
                           ],
@@ -153,7 +154,7 @@ class AdminAnalyticsPage extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Top 5 Student Leaderboard',
+                              AppLanguage.t('top_5_leaderboard'),
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
@@ -162,7 +163,7 @@ class AdminAnalyticsPage extends StatelessWidget {
                             ),
                             const SizedBox(height: 10),
                             if (top5.isEmpty)
-                              Text('No leaderboard data.', style: TextStyle(color: context.textMuted))
+                              Text(AppLanguage.t('no_leaderboard_data'), style: TextStyle(color: context.textMuted))
                             else
                               ...top5.asMap().entries.map((entry) {
                                 final rank = entry.key + 1;
@@ -170,7 +171,7 @@ class AdminAnalyticsPage extends StatelessWidget {
                                 final name =
                                     (data['name'] ??
                                             data['firstName'] ??
-                                            'Student')
+                                            AppLanguage.t('role_student'))
                                         .toString();
                                 final xp = _extractXp(data);
                                 return ListTile(
@@ -192,7 +193,7 @@ class AdminAnalyticsPage extends StatelessWidget {
                                   ),
                                   title: Text(name, style: TextStyle(color: context.textDeep, fontWeight: FontWeight.w600)),
                                   trailing: Text(
-                                    '$xp XP',
+                                    '$xp ${AppLanguage.t('xp')}',
                                     style: TextStyle(
                                       color: context.textDeep,
                                       fontWeight: FontWeight.w700,
@@ -215,7 +216,7 @@ class AdminAnalyticsPage extends StatelessWidget {
   }
 
   Widget _topStudentTile(BuildContext context, Map<String, dynamic> data) {
-    final name = (data['name'] ?? data['firstName'] ?? 'Student').toString();
+    final name = (data['name'] ?? data['firstName'] ?? AppLanguage.t('role_student')).toString();
     final email = (data['email'] ?? '').toString();
     final xp = _extractXp(data);
     final level = _toInt(data['level'], fallback: 1);
@@ -251,7 +252,7 @@ class AdminAnalyticsPage extends StatelessWidget {
             ),
           ),
           Text(
-            'Lv.$level  $xp XP',
+            '${AppLanguage.t('level')} $level  $xp ${AppLanguage.t('xp')}',
             style: TextStyle(color: context.textDeep, fontWeight: FontWeight.bold),
           ),
         ],

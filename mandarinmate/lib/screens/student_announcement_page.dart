@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mandarinmate/utils/linkify_util.dart';
 import 'package:mandarinmate/utils/app_theme.dart';
+import 'package:mandarinmate/utils/app_language.dart';
 
 class StudentAnnouncementPage extends StatelessWidget {
   const StudentAnnouncementPage({super.key});
@@ -19,7 +20,7 @@ class StudentAnnouncementPage extends StatelessWidget {
       backgroundColor: context.scaffoldBg,
       appBar: AppBar(
         title: Text(
-          'Announcements',
+          AppLanguage.t('announcements'),
           style: TextStyle(
             color: context.textDeep,
             fontWeight: FontWeight.w900,
@@ -56,7 +57,7 @@ class StudentAnnouncementPage extends StatelessWidget {
           if (snapshot.hasError) {
             return Center(
               child: Text(
-                'Failed to load announcements',
+                AppLanguage.t('failed_load_announcements'),
                 style: TextStyle(color: context.textMuted, fontWeight: FontWeight.w600),
               ),
             );
@@ -89,7 +90,7 @@ class StudentAnnouncementPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      'No Announcements Yet',
+                      AppLanguage.t('no_announcements_yet'),
                       style: TextStyle(
                         color: context.textDeep,
                         fontSize: 18,
@@ -98,7 +99,7 @@ class StudentAnnouncementPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'You will see updates from tutors and admins here.',
+                      AppLanguage.t('student_no_announcements_desc'),
                       style: TextStyle(
                         color: context.textMuted,
                         fontSize: 14,
@@ -117,12 +118,12 @@ class StudentAnnouncementPage extends StatelessWidget {
             separatorBuilder: (context, index) => const SizedBox(height: 14),
             itemBuilder: (context, index) {
               final data = filteredDocs[index].data();
-              final title = data['title'] ?? 'Announcement';
+              final title = data['title'] ?? AppLanguage.t('announcement');
               final body = data['body'] ?? '';
-              final createdByName = data['createdByName'] ?? 'Instructor';
+              final createdByName = data['createdByName'] ?? AppLanguage.t('instructor');
               final createdByRole = data['targetRole'] != null
-                  ? (data['targetRole'] == 'student' ? 'Tutor/Admin' : 'System')
-                  : 'Tutor';
+                  ? (data['targetRole'] == 'student' ? AppLanguage.t('tutor_admin') : AppLanguage.t('system'))
+                  : AppLanguage.t('role_tutor');
               final createdAt = data['createdAt'] is Timestamp
                   ? (data['createdAt'] as Timestamp).toDate()
                   : null;
@@ -182,7 +183,7 @@ class StudentAnnouncementPage extends StatelessWidget {
                                     Text(
                                       createdAt != null
                                           ? DateFormat('dd MMM yyyy, hh:mm a').format(createdAt)
-                                          : 'Just now',
+                                          : AppLanguage.t('just_now'),
                                       style: TextStyle(
                                         color: context.textMuted,
                                         fontSize: 11,
@@ -231,19 +232,19 @@ class StudentAnnouncementPage extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 12),
-                          const Row(
+                          Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
                               Text(
-                                'Read more',
-                                style: TextStyle(
+                                AppLanguage.t('read_more'),
+                                style: const TextStyle(
                                   color: primaryColor,
                                   fontSize: 12,
                                   fontWeight: FontWeight.w800,
                                 ),
                               ),
-                              SizedBox(width: 4),
-                              Icon(
+                              const SizedBox(width: 4),
+                              const Icon(
                                 Icons.arrow_forward_rounded,
                                 color: primaryColor,
                                 size: 14,
@@ -321,7 +322,7 @@ class StudentAnnouncementPage extends StatelessWidget {
                         Text(
                           date != null
                               ? DateFormat('dd MMM yyyy, hh:mm a').format(date)
-                              : 'Just now',
+                              : AppLanguage.t('just_now'),
                           style: TextStyle(
                             color: context.textMuted,
                             fontSize: 12,
@@ -380,9 +381,9 @@ class StudentAnnouncementPage extends StatelessWidget {
                     elevation: 0,
                   ),
                   onPressed: () => Navigator.pop(context),
-                  child: const Text(
-                    'Close',
-                    style: TextStyle(
+                  child: Text(
+                    AppLanguage.t('close'),
+                    style: const TextStyle(
                       fontWeight: FontWeight.w900,
                       fontSize: 16,
                     ),

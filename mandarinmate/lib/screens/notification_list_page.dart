@@ -11,6 +11,7 @@ import 'package:mandarinmate/tutor/presentation/pages/tutor_announcement_page.da
 import 'package:mandarinmate/dashboard/admin_users_page.dart';
 import 'package:mandarinmate/screens/main_screen.dart';
 import 'package:mandarinmate/utils/app_theme.dart';
+import 'package:mandarinmate/utils/app_language.dart';
 
 class NotificationListPage extends StatefulWidget {
   final String role; // 'student', 'tutor', or 'admin'
@@ -90,7 +91,7 @@ class _NotificationListPageState extends State<NotificationListPage> {
       case 'chat':
         final chatId = data['chatId'] ?? '';
         final senderId = data['senderId'] ?? '';
-        final senderName = data['senderName'] ?? 'Chat';
+        final senderName = data['senderName'] ?? AppLanguage.t('chat');
         if (chatId.isNotEmpty) {
           Navigator.push(
             context,
@@ -212,8 +213,8 @@ class _NotificationListPageState extends State<NotificationListPage> {
         await batch.commit();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('All notifications marked as read.'),
+            SnackBar(
+              content: Text(AppLanguage.t('all_notif_read')),
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -248,7 +249,7 @@ class _NotificationListPageState extends State<NotificationListPage> {
       backgroundColor: context.scaffoldBg,
       appBar: AppBar(
         title: Text(
-          'Notifications',
+          AppLanguage.t('notifications'),
           style: TextStyle(
             fontWeight: FontWeight.w900,
             color: context.textDeep,
@@ -265,7 +266,7 @@ class _NotificationListPageState extends State<NotificationListPage> {
           if (widget.role != 'admin')
             IconButton(
               icon: const Icon(Icons.campaign_rounded),
-              tooltip: 'Announcements',
+              tooltip: AppLanguage.t('announcements'),
               onPressed: () {
                 if (widget.role == 'student') {
                   Navigator.push(
@@ -305,7 +306,7 @@ class _NotificationListPageState extends State<NotificationListPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        unreadCount > 0 ? '$unreadCount unread' : 'All caught up',
+                        unreadCount > 0 ? '$unreadCount ${AppLanguage.t('unread')}' : AppLanguage.t('all_caught_up'),
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
@@ -315,9 +316,9 @@ class _NotificationListPageState extends State<NotificationListPage> {
                       TextButton.icon(
                         onPressed: unreadCount > 0 ? () => _markAllAsRead(docs) : null,
                         icon: const Icon(Icons.done_all_rounded, size: 16),
-                        label: const Text(
-                          'Mark all read',
-                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                        label: Text(
+                          AppLanguage.t('mark_all_read'),
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                         ),
                         style: TextButton.styleFrom(
                           foregroundColor: widget.themeColor,
@@ -347,7 +348,7 @@ class _NotificationListPageState extends State<NotificationListPage> {
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              'No Notifications Yet',
+                              AppLanguage.t('no_notifications_yet'),
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -356,7 +357,7 @@ class _NotificationListPageState extends State<NotificationListPage> {
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              'We\'ll notify you when something updates!',
+                              AppLanguage.t('notify_on_updates'),
                               style: TextStyle(
                                 fontSize: 13,
                                 color: context.textMuted,
@@ -372,7 +373,7 @@ class _NotificationListPageState extends State<NotificationListPage> {
                         itemBuilder: (context, index) {
                           final doc = docs[index];
                           final data = doc.data();
-                          final title = data['title'] ?? 'Notification';
+                          final title = data['title'] ?? AppLanguage.t('notifications');
                           final body = data['body'] ?? '';
                           final type = data['type'] ?? '';
                           final isRead = data['isRead'] == true;
@@ -398,22 +399,22 @@ class _NotificationListPageState extends State<NotificationListPage> {
                                 builder: (dialogContext) => AlertDialog(
                                   backgroundColor: dialogContext.cardBg,
                                   title: Text(
-                                    'Delete Notification',
+                                    AppLanguage.t('confirm_delete_title'),
                                     style: TextStyle(color: dialogContext.textDeep),
                                   ),
                                   content: Text(
-                                    'Are you sure you want to delete this notification?',
+                                    AppLanguage.t('confirm_delete_msg'),
                                     style: TextStyle(color: dialogContext.textMuted),
                                   ),
                                   actions: [
                                     TextButton(
                                       onPressed: () => Navigator.pop(dialogContext, false),
-                                      child: const Text('Cancel'),
+                                      child: Text(AppLanguage.t('cancel')),
                                     ),
                                     ElevatedButton(
                                       style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                                       onPressed: () => Navigator.pop(dialogContext, true),
-                                      child: const Text('Delete', style: TextStyle(color: Colors.white)),
+                                      child: Text(AppLanguage.t('delete'), style: const TextStyle(color: Colors.white)),
                                     ),
                                   ],
                                 ),

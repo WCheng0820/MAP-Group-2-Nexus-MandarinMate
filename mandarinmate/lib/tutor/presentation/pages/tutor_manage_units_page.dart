@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:mandarinmate/utils/app_theme.dart';
 import 'tutor_generate_unit_page.dart';
 import 'tutor_edit_vocabulary_page.dart';
+import 'package:mandarinmate/utils/app_language.dart';
 
 class TutorManageUnitsPage extends StatefulWidget {
   const TutorManageUnitsPage({super.key});
@@ -24,7 +25,7 @@ class _TutorManageUnitsPageState extends State<TutorManageUnitsPage> {
       appBar: AppBar(
         backgroundColor: _green,
         foregroundColor: Colors.white,
-        title: const Text('Manage Vocabulary Units'),
+        title: Text(AppLanguage.t('manage_vocab_title')),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -39,7 +40,7 @@ class _TutorManageUnitsPageState extends State<TutorManageUnitsPage> {
         child: const Icon(Icons.add),
       ),
       body: user == null
-          ? const Center(child: Text('Please log in to manage units.'))
+          ? Center(child: Text(AppLanguage.t('tutor_login_manage_units')))
           : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               stream: FirebaseFirestore.instance
                   .collection('lessons')
@@ -51,7 +52,7 @@ class _TutorManageUnitsPageState extends State<TutorManageUnitsPage> {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
+                  return Center(child: Text('${AppLanguage.t('action_failed')}: ${snapshot.error}'));
                 }
 
                 final docs = snapshot.data?.docs ?? const [];
@@ -65,7 +66,7 @@ class _TutorManageUnitsPageState extends State<TutorManageUnitsPage> {
                   });
                 
                 if (sortedDocs.isEmpty) {
-                  return const Center(child: Text('No units created yet.'));
+                  return Center(child: Text(AppLanguage.t('no_units_created')));
                 }
 
                 return ListView.builder(
@@ -73,7 +74,7 @@ class _TutorManageUnitsPageState extends State<TutorManageUnitsPage> {
                   itemCount: sortedDocs.length,
                   itemBuilder: (context, index) {
                     final doc = sortedDocs[index];
-                    final title = doc['title'] ?? 'Untitled Unit';
+                    final title = doc['title'] ?? AppLanguage.t('untitled_unit');
                     final createdAt = (doc['createdAt'] as Timestamp?)?.toDate();
                     final docId = doc.id;
 
@@ -109,13 +110,13 @@ class _TutorManageUnitsPageState extends State<TutorManageUnitsPage> {
                                       ),
                                       if (createdAt != null) ...[
                                         const SizedBox(height: 4),
-                                        Text(
-                                          'Created: ${createdAt.toString().split('.')[0]}',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: context.textMuted,
+                                          Text(
+                                            '${AppLanguage.t('label_created')}: ${createdAt.toString().split('.')[0]}',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: context.textMuted,
+                                            ),
                                           ),
-                                        ),
                                       ],
                                     ],
                                   ),
@@ -131,7 +132,7 @@ class _TutorManageUnitsPageState extends State<TutorManageUnitsPage> {
                                 children: [
                                   TextButton.icon(
                                     icon: const Icon(Icons.book),
-                                    label: const Text('Vocabulary'),
+                                    label: Text(AppLanguage.t('vocabulary')),
                                     onPressed: () => Navigator.push(
                                       context,
                                       MaterialPageRoute(
@@ -146,13 +147,13 @@ class _TutorManageUnitsPageState extends State<TutorManageUnitsPage> {
                                   const SizedBox(width: 8),
                                   TextButton.icon(
                                     icon: const Icon(Icons.edit),
-                                    label: const Text('Edit'),
+                                    label: Text(AppLanguage.t('edit')),
                                     onPressed: () => _showEditDialog(context, docId, title),
                                   ),
                                   const SizedBox(width: 8),
                                   TextButton.icon(
                                     icon: const Icon(Icons.delete, color: Colors.red),
-                                    label: const Text('Delete', style: TextStyle(color: Colors.red)),
+                                    label: Text(AppLanguage.t('delete'), style: const TextStyle(color: Colors.red)),
                                     onPressed: () => _showDeleteConfirmation(context, docId, title),
                                   ),
                                 ],
@@ -176,13 +177,13 @@ class _TutorManageUnitsPageState extends State<TutorManageUnitsPage> {
         final titleController = TextEditingController(text: currentTitle);
         return AlertDialog(
           backgroundColor: context.cardBg,
-          title: Text('Edit Unit Title', style: TextStyle(color: context.textDeep)),
+          title: Text(AppLanguage.t('edit_unit_title'), style: TextStyle(color: context.textDeep)),
           content: TextField(
             controller: titleController,
             style: TextStyle(color: context.textDeep),
             decoration: InputDecoration(
               border: const OutlineInputBorder(),
-              labelText: 'Unit Title',
+              labelText: AppLanguage.t('unit_title_label'),
               labelStyle: TextStyle(color: context.textMuted),
             ),
           ),
@@ -192,7 +193,7 @@ class _TutorManageUnitsPageState extends State<TutorManageUnitsPage> {
                 titleController.dispose();
                 Navigator.pop(dialogContext);
               },
-              child: const Text('Cancel'),
+              child: Text(AppLanguage.t('cancel')),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -211,11 +212,11 @@ class _TutorManageUnitsPageState extends State<TutorManageUnitsPage> {
                   titleController.dispose();
                   Navigator.pop(dialogContext);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Unit updated successfully.')),
+                    SnackBar(content: Text(AppLanguage.t('unit_updated_success'))),
                   );
                 }
               },
-              child: const Text('Update'),
+              child: Text(AppLanguage.t('update')),
             ),
           ],
         );
@@ -228,15 +229,15 @@ class _TutorManageUnitsPageState extends State<TutorManageUnitsPage> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: context.cardBg,
-        title: Text('Delete Unit', style: TextStyle(color: context.textDeep)),
+        title: Text(AppLanguage.t('delete_unit_title'), style: TextStyle(color: context.textDeep)),
         content: Text(
-          'Are you sure you want to delete "$title"? This cannot be undone.',
+          AppLanguage.t('delete_unit_confirm'),
           style: TextStyle(color: context.textMuted),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+            child: Text(AppLanguage.t('cancel')),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -273,19 +274,19 @@ class _TutorManageUnitsPageState extends State<TutorManageUnitsPage> {
                 if (mounted) {
                   Navigator.pop(dialogContext);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Unit deleted successfully.')),
+                    SnackBar(content: Text(AppLanguage.t('unit_deleted_success'))),
                   );
                 }
               } catch (e) {
                 if (mounted) {
                   Navigator.pop(dialogContext);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error deleting unit: $e')),
+                    SnackBar(content: Text('${AppLanguage.t('error_deleting_unit')}: $e')),
                   );
                 }
               }
             },
-            child: const Text('Delete'),
+            child: Text(AppLanguage.t('delete')),
           ),
         ],
       ),
@@ -307,11 +308,11 @@ class _TutorManageUnitsPageState extends State<TutorManageUnitsPage> {
                 ListTile(
                   leading: const Icon(Icons.add_circle, color: _green),
                   title: Text(
-                    'Generate with AI',
+                    AppLanguage.t('ai_generate_unit'),
                     style: TextStyle(color: context.textDeep),
                   ),
                   subtitle: Text(
-                    'Let AI create vocabulary from a title',
+                    AppLanguage.t('ai_generate_desc'),
                     style: TextStyle(color: context.textMuted),
                   ),
                   onTap: () {

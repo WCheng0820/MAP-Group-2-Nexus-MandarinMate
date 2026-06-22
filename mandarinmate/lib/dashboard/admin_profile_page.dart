@@ -8,6 +8,7 @@ import 'package:mandarinmate/dashboard/admin_badge_config_page.dart';
 import 'package:mandarinmate/screens/profile/app_settings_page.dart';
 import 'package:mandarinmate/screens/profile/edit_profile_page.dart' as mandarinmate_edit_profile;
 import 'package:mandarinmate/utils/app_theme.dart';
+import 'package:mandarinmate/utils/app_language.dart';
 
 class AdminProfilePage extends StatefulWidget {
   const AdminProfilePage({super.key});
@@ -33,8 +34,8 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
   void _handleLogout(BuildContext context) {
     context.read<AuthBloc>().add(AuthLogoutRequested());
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Logged out successfully'),
+      SnackBar(
+        content: Text(AppLanguage.t('logout_msg')),
         backgroundColor: Colors.green,
         behavior: SnackBarBehavior.floating,
       ),
@@ -86,9 +87,9 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'Profile',
-                            style: TextStyle(
+                          Text(
+                            AppLanguage.t('profile'),
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 24,
                               fontWeight: FontWeight.w900,
@@ -218,18 +219,18 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                           borderRadius: BorderRadius.circular(999),
                           border: Border.all(color: Colors.white.withOpacity(0.16)),
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.verified_user_rounded,
                               color: Colors.white,
                               size: 14,
                             ),
-                            SizedBox(width: 6),
+                            const SizedBox(width: 6),
                             Text(
-                              '👑 Administrator',
-                              style: TextStyle(
+                              AppLanguage.t('admin_role'),
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
@@ -250,7 +251,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                       // Overview Panel (Statistics Grid)
                       _buildProfileCard(
                         context,
-                        title: 'Overview Panel',
+                        title: AppLanguage.t('overview_panel'),
                         child: StreamBuilder<QuerySnapshot>(
                           stream: FirebaseFirestore.instance.collection('users').snapshots(),
                           builder: (context, userSnapshot) {
@@ -282,7 +283,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                                           context,
                                           icon: '👥',
                                           value: '$managedCount',
-                                          label: 'Users Managed',
+                                          label: AppLanguage.t('users_managed'),
                                           bgColor: const Color(0xFFE8F5E9),
                                           iconColor: Colors.green,
                                         ),
@@ -290,7 +291,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                                           context,
                                           icon: '📚',
                                           value: '$totalLessons',
-                                          label: 'Lessons Active',
+                                          label: AppLanguage.t('lessons_active'),
                                           bgColor: const Color(0xFFE3F2FD),
                                           iconColor: Colors.blue,
                                         ),
@@ -298,15 +299,15 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                                           context,
                                           icon: '📢',
                                           value: '$totalAnnouncements',
-                                          label: 'Announcements',
+                                          label: AppLanguage.t('announcements'),
                                           bgColor: const Color(0xFFFFF3E0),
                                           iconColor: Colors.orange,
                                         ),
                                         _buildAdminStatItem(
                                           context,
                                           icon: '🛡️',
-                                          value: 'Online',
-                                          label: 'System Status',
+                                          value: AppLanguage.t('online'),
+                                          label: AppLanguage.t('system_status'),
                                           bgColor: const Color(0xFFF3E5F5),
                                           iconColor: Colors.purple,
                                         ),
@@ -324,15 +325,15 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                       // System Management Shortcuts
                       _buildProfileCard(
                         context,
-                        title: 'System Management',
+                        title: AppLanguage.t('system_management'),
                         child: Column(
                           children: [
                             _buildMenuTile(
                               context,
                               icon: Icons.military_tech_rounded,
                               iconColor: _primaryColor,
-                              title: 'Badge Configuration',
-                              subtitle: 'Configure thresholds for achievements',
+                              title: AppLanguage.t('badge_config'),
+                              subtitle: AppLanguage.t('badge_thresholds'),
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -347,8 +348,8 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                               context,
                               icon: Icons.settings_rounded,
                               iconColor: const Color(0xFF5F6368),
-                              title: 'Preferences & Theme',
-                              subtitle: 'Theme modes and language configurations',
+                              title: AppLanguage.t('pref_theme'),
+                              subtitle: AppLanguage.t('pref_theme_sub'),
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -366,8 +367,8 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                               context,
                               icon: Icons.logout_rounded,
                               iconColor: const Color(0xFFD32F2F),
-                              title: 'Log Out',
-                              subtitle: 'Sign out of your administrator account',
+                              title: AppLanguage.t('logout_title'),
+                              subtitle: AppLanguage.t('logout_sub'),
                               onTap: () => _handleLogout(context),
                             ),
                           ],

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:mandarinmate/lessons/domain/lesson_model.dart';
 import 'package:mandarinmate/tutor/presentation/pages/tutor_create_lesson_page.dart';
 import 'package:mandarinmate/utils/app_theme.dart';
+import 'package:mandarinmate/utils/app_language.dart';
 
 
 class TutorLessonsPage extends StatefulWidget {
@@ -46,7 +47,7 @@ class _TutorLessonsPageState extends State<TutorLessonsPage> {
       appBar: AppBar(
         backgroundColor: _purple,
         foregroundColor: Colors.white,
-        title: const Text('Manage Learning Materials'),
+        title: Text(AppLanguage.t('lesson_material_title')),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -75,11 +76,11 @@ class _TutorLessonsPageState extends State<TutorLessonsPage> {
         child: const Icon(Icons.add),
       ),
       body: user == null
-          ? const Center(child: Text('Please log in again to manage learning materials.'))
+          ? Center(child: Text(AppLanguage.t('tutor_login_manage_materials')))
           : ListView(
               padding: EdgeInsets.zero,
               children: [
-                _sectionHeader(context, 'Your Learning Materials'),
+                _sectionHeader(context, AppLanguage.t('your_learning_materials')),
                 StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                   stream: FirebaseFirestore.instance
                       .collection('lessons')
@@ -94,9 +95,9 @@ class _TutorLessonsPageState extends State<TutorLessonsPage> {
                     }
 
                     if (snapshot.hasError) {
-                      return const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16),
-                        child: Text('Failed to load your learning materials.'),
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(AppLanguage.t('failed_load_materials')),
                       );
                     }
 
@@ -108,9 +109,9 @@ class _TutorLessonsPageState extends State<TutorLessonsPage> {
                         .toList();
 
                     if (docs.isEmpty) {
-                      return const Padding(
-                        padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
-                        child: Text('No learning materials created yet.'),
+                      return Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                        child: Text(AppLanguage.t('no_materials_created')),
                       );
                     }
 
@@ -176,7 +177,7 @@ class _TutorLessonsPageState extends State<TutorLessonsPage> {
                                             color: _purple.withValues(alpha: 0.10),
                                             borderRadius: BorderRadius.circular(12),
                                           ),
-                                          child: Text('Set $unitNumber', style: const TextStyle(color: _purple, fontWeight: FontWeight.w700)),
+                                          child: Text('${AppLanguage.t('label_set')} $unitNumber', style: const TextStyle(color: _purple, fontWeight: FontWeight.w700)),
                                         ),
                                         const Spacer(),
                                         IconButton(
@@ -215,7 +216,7 @@ class _TutorLessonsPageState extends State<TutorLessonsPage> {
                                           Chip(
                                             avatar: const Icon(Icons.attach_file, size: 16),
                                             label: Text(
-                                              '${materials.length} material${materials.length == 1 ? '' : 's'}',
+                                              '${materials.length} ${AppLanguage.t('materials_label')}',
                                               style: TextStyle(color: context.textDeep),
                                             ),
                                             backgroundColor: _purple.withValues(alpha: 0.08),
@@ -300,12 +301,12 @@ class _TutorLessonsPageState extends State<TutorLessonsPage> {
           builder: (context) {
             return AlertDialog(
               backgroundColor: context.cardBg,
-              title: Text('Delete Learning Materials', style: TextStyle(color: context.textDeep)),
-              content: Text('Are you sure you want to delete "$title"?', style: TextStyle(color: context.textMuted)),
+              title: Text(AppLanguage.t('delete_materials_title'), style: TextStyle(color: context.textDeep)),
+              content: Text(AppLanguage.t('delete_materials_confirm'), style: TextStyle(color: context.textMuted)),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Cancel'),
+                  child: Text(AppLanguage.t('cancel')),
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
@@ -313,7 +314,7 @@ class _TutorLessonsPageState extends State<TutorLessonsPage> {
                     foregroundColor: Colors.white,
                   ),
                   onPressed: () => Navigator.pop(context, true),
-                  child: const Text('Delete'),
+                  child: Text(AppLanguage.t('delete')),
                 ),
               ],
             );
@@ -335,7 +336,7 @@ class _TutorLessonsPageState extends State<TutorLessonsPage> {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Learning materials deleted successfully.')),
+        SnackBar(content: Text(AppLanguage.t('materials_deleted_success'))),
       );
     } catch (_) {
       if (!context.mounted) {
@@ -343,7 +344,7 @@ class _TutorLessonsPageState extends State<TutorLessonsPage> {
       }
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Failed to delete learning materials.')));
+      ).showSnackBar(SnackBar(content: Text(AppLanguage.t('failed_delete_materials'))));
     }
   }
 

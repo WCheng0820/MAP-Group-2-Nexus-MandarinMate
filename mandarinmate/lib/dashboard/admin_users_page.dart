@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mandarinmate/models/user_model.dart';
 import 'package:mandarinmate/utils/app_theme.dart';
+import 'package:mandarinmate/utils/app_language.dart';
 
 class AdminUsersPage extends StatefulWidget {
   const AdminUsersPage({super.key});
@@ -29,9 +30,9 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
     return Scaffold(
       backgroundColor: context.scaffoldBg,
       appBar: AppBar(
-        title: const Text(
-          'Admin Users',
-          style: TextStyle(
+        title: Text(
+          AppLanguage.t('manage_users'),
+          style: const TextStyle(
             color: Colors.white,
             fontSize: 24,
             fontWeight: FontWeight.w900,
@@ -52,7 +53,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                       setState(() => _query = value.trim().toLowerCase()),
                   style: TextStyle(color: context.textDeep),
                   decoration: InputDecoration(
-                    hintText: 'Search name or email',
+                    hintText: AppLanguage.t('search_users_hint'),
                     hintStyle: TextStyle(color: context.textMuted),
                     prefixIcon: Icon(Icons.search_rounded, color: context.textMuted),
                     filled: true,
@@ -78,7 +79,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         decoration: BoxDecoration(
-                          color: context.cardBg,
+                           color: context.cardBg,
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(color: context.borderTheme),
                         ),
@@ -88,19 +89,19 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                           underline: const SizedBox.shrink(),
                           dropdownColor: context.cardBg,
                           style: TextStyle(color: context.textDeep, fontSize: 14, fontWeight: FontWeight.w600),
-                          items: const [
-                            DropdownMenuItem(value: 'all', child: Text('All')),
+                          items: [
+                            DropdownMenuItem(value: 'all', child: Text(AppLanguage.t('all_roles'))),
                             DropdownMenuItem(
                               value: 'student',
-                              child: Text('Student'),
+                              child: Text(AppLanguage.t('role_student')),
                             ),
                             DropdownMenuItem(
                               value: 'tutor',
-                              child: Text('Tutor'),
+                              child: Text(AppLanguage.t('role_tutor')),
                             ),
                             DropdownMenuItem(
                               value: 'admin',
-                              child: Text('Admin'),
+                              child: Text(AppLanguage.t('role_admin')),
                             ),
                           ],
                           onChanged: (value) {
@@ -126,22 +127,22 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                           underline: const SizedBox.shrink(),
                           dropdownColor: context.cardBg,
                           style: TextStyle(color: context.textDeep, fontSize: 14, fontWeight: FontWeight.w600),
-                          items: const [
+                          items: [
                             DropdownMenuItem(
                               value: 'all',
-                              child: Text('All Status'),
+                              child: Text(AppLanguage.t('status_all')),
                             ),
                             DropdownMenuItem(
                               value: 'pending',
-                              child: Text('Pending'),
+                              child: Text(AppLanguage.t('status_pending')),
                             ),
                             DropdownMenuItem(
                               value: 'approved',
-                              child: Text('Approved'),
+                              child: Text(AppLanguage.t('status_approved')),
                             ),
                             DropdownMenuItem(
                               value: 'rejected',
-                              child: Text('Rejected'),
+                              child: Text(AppLanguage.t('status_rejected')),
                             ),
                           ],
                           onChanged: (value) {
@@ -167,7 +168,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                   );
                 }
                 if (snapshot.hasError) {
-                  return const Center(child: Text('Failed to load users.'));
+                  return Center(child: Text(AppLanguage.t('failed_load_users')));
                 }
 
                 final docs = snapshot.data?.docs ?? const [];
@@ -199,7 +200,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                 }).toList();
 
                 if (filtered.isEmpty) {
-                  return const Center(child: Text('No users found.'));
+                  return Center(child: Text(AppLanguage.t('no_users_found')));
                 }
 
                 return ListView.separated(
@@ -263,10 +264,10 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                               spacing: 8,
                               runSpacing: 6,
                               children: [
-                                _ChipLabel(label: role.toUpperCase()),
+                                _ChipLabel(label: AppLanguage.t('role_${role.toLowerCase()}').toUpperCase()),
                                 _StatusChip(status: membershipStatus),
-                                _ChipLabel(label: 'Level $level'),
-                                _ChipLabel(label: 'XP $xp'),
+                                _ChipLabel(label: '${AppLanguage.t('level')} $level'),
+                                _ChipLabel(label: '${AppLanguage.t('xp')} $xp'),
                               ],
                             ),
                           ],
@@ -288,26 +289,26 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                                   currentRole: role,
                                 ),
                                 itemBuilder: (_) => [
-                                  const PopupMenuItem(
+                                  PopupMenuItem(
                                     value: 'change_role',
-                                    child: Text('Change role'),
+                                    child: Text(AppLanguage.t('change_role_title')),
                                   ),
                                   if (membershipStatus !=
                                       MembershipStatus.approved)
-                                    const PopupMenuItem(
+                                    PopupMenuItem(
                                       value: 'approve',
-                                      child: Text('Approve member'),
+                                      child: Text(AppLanguage.t('approve_member')),
                                     ),
                                   if (membershipStatus !=
                                       MembershipStatus.rejected)
-                                    const PopupMenuItem(
+                                    PopupMenuItem(
                                       value: 'reject',
-                                      child: Text('Reject member'),
+                                      child: Text(AppLanguage.t('reject_member')),
                                     ),
                                   if (!isCurrentUser)
-                                    const PopupMenuItem(
+                                    PopupMenuItem(
                                       value: 'remove_from_list',
-                                      child: Text('Remove from list'),
+                                      child: Text(AppLanguage.t('remove_from_list')),
                                     ),
                                 ],
                               ),
@@ -340,13 +341,13 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Change Role',
+                  AppLanguage.t('change_role_title'),
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: context.textDeep),
                 ),
                 const SizedBox(height: 12),
                 for (final role in const ['student', 'tutor', 'admin'])
                   ListTile(
-                    title: Text(role.toUpperCase(), style: TextStyle(color: context.textDeep, fontWeight: FontWeight.bold)),
+                    title: Text(AppLanguage.t('role_$role').toUpperCase(), style: TextStyle(color: context.textDeep, fontWeight: FontWeight.bold)),
                     trailing: role == currentRole
                         ? const Icon(Icons.check_rounded, color: _primary)
                         : null,
@@ -402,7 +403,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
             return;
           }
           if (changed) {
-            _showMessage(context, 'Role updated for $userName.');
+            _showMessage(context, '${AppLanguage.t('role_updated_for')} $userName.');
           }
           break;
         case 'approve':
@@ -413,7 +414,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
           if (!mounted) {
             return;
           }
-          _showMessage(context, '$userName has been approved.');
+          _showMessage(context, '$userName ${AppLanguage.t('approved_success')}');
           break;
         case 'reject':
           await _updateMembershipStatus(
@@ -423,7 +424,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
           if (!mounted) {
             return;
           }
-          _showMessage(context, '$userName has been rejected.');
+          _showMessage(context, '$userName ${AppLanguage.t('rejected_success')}');
           break;
         case 'remove_from_list':
           final confirmed = await _confirmArchiveUser(context, userName);
@@ -434,14 +435,14 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
           if (!mounted) {
             return;
           }
-          _showMessage(context, '$userName was removed from the list.');
+          _showMessage(context, '$userName ${AppLanguage.t('removed_success')}');
           break;
       }
     } catch (e) {
       if (!mounted) {
         return;
       }
-      _showMessage(context, 'Action failed: $e');
+      _showMessage(context, '${AppLanguage.t('action_failed')}: $e');
     } finally {
       if (mounted) {
         setState(() => _busyUserIds.remove(userId));
@@ -458,19 +459,19 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
           context: context,
           builder: (dialogContext) => AlertDialog(
             backgroundColor: context.cardBg,
-            title: Text('Remove From List', style: TextStyle(color: context.textDeep)),
+            title: Text(AppLanguage.t('remove_confirm_title'), style: TextStyle(color: context.textDeep)),
             content: Text(
-              'Hide $userName from Manage Users? This will not delete the login account.',
+              AppLanguage.t('remove_confirm_desc'),
               style: TextStyle(color: context.textMuted),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(dialogContext, false),
-                child: const Text('Cancel'),
+                child: Text(AppLanguage.t('cancel')),
               ),
               FilledButton(
                 onPressed: () => Navigator.pop(dialogContext, true),
-                child: const Text('Remove'),
+                child: Text(AppLanguage.t('remove_btn')),
               ),
             ],
           ),

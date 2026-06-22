@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:mandarinmate/screens/announcement_create_edit_page.dart';
 import 'package:mandarinmate/utils/linkify_util.dart';
 import 'package:mandarinmate/utils/app_theme.dart';
+import 'package:mandarinmate/utils/app_language.dart';
 
 class TutorAnnouncementPage extends StatefulWidget {
   const TutorAnnouncementPage({super.key});
@@ -25,7 +26,7 @@ class _TutorAnnouncementPageState extends State<TutorAnnouncementPage> {
         backgroundColor: context.isDarkMode ? context.cardBg : _green,
         foregroundColor: context.isDarkMode ? context.textDeep : Colors.white,
         title: Text(
-          'Announcements',
+          AppLanguage.t('announcements'),
           style: TextStyle(
             color: context.isDarkMode ? context.textDeep : Colors.white,
           ),
@@ -46,11 +47,11 @@ class _TutorAnnouncementPageState extends State<TutorAnnouncementPage> {
         backgroundColor: context.isDarkMode ? const Color(0xFF34D399) : _green,
         foregroundColor: context.isDarkMode ? Colors.black : Colors.white,
         icon: const Icon(Icons.add_rounded),
-        label: const Text('Create Announcement'),
+        label: Text(AppLanguage.t('create_announcement')),
       ),
       body: user == null
-          ? const Center(
-              child: Text('Please log in again to manage announcements.'),
+          ? Center(
+              child: Text(AppLanguage.t('tutor_login_required')),
             )
           : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               stream: FirebaseFirestore.instance
@@ -63,15 +64,15 @@ class _TutorAnnouncementPageState extends State<TutorAnnouncementPage> {
                 }
 
                 if (snapshot.hasError) {
-                  return const Center(
-                    child: Text('Error loading announcements.'),
+                  return Center(
+                    child: Text(AppLanguage.t('failed_load_announcements')),
                   );
                 }
 
                 final docs = snapshot.data?.docs ?? [];
                 if (docs.isEmpty) {
-                  return const Center(
-                    child: Text('No announcements published yet.'),
+                  return Center(
+                    child: Text(AppLanguage.t('no_announcements_published')),
                   );
                 }
 
@@ -187,17 +188,17 @@ class _TutorAnnouncementPageState extends State<TutorAnnouncementPage> {
       builder: (dialogContext) => AlertDialog(
         backgroundColor: dialogContext.cardBg,
         title: Text(
-          'Delete Announcement',
+          AppLanguage.t('delete_announcement'),
           style: TextStyle(color: dialogContext.textDeep),
         ),
         content: Text(
-          'Are you sure you want to delete "$title"?',
+          AppLanguage.t('delete_announcement_confirm'),
           style: TextStyle(color: dialogContext.textMuted),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+            child: Text(AppLanguage.t('cancel')),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -205,7 +206,7 @@ class _TutorAnnouncementPageState extends State<TutorAnnouncementPage> {
               Navigator.pop(dialogContext);
               _deleteAnnouncement(docId);
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+            child: Text(AppLanguage.t('delete'), style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -222,14 +223,14 @@ class _TutorAnnouncementPageState extends State<TutorAnnouncementPage> {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Announcement successfully deleted.')),
+        SnackBar(content: Text(AppLanguage.t('announcement_deleted_success'))),
       );
     } catch (_) {
       if (!mounted) {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to delete announcement.')),
+        SnackBar(content: Text(AppLanguage.t('failed_delete_announcement'))),
       );
     }
   }

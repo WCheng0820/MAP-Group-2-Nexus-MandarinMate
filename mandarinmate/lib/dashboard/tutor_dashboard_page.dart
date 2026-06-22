@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mandarinmate/utils/app_theme.dart';
+import 'package:mandarinmate/utils/app_language.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mandarinmate/auth/presentation/bloc/auth_bloc.dart';
 import 'package:mandarinmate/auth/presentation/pages/login_page.dart';
@@ -50,8 +51,8 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
   void _logout(BuildContext context) {
     context.read<AuthBloc>().add(AuthLogoutRequested());
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Logout successful'),
+      SnackBar(
+        content: Text(AppLanguage.t('logout_msg')),
         backgroundColor: Colors.green,
         behavior: SnackBarBehavior.floating,
       ),
@@ -99,30 +100,30 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
         unselectedItemColor: context.textMuted,
         type: BottomNavigationBarType.fixed,
         onTap: (index) => _onNavTapped(context, index),
-        items: const [
+        items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home_rounded),
-            label: 'Home',
+            icon: const Icon(Icons.home_rounded),
+            label: AppLanguage.t('home'),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.class_rounded),
-            label: 'Lessons',
+            icon: const Icon(Icons.class_rounded),
+            label: AppLanguage.t('lessons_nav'),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.people_alt_rounded),
-            label: 'Students',
+            icon: const Icon(Icons.people_alt_rounded),
+            label: AppLanguage.t('students_nav'),
           ),
           BottomNavigationBarItem(
-            icon: _ChatBadgeIcon(iconData: Icons.chat_bubble_rounded),
-            label: 'Chat',
+            icon: const _ChatBadgeIcon(iconData: Icons.chat_bubble_rounded),
+            label: AppLanguage.t('chat'),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.forum_rounded),
-            label: 'Forum',
+            icon: const Icon(Icons.forum_rounded),
+            label: AppLanguage.t('forum'),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.account_circle_rounded),
-            label: 'Profile',
+            icon: const Icon(Icons.account_circle_rounded),
+            label: AppLanguage.t('profile'),
           ),
         ],
       ),
@@ -162,10 +163,10 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                     final studentCount =
                         studentSnapshot.data?.docs.length ?? 0;
                     return _TutorHero(
-                      title: 'Tutor Dashboard',
-                      headline: 'Manage All Learning Resources',
-                      subtitle: '$studentCount active students',
-                      actionLabel: 'Manage Lessons',
+                      title: AppLanguage.t('tutor_dashboard'),
+                      headline: AppLanguage.t('tutor_hero_headline'),
+                      subtitle: '$studentCount ${AppLanguage.t('active_students')}',
+                      actionLabel: AppLanguage.t('manage_lessons'),
                       onAction: () {
                         setState(() => _currentIndex = 1);
                       },
@@ -174,7 +175,7 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                 ),
                 const SizedBox(height: 18),
                 _SectionHeader(
-                  title: 'Quick actions',
+                  title: AppLanguage.t('quick_actions'),
                   onViewAll: () {
                     setState(() => _currentIndex = 1);
                   },
@@ -190,8 +191,8 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                   children: [
                     _TutorActionTile(
                       icon: Icons.class_rounded,
-                      title: 'Manage Lessons',
-                      subtitle: 'Manage vocab, materials, and flashcards',
+                      title: AppLanguage.t('manage_lessons'),
+                      subtitle: AppLanguage.t('tutor_action_lessons_desc'),
                       color: _TutorColors.green,
                       onTap: () {
                         setState(() => _currentIndex = 1);
@@ -199,8 +200,8 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                     ),
                     _TutorActionTile(
                       icon: Icons.people_alt_rounded,
-                      title: 'Student List',
-                      subtitle: 'View profiles and progress',
+                      title: AppLanguage.t('tutor_action_students'),
+                      subtitle: AppLanguage.t('tutor_action_students_desc'),
                       color: _TutorColors.teal,
                       onTap: () {
                         setState(() => _currentIndex = 2);
@@ -208,8 +209,8 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                     ),
                     _TutorActionTile(
                       icon: Icons.campaign_rounded,
-                      title: 'Announcements',
-                      subtitle: 'Send updates to students',
+                      title: AppLanguage.t('announcements'),
+                      subtitle: AppLanguage.t('tutor_action_announcements_desc'),
                       color: _TutorColors.orange,
                       onTap: () {
                         Navigator.push(
@@ -222,8 +223,8 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                     ),
                     _TutorActionTile(
                       icon: Icons.chat_bubble_rounded,
-                      title: 'Chat',
-                      subtitle: 'Direct message student channels',
+                      title: AppLanguage.t('chat'),
+                      subtitle: AppLanguage.t('tutor_action_chat_desc'),
                       color: _TutorColors.blue,
                       onTap: () {
                         setState(() => _currentIndex = 3);
@@ -231,8 +232,8 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                     ),
                     _TutorActionTile(
                       icon: Icons.forum_rounded,
-                      title: 'Community Forum',
-                      subtitle: 'Discuss Mandarin topics & guide students',
+                      title: AppLanguage.t('forum_discussion'),
+                      subtitle: AppLanguage.t('tutor_action_forum_desc'),
                       color: const Color(0xFF673AB7),
                       onTap: () {
                         setState(() => _currentIndex = 4);
@@ -296,9 +297,9 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'Profile',
-                            style: TextStyle(
+                          Text(
+                            AppLanguage.t('profile'),
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 24,
                               fontWeight: FontWeight.w900,
@@ -432,17 +433,17 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                               color: Colors.white.withValues(alpha: 0.16),
                               borderRadius: BorderRadius.circular(999),
                             ),
-                            child: const Row(
+                            child: Row(
                               children: [
-                                Icon(
+                                const Icon(
                                   Icons.verified_user_rounded,
                                   color: Colors.white,
                                   size: 14,
                                 ),
-                                SizedBox(width: 6),
+                                const SizedBox(width: 6),
                                 Text(
-                                  'Lead Educator',
-                                  style: TextStyle(
+                                  AppLanguage.t('lead_educator'),
+                                  style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
@@ -461,9 +462,9 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                               color: Colors.white.withValues(alpha: 0.16),
                               borderRadius: BorderRadius.circular(999),
                             ),
-                            child: const Text(
-                              'UTM Mandarin Club',
-                              style: TextStyle(
+                            child: Text(
+                              AppLanguage.t('utm_mandarin_club'),
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
@@ -486,7 +487,7 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                     children: [
                       // Card 1: Dynamic Teaching Overview & Stats Grid
                       _buildTutorProfileCard(
-                        title: 'Teaching Overview',
+                        title: AppLanguage.t('teaching_overview'),
                         child: StreamBuilder<QuerySnapshot>(
                           stream: FirebaseFirestore.instance
                               .collection('users')
@@ -494,21 +495,21 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                               .snapshots(),
                           builder: (context, studentSnapshot) {
                             final studentsCount = studentSnapshot.data?.docs.length ?? 0;
-
+ 
                             return StreamBuilder<QuerySnapshot>(
                               stream: FirebaseFirestore.instance
                                   .collection('lessons')
                                   .snapshots(),
                               builder: (context, lessonsSnapshot) {
                                 final lessonsCount = lessonsSnapshot.data?.docs.length ?? 0;
-
+ 
                                 return StreamBuilder<QuerySnapshot>(
                                   stream: FirebaseFirestore.instance
                                       .collection('announcements')
                                       .snapshots(),
                                   builder: (context, announcementsSnapshot) {
                                     final announcementsCount = announcementsSnapshot.data?.docs.length ?? 0;
-
+ 
                                     return GridView.count(
                                       crossAxisCount: 2,
                                       shrinkWrap: true,
@@ -520,28 +521,28 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                                         _buildTutorStatItem(
                                           icon: '👥',
                                           value: '$studentsCount',
-                                          label: 'Students Managed',
+                                          label: AppLanguage.t('students_managed'),
                                           bgColor: const Color(0xFFE8F5E9),
                                           iconColor: _TutorColors.green,
                                         ),
                                         _buildTutorStatItem(
                                           icon: '📚',
                                           value: '$lessonsCount',
-                                          label: 'Lessons Published',
+                                          label: AppLanguage.t('lessons_published'),
                                           bgColor: const Color(0xFFE3F2FD),
                                           iconColor: _TutorColors.blue,
                                         ),
                                         _buildTutorStatItem(
                                           icon: '📢',
                                           value: '$announcementsCount',
-                                          label: 'Announcements',
+                                          label: AppLanguage.t('announcements'),
                                           bgColor: const Color(0xFFFFF3E0),
                                           iconColor: _TutorColors.orange,
                                         ),
                                         _buildTutorStatItem(
                                           icon: '⭐',
-                                          value: 'Senior',
-                                          label: 'Verified Tier',
+                                          value: AppLanguage.t('senior'),
+                                          label: AppLanguage.t('verified_tier'),
                                           bgColor: const Color(0xFFF3E5F5),
                                           iconColor: Colors.purple,
                                         ),
@@ -558,23 +559,23 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
 
                       // Card 2: Classroom Assignment Info
                       _buildTutorProfileCard(
-                        title: 'Classroom Info',
+                        title: AppLanguage.t('classroom_info'),
                         child: Column(
                           children: [
                             _buildClassroomRow(
-                              label: 'Academy',
-                              value: 'Universiti Teknologi Malaysia (UTM)',
+                              label: AppLanguage.t('academy'),
+                              value: AppLanguage.t('utm_full_name'),
                               icon: Icons.school_rounded,
                             ),
                             Divider(height: 1, color: context.borderTheme),
                             _buildClassroomRow(
-                              label: 'Organization',
-                              value: 'Nexus Mandarin Club',
+                              label: AppLanguage.t('organization'),
+                              value: AppLanguage.t('nexus_club_name'),
                               icon: Icons.group_work_rounded,
                             ),
                             Divider(height: 1, color: context.borderTheme),
                             _buildClassroomRow(
-                              label: 'Course Code',
+                              label: AppLanguage.t('course_code'),
                               value: 'NEXUS-MANDARIN-1',
                               icon: Icons.badge_rounded,
                             ),
@@ -585,7 +586,7 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
 
                       // Card 3: Dynamic Action Log Timeline (Recent Activity)
                       _buildTutorProfileCard(
-                        title: 'Recent Activity Logs',
+                        title: AppLanguage.t('recent_activity_logs'),
                         child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                           stream: FirebaseFirestore.instance
                               .collection('announcements')
@@ -594,7 +595,7 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                               .snapshots(),
                           builder: (context, announcementSnapshot) {
                             final latestAnnDoc = announcementSnapshot.data?.docs.firstOrNull;
-                            final latestAnnTitle = latestAnnDoc?.data()['title']?.toString() ?? 'No announcements broadcasted';
+                            final latestAnnTitle = latestAnnDoc?.data()['title']?.toString() ?? AppLanguage.t('no_announcements_broadcasted');
                             final latestAnnContent = latestAnnDoc?.data()['content']?.toString() ?? '';
 
                             return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -605,33 +606,33 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                                   .snapshots(),
                               builder: (context, lessonSnapshot) {
                                 final latestLessonDoc = lessonSnapshot.data?.docs.firstOrNull;
-                                final latestLessonTitle = latestLessonDoc?.data()['title']?.toString() ?? 'No lessons published';
+                                final latestLessonTitle = latestLessonDoc?.data()['title']?.toString() ?? AppLanguage.t('no_lessons_published');
 
                                 return Column(
                                   children: [
                                     _buildTutorActivityItem(
                                       icon: '📢',
-                                      title: 'Latest Broadcast Sent',
+                                      title: AppLanguage.t('latest_broadcast_sent'),
                                       detail: latestAnnTitle,
                                       time: latestAnnContent.isNotEmpty
                                           ? (latestAnnContent.length > 30 ? '${latestAnnContent.substring(0, 30)}...' : latestAnnContent)
-                                          : 'Tap Announcements to broadcast',
+                                          : AppLanguage.t('tap_announcements_broadcast'),
                                       bgColor: const Color(0xFFFFF3E0),
                                     ),
                                     const SizedBox(height: 12),
                                     _buildTutorActivityItem(
                                       icon: '📚',
-                                      title: 'Latest Published Lesson',
+                                      title: AppLanguage.t('latest_published_lesson'),
                                       detail: latestLessonTitle,
-                                      time: 'Added to student course path',
+                                      time: AppLanguage.t('added_to_student_path'),
                                       bgColor: const Color(0xFFE3F2FD),
                                     ),
                                     const SizedBox(height: 12),
                                     _buildTutorActivityItem(
                                       icon: '✅',
-                                      title: 'Class Health Checklist',
-                                      detail: 'All classroom databases online',
-                                      time: 'Nexus Mandarin Club Active',
+                                      title: AppLanguage.t('class_health_checklist'),
+                                      detail: AppLanguage.t('all_db_online'),
+                                      time: AppLanguage.t('nexus_club_active'),
                                       bgColor: const Color(0xFFE8F5E9),
                                     ),
                                   ],
@@ -652,7 +653,7 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                               icon: Icons.settings_rounded,
                               iconBg: const Color(0xFFE8F5E9),
                               iconColor: _TutorColors.green,
-                              title: 'App Settings',
+                              title: AppLanguage.t('app_settings'),
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -671,7 +672,7 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                               icon: Icons.edit_note_rounded,
                               iconBg: const Color(0xFFE1F5FE),
                               iconColor: Colors.blue.shade700,
-                              title: 'Edit Profile',
+                              title: AppLanguage.t('edit_profile'),
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -689,7 +690,7 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                               icon: Icons.class_rounded,
                               iconBg: const Color(0xFFE3F2FD),
                               iconColor: _TutorColors.blue,
-                              title: 'Manage Lessons Hub',
+                              title: AppLanguage.t('manage_lessons_hub'),
                               onTap: () {
                                 setState(() => _currentIndex = 1);
                               },
@@ -699,7 +700,7 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                               icon: Icons.people_alt_rounded,
                               iconBg: const Color(0xFFE0F2F1),
                               iconColor: Colors.teal,
-                              title: 'My Students Progress',
+                              title: AppLanguage.t('my_students_progress'),
                               onTap: () {
                                 setState(() => _currentIndex = 2);
                               },
@@ -709,7 +710,7 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                               icon: Icons.campaign_rounded,
                               iconBg: const Color(0xFFFFF3E0),
                               iconColor: _TutorColors.orange,
-                              title: 'Broadcast Announcement',
+                              title: AppLanguage.t('broadcast_announcement'),
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -724,7 +725,7 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                               icon: Icons.forum_rounded,
                               iconBg: const Color(0xFFF3E5F5),
                               iconColor: const Color(0xFF9C27B0),
-                              title: 'Community Forum Feed',
+                              title: AppLanguage.t('community_forum_feed'),
                               onTap: () {
                                 setState(() => _currentIndex = 4);
                               },
@@ -734,7 +735,7 @@ class _TutorDashboardPageState extends State<TutorDashboardPage> {
                               icon: Icons.logout_rounded,
                               iconBg: const Color(0xFFFFF0F0),
                               iconColor: const Color(0xFFD32F2F),
-                              title: 'Sign Out / Logout',
+                              title: AppLanguage.t('logout'),
                               onTap: () => _logout(context),
                             ),
                           ],
@@ -1061,7 +1062,7 @@ class _TutorHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Hi, $name',
+                '${AppLanguage.t('welcome')}, $name',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
@@ -1072,7 +1073,7 @@ class _TutorHeader extends StatelessWidget {
               ),
               const SizedBox(height: 3),
               Text(
-                'Ready to guide your students?',
+                AppLanguage.t('tutor_guide_desc'),
                 style: TextStyle(
                   color: context.textMuted,
                   fontSize: 13,
@@ -1312,7 +1313,7 @@ class _SectionHeader extends StatelessWidget {
             ),
           ),
         ),
-        TextButton(onPressed: onViewAll, child: const Text('View all')),
+        TextButton(onPressed: onViewAll, child: Text(AppLanguage.t('view_all'))),
       ],
     );
   }
@@ -1378,7 +1379,7 @@ class _TutorClassroomOverview extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Text(
-                'Classroom Stats • UTM Nexus',
+                AppLanguage.t('classroom_stats_title'),
                 style: TextStyle(
                   color: context.textDeep,
                   fontSize: 16,
@@ -1395,8 +1396,8 @@ class _TutorClassroomOverview extends StatelessWidget {
                   context,
                   icon: Icons.cloud_done_rounded,
                   iconColor: Colors.green,
-                  label: 'Server Status',
-                  value: 'Online',
+                  label: AppLanguage.t('server_status'),
+                  value: AppLanguage.t('online'),
                 ),
               ),
               Expanded(
@@ -1404,8 +1405,8 @@ class _TutorClassroomOverview extends StatelessWidget {
                   context,
                   icon: Icons.gpp_good_rounded,
                   iconColor: Colors.teal,
-                  label: 'Firestore DB',
-                  value: 'Secure',
+                  label: AppLanguage.t('firestore_db'),
+                  value: AppLanguage.t('secure'),
                 ),
               ),
               Expanded(
@@ -1413,7 +1414,7 @@ class _TutorClassroomOverview extends StatelessWidget {
                   context,
                   icon: Icons.code_rounded,
                   iconColor: Colors.blue,
-                  label: 'App Version',
+                  label: AppLanguage.t('app_version'),
                   value: 'v1.2.0',
                 ),
               ),
@@ -1462,10 +1463,10 @@ class _TutorChecklistPanel extends StatefulWidget {
 
 class _TutorChecklistPanelState extends State<_TutorChecklistPanel> {
   final List<Map<String, dynamic>> _tasks = [
-    {'title': 'Publish new vocabulary unit', 'done': false},
-    {'title': 'Broadcast weekly test reminder', 'done': true},
-    {'title': 'Review student forum submissions', 'done': false},
-    {'title': 'Audit course badges configuration', 'done': false},
+    {'title': 'task_publish_vocab', 'done': false},
+    {'title': 'task_broadcast_reminder', 'done': true},
+    {'title': 'task_review_forum', 'done': false},
+    {'title': 'task_audit_badges', 'done': false},
   ];
 
   @override
@@ -1499,7 +1500,7 @@ class _TutorChecklistPanelState extends State<_TutorChecklistPanel> {
               ),
               const SizedBox(width: 10),
               Text(
-                'Weekly Teaching Tasks',
+                AppLanguage.t('weekly_teaching_tasks'),
                 style: TextStyle(
                   color: context.textDeep,
                   fontSize: 16,
@@ -1518,7 +1519,7 @@ class _TutorChecklistPanelState extends State<_TutorChecklistPanel> {
               return CheckboxListTile(
                 contentPadding: EdgeInsets.zero,
                 title: Text(
-                  task['title']!,
+                  AppLanguage.t(task['title']!),
                   style: TextStyle(
                     color: task['done'] ? context.textMuted : context.textDeep,
                     fontSize: 13,

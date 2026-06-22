@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:mandarinmate/utils/app_theme.dart';
 import 'tutor_create_flashcards_page.dart';
 import 'tutor_edit_flashcards_page.dart';
+import 'package:mandarinmate/utils/app_language.dart';
 
 class TutorManageFlashcardsPage extends StatefulWidget {
   const TutorManageFlashcardsPage({super.key});
@@ -25,7 +26,7 @@ class _TutorManageFlashcardsPageState extends State<TutorManageFlashcardsPage> {
       appBar: AppBar(
         backgroundColor: _orange,
         foregroundColor: Colors.white,
-        title: const Text('Manage Flashcards'),
+        title: Text(AppLanguage.t('manage_flashcards')),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -40,7 +41,7 @@ class _TutorManageFlashcardsPageState extends State<TutorManageFlashcardsPage> {
         child: const Icon(Icons.add),
       ),
       body: user == null
-          ? const Center(child: Text('Please log in to manage flashcards.'))
+          ? Center(child: Text(AppLanguage.t('tutor_login_manage_flashcards')))
           : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               stream: FirebaseFirestore.instance
                   .collection('flashcard_levels')
@@ -52,7 +53,7 @@ class _TutorManageFlashcardsPageState extends State<TutorManageFlashcardsPage> {
                 }
 
                 if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
+                  return Center(child: Text('${AppLanguage.t('action_failed')}: ${snapshot.error}'));
                 }
 
                 final docs = snapshot.data?.docs ?? const [];
@@ -66,10 +67,10 @@ class _TutorManageFlashcardsPageState extends State<TutorManageFlashcardsPage> {
                   });
 
                 if (sortedDocs.isEmpty) {
-                  return const Center(
+                  return Center(
                     child: Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Text('No flashcard sets created yet. Tap + to add one.'),
+                      padding: const EdgeInsets.all(16),
+                      child: Text(AppLanguage.t('no_flashcards_created')),
                     ),
                   );
                 }
@@ -82,7 +83,7 @@ class _TutorManageFlashcardsPageState extends State<TutorManageFlashcardsPage> {
                     final doc = sortedDocs[index];
                     final data = doc.data();
                     final levelNumber = data['levelNumber'] ?? 0;
-                    final title = data['title'] ?? 'Untitled Level';
+                    final title = data['title'] ?? AppLanguage.t('untitled_level');
                     final description = data['description'] ?? '';
                     final docId = doc.id;
 
@@ -117,7 +118,7 @@ class _TutorManageFlashcardsPageState extends State<TutorManageFlashcardsPage> {
                                               borderRadius: BorderRadius.circular(8),
                                             ),
                                             child: Text(
-                                              'Level $levelNumber',
+                                              '${AppLanguage.t('level')} $levelNumber',
                                               style: const TextStyle(
                                                 color: _orange,
                                                 fontWeight: FontWeight.w700,
@@ -175,23 +176,23 @@ class _TutorManageFlashcardsPageState extends State<TutorManageFlashcardsPage> {
                                     }
                                   },
                                   itemBuilder: (BuildContext context) => [
-                                    const PopupMenuItem<String>(
+                                    PopupMenuItem<String>(
                                       value: 'edit',
                                       child: Row(
                                         children: [
-                                          Icon(Icons.edit, size: 18),
-                                          SizedBox(width: 8),
-                                          Text('Edit'),
+                                          const Icon(Icons.edit, size: 18),
+                                          const SizedBox(width: 8),
+                                          Text(AppLanguage.t('edit')),
                                         ],
                                       ),
                                     ),
-                                    const PopupMenuItem<String>(
+                                    PopupMenuItem<String>(
                                       value: 'delete',
                                       child: Row(
                                         children: [
-                                          Icon(Icons.delete, size: 18, color: Colors.red),
-                                          SizedBox(width: 8),
-                                          Text('Delete', style: TextStyle(color: Colors.red)),
+                                          const Icon(Icons.delete, size: 18, color: Colors.red),
+                                          const SizedBox(width: 8),
+                                          Text(AppLanguage.t('delete'), style: const TextStyle(color: Colors.red)),
                                         ],
                                       ),
                                     ),
@@ -225,11 +226,11 @@ class _TutorManageFlashcardsPageState extends State<TutorManageFlashcardsPage> {
                 ListTile(
                   leading: const Icon(Icons.add_circle, color: _orange),
                   title: Text(
-                    'Add New Flashcard Set',
+                    AppLanguage.t('add_new_flashcard_set'),
                     style: TextStyle(color: context.textDeep),
                   ),
                   subtitle: Text(
-                    'Create a new flashcard set for a level',
+                    AppLanguage.t('create_set_desc'),
                     style: TextStyle(color: context.textMuted),
                   ),
                   onTap: () {
@@ -255,15 +256,15 @@ class _TutorManageFlashcardsPageState extends State<TutorManageFlashcardsPage> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: context.cardBg,
-        title: Text('Delete Flashcard Set', style: TextStyle(color: context.textDeep)),
+        title: Text(AppLanguage.t('delete_flashcard_set'), style: TextStyle(color: context.textDeep)),
         content: Text(
-          'Are you sure you want to delete "$title"? All cards will be deleted.',
+          AppLanguage.t('delete_flashcard_set_confirm'),
           style: TextStyle(color: context.textMuted),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+            child: Text(AppLanguage.t('cancel')),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -296,19 +297,19 @@ class _TutorManageFlashcardsPageState extends State<TutorManageFlashcardsPage> {
                 if (mounted) {
                   Navigator.pop(dialogContext);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Flashcard set deleted.')),
+                    SnackBar(content: Text(AppLanguage.t('flashcard_set_deleted'))),
                   );
                 }
               } catch (e) {
                 if (mounted) {
                   Navigator.pop(dialogContext);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $e')),
+                    SnackBar(content: Text('${AppLanguage.t('action_failed')}: $e')),
                   );
                 }
               }
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+            child: Text(AppLanguage.t('delete'), style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
