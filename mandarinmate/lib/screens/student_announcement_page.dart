@@ -132,11 +132,11 @@ class StudentAnnouncementPage extends StatelessWidget {
                   color: context.cardBg,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: context.borderTheme),
-                  boxShadow: const [
+                  boxShadow: [
                     BoxShadow(
-                      color: Color(0x0A111827),
+                      color: context.isDarkMode ? Colors.black38 : const Color(0x0A111827),
                       blurRadius: 12,
-                      offset: Offset(0, 6),
+                      offset: const Offset(0, 6),
                     ),
                   ],
                 ),
@@ -356,8 +356,8 @@ class StudentAnnouncementPage extends StatelessWidget {
                       height: 1.5,
                       fontWeight: FontWeight.w500,
                     ),
-                    const TextStyle(
-                      color: Colors.blue,
+                    TextStyle(
+                      color: context.isDarkMode ? Colors.blue.shade300 : Colors.blue,
                       fontSize: 15,
                       height: 1.5,
                       fontWeight: FontWeight.bold,

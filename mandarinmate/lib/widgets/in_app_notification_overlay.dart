@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mandarinmate/services/notification_service.dart';
+import 'package:mandarinmate/utils/app_theme.dart';
 
 class InAppNotificationOverlay extends StatefulWidget {
   final String title;
@@ -226,11 +227,11 @@ class _InAppNotificationOverlayState extends State<InAppNotificationOverlay>
             color: Colors.transparent,
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.cardBg,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
+                    color: Colors.black.withValues(alpha: context.isDarkMode ? 0.3 : 0.08),
                     blurRadius: 16,
                     offset: const Offset(0, 8),
                   ),
@@ -241,7 +242,7 @@ class _InAppNotificationOverlayState extends State<InAppNotificationOverlay>
                   ),
                 ],
                 border: Border.all(
-                  color: iconColor.withValues(alpha: 0.15),
+                  color: iconColor.withValues(alpha: context.isDarkMode ? 0.3 : 0.15),
                   width: 1.5,
                 ),
               ),
@@ -276,10 +277,10 @@ class _InAppNotificationOverlayState extends State<InAppNotificationOverlay>
                                 widget.title,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.w900,
                                   fontSize: 14,
-                                  color: Color(0xFF1C2433),
+                                  color: context.textDeep,
                                 ),
                               ),
                               const SizedBox(height: 3),
@@ -289,7 +290,7 @@ class _InAppNotificationOverlayState extends State<InAppNotificationOverlay>
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Colors.grey.shade600,
+                                  color: context.textMuted,
                                   height: 1.3,
                                 ),
                               ),
@@ -297,7 +298,11 @@ class _InAppNotificationOverlayState extends State<InAppNotificationOverlay>
                           ),
                         ),
                         IconButton(
-                          icon: Icon(Icons.close_rounded, color: Colors.grey.shade400, size: 20),
+                          icon: Icon(
+                            Icons.close_rounded,
+                            color: context.isDarkMode ? Colors.white54 : Colors.grey.shade400,
+                            size: 20,
+                          ),
                           onPressed: _dismiss,
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),

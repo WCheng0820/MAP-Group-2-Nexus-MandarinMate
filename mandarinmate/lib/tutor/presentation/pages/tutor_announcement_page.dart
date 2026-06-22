@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mandarinmate/screens/announcement_create_edit_page.dart';
 import 'package:mandarinmate/utils/linkify_util.dart';
+import 'package:mandarinmate/utils/app_theme.dart';
 
 class TutorAnnouncementPage extends StatefulWidget {
   const TutorAnnouncementPage({super.key});
@@ -19,11 +20,16 @@ class _TutorAnnouncementPageState extends State<TutorAnnouncementPage> {
     final user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6FBF8),
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
-        backgroundColor: _green,
-        foregroundColor: Colors.white,
-        title: const Text('Announcements'),
+        backgroundColor: context.isDarkMode ? context.cardBg : _green,
+        foregroundColor: context.isDarkMode ? context.textDeep : Colors.white,
+        title: Text(
+          'Announcements',
+          style: TextStyle(
+            color: context.isDarkMode ? context.textDeep : Colors.white,
+          ),
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
@@ -37,8 +43,8 @@ class _TutorAnnouncementPageState extends State<TutorAnnouncementPage> {
             ),
           );
         },
-        backgroundColor: _green,
-        foregroundColor: Colors.white,
+        backgroundColor: context.isDarkMode ? const Color(0xFF34D399) : _green,
+        foregroundColor: context.isDarkMode ? Colors.black : Colors.white,
         icon: const Icon(Icons.add_rounded),
         label: const Text('Create Announcement'),
       ),
@@ -87,10 +93,10 @@ class _TutorAnnouncementPageState extends State<TutorAnnouncementPage> {
 
                     return Card(
                       elevation: 0,
-                      color: Colors.white,
+                      color: context.cardBg,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
-                        side: BorderSide(color: Colors.grey.shade200),
+                        side: BorderSide(color: context.borderTheme),
                       ),
                       child: Padding(
                         padding: const EdgeInsets.all(16),
@@ -102,16 +108,17 @@ class _TutorAnnouncementPageState extends State<TutorAnnouncementPage> {
                                 Expanded(
                                   child: Text(
                                     title,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w700,
+                                      color: context.textDeep,
                                     ),
                                   ),
                                 ),
                                 if (isAuthor) ...[
                                   IconButton(
                                     icon: const Icon(Icons.edit_outlined),
-                                    color: Colors.blue.shade600,
+                                    color: context.isDarkMode ? Colors.blue.shade300 : Colors.blue.shade600,
                                     onPressed: () {
                                       Navigator.push(
                                         context,
@@ -129,7 +136,7 @@ class _TutorAnnouncementPageState extends State<TutorAnnouncementPage> {
                                   ),
                                   IconButton(
                                     icon: const Icon(Icons.delete_outline),
-                                    color: Colors.red.shade400,
+                                    color: context.isDarkMode ? Colors.red.shade300 : Colors.red.shade400,
                                     onPressed: () => _confirmDeleteAnnouncement(
                                       context,
                                       announcementDoc.id,
@@ -143,12 +150,12 @@ class _TutorAnnouncementPageState extends State<TutorAnnouncementPage> {
                             buildLinkifiableText(
                               body,
                               TextStyle(
-                                color: Colors.grey.shade700,
+                                color: context.textMuted,
                                 fontSize: 14,
                                 height: 1.4,
                               ),
-                              const TextStyle(
-                                color: Colors.blue,
+                              TextStyle(
+                                color: context.isDarkMode ? Colors.blue.shade300 : Colors.blue,
                                 fontWeight: FontWeight.w600,
                                 decoration: TextDecoration.underline,
                               ),
@@ -159,7 +166,7 @@ class _TutorAnnouncementPageState extends State<TutorAnnouncementPage> {
                                 '${createdAt.day.toString().padLeft(2, '0')}/${createdAt.month.toString().padLeft(2, '0')}/${createdAt.year} ${createdAt.hour.toString().padLeft(2, '0')}:${createdAt.minute.toString().padLeft(2, '0')}',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Colors.grey.shade500,
+                                  color: context.isDarkMode ? Colors.white30 : Colors.grey.shade500,
                                 ),
                               ),
                             ],
@@ -178,8 +185,15 @@ class _TutorAnnouncementPageState extends State<TutorAnnouncementPage> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Announcement'),
-        content: Text('Are you sure you want to delete "$title"?'),
+        backgroundColor: dialogContext.cardBg,
+        title: Text(
+          'Delete Announcement',
+          style: TextStyle(color: dialogContext.textDeep),
+        ),
+        content: Text(
+          'Are you sure you want to delete "$title"?',
+          style: TextStyle(color: dialogContext.textMuted),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),

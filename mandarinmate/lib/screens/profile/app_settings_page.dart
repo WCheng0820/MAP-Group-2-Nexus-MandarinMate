@@ -42,6 +42,13 @@ class _AppSettingsPageState extends State<AppSettingsPage> {
   bool _pinyinInCreator = true;
   bool _weeklyClassReport = true;
 
+  // Admin specific settings
+  bool _tutorAlerts = true;
+  bool _moderationAlerts = true;
+  bool _aiModeration = true;
+  bool _maintenanceMode = false;
+  bool _developerMode = false;
+
   bool _darkMode = false;
   String _language = 'English';
 
@@ -82,6 +89,12 @@ class _AppSettingsPageState extends State<AppSettingsPage> {
         _autoSaveDrafts = prefs.getBool('auto_save_drafts') ?? true;
         _pinyinInCreator = prefs.getBool('pinyin_in_creator') ?? true;
         _weeklyClassReport = prefs.getBool('weekly_class_report') ?? true;
+
+        _tutorAlerts = prefs.getBool('admin_tutor_alerts') ?? true;
+        _moderationAlerts = prefs.getBool('admin_moderation_alerts') ?? true;
+        _aiModeration = prefs.getBool('admin_ai_moderation') ?? true;
+        _maintenanceMode = prefs.getBool('admin_maintenance_mode') ?? false;
+        _developerMode = prefs.getBool('admin_developer_mode') ?? false;
 
         _darkMode = prefs.getBool('dark_mode') ?? false;
         _language = prefs.getString('language') ?? 'English';
@@ -452,7 +465,9 @@ class _AppSettingsPageState extends State<AppSettingsPage> {
                             Text(
                               widget.role == 'student'
                                   ? '🎓 Student · Level $_userLevel'
-                                  : '🏫 Educator · Nexus Mandarin Club',
+                                  : widget.role == 'admin'
+                                      ? '👑 Administrator · System Control'
+                                      : '🏫 Educator · Nexus Mandarin Club',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
@@ -489,167 +504,248 @@ class _AppSettingsPageState extends State<AppSettingsPage> {
 
                 // NOTIFICATIONS Section
                 _buildSectionHeader(AppLanguage.t('sec_notifications')),
-                _buildCardGroup([
-                  _buildSwitchTile(
-                    icon: Icons.notifications_rounded,
-                    iconColor: Colors.pink,
-                    bgColor: Colors.pink.shade50,
-                    title: AppLanguage.t('push_notifications'),
-                    subtitle: AppLanguage.t('send_push_updates'),
-                    value: _pushNotifications,
-                    onChanged: (val) {
-                      setState(() => _pushNotifications = val);
-                      _saveSettingBool('push_notifications', val);
-                    },
-                  ),
-                  _buildSwitchTile(
-                    icon: Icons.alarm_rounded,
-                    iconColor: Colors.orange.shade700,
-                    bgColor: Colors.orange.shade50,
-                    title: AppLanguage.t('daily_reminder'),
-                    subtitle: AppLanguage.t('remind_study_daily'),
-                    value: _dailyReminder,
-                    onChanged: (val) {
-                      setState(() => _dailyReminder = val);
-                      _saveSettingBool('daily_reminder', val);
-                    },
-                  ),
-                  _buildSwitchTile(
-                    icon: Icons.flash_on_rounded,
-                    iconColor: Colors.red.shade700,
-                    bgColor: Colors.red.shade50,
-                    title: AppLanguage.t('streak_alert'),
-                    subtitle: AppLanguage.t('alert_streak_broken'),
-                    value: _streakAlert,
-                    onChanged: (val) {
-                      setState(() => _streakAlert = val);
-                      _saveSettingBool('streak_alert', val);
-                    },
-                  ),
-                  _buildSwitchTile(
-                    icon: Icons.emoji_events_rounded,
-                    iconColor: Colors.purple.shade700,
-                    bgColor: Colors.purple.shade50,
-                    title: AppLanguage.t('leaderboard_updates'),
-                    subtitle: AppLanguage.t('notify_rank_updates'),
-                    value: _leaderboardUpdates,
-                    onChanged: (val) {
-                      setState(() => _leaderboardUpdates = val);
-                      _saveSettingBool('leaderboard_updates', val);
-                    },
-                  ),
-                ]),
-                const SizedBox(height: 20),
-
-                // LEARNING / TEACHING Section
-                _buildSectionHeader(widget.role == 'student' ? AppLanguage.t('sec_learning') : AppLanguage.t('sec_teaching')),
-                _buildCardGroup(widget.role == 'student'
+                _buildCardGroup(widget.role == 'admin'
                     ? [
                         _buildSwitchTile(
-                          icon: Icons.volume_up_rounded,
-                          iconColor: Colors.blue.shade700,
-                          bgColor: Colors.blue.shade50,
-                          title: AppLanguage.t('sound_effects'),
-                          subtitle: AppLanguage.t('audio_cues_exercises'),
-                          value: _soundEffects,
-                          onChanged: (val) {
-                            setState(() => _soundEffects = val);
-                            _saveSettingBool('sound_effects', val);
-                          },
-                        ),
-                        _buildSwitchTile(
-                          icon: Icons.language_rounded,
-                          iconColor: Colors.green.shade700,
-                          bgColor: Colors.green.shade50,
-                          title: AppLanguage.t('show_chinese_chars'),
-                          subtitle: AppLanguage.t('show_chars_in_cards'),
-                          value: _showChineseCharacters,
-                          onChanged: (val) {
-                            setState(() => _showChineseCharacters = val);
-                            _saveSettingBool('show_chinese_characters', val);
-                          },
-                        ),
-                        _buildSwitchTile(
-                          icon: Icons.abc_rounded,
-                          iconColor: Colors.deepPurple.shade700,
-                          bgColor: Colors.deepPurple.shade50,
-                          title: AppLanguage.t('show_pinyin'),
-                          subtitle: AppLanguage.t('show_pronunciation_guides'),
-                          value: _showPinyin,
-                          onChanged: (val) {
-                            setState(() => _showPinyin = val);
-                            _saveSettingBool('show_pinyin', val);
-                          },
-                        ),
-                        _buildNavigationTile(
-                          icon: Icons.phone_android_rounded,
-                          iconColor: Colors.orange.shade700,
-                          bgColor: Colors.orange.shade50,
-                          title: AppLanguage.t('daily_goal'),
-                          subtitle: AppLanguage.t('daily_goal_sub'),
-                          valueText: '$_dailyGoalXp XP',
-                          onTap: _showDailyGoalDialog,
-                        ),
-                        _buildNavigationTile(
-                          icon: Icons.alarm_on_rounded,
-                          iconColor: Colors.pink.shade700,
+                          icon: Icons.notifications_rounded,
+                          iconColor: Colors.pink,
                           bgColor: Colors.pink.shade50,
-                          title: AppLanguage.t('reminder_time'),
-                          subtitle: AppLanguage.t('reminder_time_sub'),
-                          valueText: _formatTimeOfDay(_reminderTime),
-                          onTap: _selectReminderTime,
+                          title: AppLanguage.t('push_notifications'),
+                          subtitle: AppLanguage.t('send_push_updates'),
+                          value: _pushNotifications,
+                          onChanged: (val) {
+                            setState(() => _pushNotifications = val);
+                            _saveSettingBool('push_notifications', val);
+                          },
                         ),
                       ]
                     : [
                         _buildSwitchTile(
-                          icon: Icons.volume_up_rounded,
-                          iconColor: Colors.blue.shade700,
-                          bgColor: Colors.blue.shade50,
-                          title: AppLanguage.t('sound_effects'),
-                          subtitle: AppLanguage.t('audio_cues_exercises'),
-                          value: _soundEffects,
+                          icon: Icons.notifications_rounded,
+                          iconColor: Colors.pink,
+                          bgColor: Colors.pink.shade50,
+                          title: AppLanguage.t('push_notifications'),
+                          subtitle: AppLanguage.t('send_push_updates'),
+                          value: _pushNotifications,
                           onChanged: (val) {
-                            setState(() => _soundEffects = val);
-                            _saveSettingBool('sound_effects', val);
+                            setState(() => _pushNotifications = val);
+                            _saveSettingBool('push_notifications', val);
                           },
                         ),
                         _buildSwitchTile(
-                          icon: Icons.save_rounded,
-                          iconColor: Colors.teal.shade700,
-                          bgColor: Colors.teal.shade50,
-                          title: AppLanguage.t('tutor_auto_save'),
-                          subtitle: AppLanguage.t('tutor_auto_save_sub'),
-                          value: _autoSaveDrafts,
+                          icon: Icons.alarm_rounded,
+                          iconColor: Colors.orange.shade700,
+                          bgColor: Colors.orange.shade50,
+                          title: AppLanguage.t('daily_reminder'),
+                          subtitle: AppLanguage.t('remind_study_daily'),
+                          value: _dailyReminder,
                           onChanged: (val) {
-                            setState(() => _autoSaveDrafts = val);
-                            _saveSettingBool('auto_save_drafts', val);
+                            setState(() => _dailyReminder = val);
+                            _saveSettingBool('daily_reminder', val);
                           },
                         ),
                         _buildSwitchTile(
-                          icon: Icons.spellcheck_rounded,
+                          icon: Icons.flash_on_rounded,
+                          iconColor: Colors.red.shade700,
+                          bgColor: Colors.red.shade50,
+                          title: AppLanguage.t('streak_alert'),
+                          subtitle: AppLanguage.t('alert_streak_broken'),
+                          value: _streakAlert,
+                          onChanged: (val) {
+                            setState(() => _streakAlert = val);
+                            _saveSettingBool('streak_alert', val);
+                          },
+                        ),
+                        _buildSwitchTile(
+                          icon: Icons.emoji_events_rounded,
                           iconColor: Colors.purple.shade700,
                           bgColor: Colors.purple.shade50,
-                          title: AppLanguage.t('tutor_pinyin_creator'),
-                          subtitle: AppLanguage.t('tutor_pinyin_creator_sub'),
-                          value: _pinyinInCreator,
+                          title: AppLanguage.t('leaderboard_updates'),
+                          subtitle: AppLanguage.t('notify_rank_updates'),
+                          value: _leaderboardUpdates,
                           onChanged: (val) {
-                            setState(() => _pinyinInCreator = val);
-                            _saveSettingBool('pinyin_in_creator', val);
-                          },
-                        ),
-                        _buildSwitchTile(
-                          icon: Icons.bar_chart_rounded,
-                          iconColor: Colors.indigo.shade700,
-                          bgColor: Colors.indigo.shade50,
-                          title: AppLanguage.t('tutor_weekly_report'),
-                          subtitle: AppLanguage.t('tutor_weekly_report_sub'),
-                          value: _weeklyClassReport,
-                          onChanged: (val) {
-                            setState(() => _weeklyClassReport = val);
-                            _saveSettingBool('weekly_class_report', val);
+                            setState(() => _leaderboardUpdates = val);
+                            _saveSettingBool('leaderboard_updates', val);
                           },
                         ),
                       ]),
+                const SizedBox(height: 20),
+
+                // LEARNING / TEACHING / ADMIN Section
+                if (widget.role == 'admin') ...[
+                  _buildSectionHeader(AppLanguage.t('sec_admin_settings')),
+                  _buildCardGroup([
+                    _buildSwitchTile(
+                      icon: Icons.badge_rounded,
+                      iconColor: Colors.purple.shade700,
+                      bgColor: Colors.purple.shade50,
+                      title: AppLanguage.t('admin_tutor_alerts'),
+                      subtitle: AppLanguage.t('admin_tutor_alerts_sub'),
+                      value: _tutorAlerts,
+                      onChanged: (val) {
+                        setState(() => _tutorAlerts = val);
+                        _saveSettingBool('admin_tutor_alerts', val);
+                      },
+                    ),
+                    _buildSwitchTile(
+                      icon: Icons.report_problem_rounded,
+                      iconColor: Colors.red.shade700,
+                      bgColor: Colors.red.shade50,
+                      title: AppLanguage.t('admin_moderation_alerts'),
+                      subtitle: AppLanguage.t('admin_moderation_alerts_sub'),
+                      value: _moderationAlerts,
+                      onChanged: (val) {
+                        setState(() => _moderationAlerts = val);
+                        _saveSettingBool('admin_moderation_alerts', val);
+                      },
+                    ),
+                    _buildSwitchTile(
+                      icon: Icons.security_rounded,
+                      iconColor: Colors.blue.shade700,
+                      bgColor: Colors.blue.shade50,
+                      title: AppLanguage.t('admin_ai_moderation'),
+                      subtitle: AppLanguage.t('admin_ai_moderation_sub'),
+                      value: _aiModeration,
+                      onChanged: (val) {
+                        setState(() => _aiModeration = val);
+                        _saveSettingBool('admin_ai_moderation', val);
+                      },
+                    ),
+                    _buildSwitchTile(
+                      icon: Icons.build_rounded,
+                      iconColor: Colors.amber.shade800,
+                      bgColor: Colors.amber.shade50,
+                      title: AppLanguage.t('admin_maintenance_mode'),
+                      subtitle: AppLanguage.t('admin_maintenance_mode_sub'),
+                      value: _maintenanceMode,
+                      onChanged: (val) {
+                        setState(() => _maintenanceMode = val);
+                        _saveSettingBool('admin_maintenance_mode', val);
+                      },
+                    ),
+                    _buildSwitchTile(
+                      icon: Icons.developer_mode_rounded,
+                      iconColor: Colors.teal.shade700,
+                      bgColor: Colors.teal.shade50,
+                      title: AppLanguage.t('admin_developer_mode'),
+                      subtitle: AppLanguage.t('admin_developer_mode_sub'),
+                      value: _developerMode,
+                      onChanged: (val) {
+                        setState(() => _developerMode = val);
+                        _saveSettingBool('admin_developer_mode', val);
+                      },
+                    ),
+                  ]),
+                ] else ...[
+                  _buildSectionHeader(widget.role == 'student' ? AppLanguage.t('sec_learning') : AppLanguage.t('sec_teaching')),
+                  _buildCardGroup(widget.role == 'student'
+                      ? [
+                          _buildSwitchTile(
+                            icon: Icons.volume_up_rounded,
+                            iconColor: Colors.blue.shade700,
+                            bgColor: Colors.blue.shade50,
+                            title: AppLanguage.t('sound_effects'),
+                            subtitle: AppLanguage.t('audio_cues_exercises'),
+                            value: _soundEffects,
+                            onChanged: (val) {
+                              setState(() => _soundEffects = val);
+                              _saveSettingBool('sound_effects', val);
+                            },
+                          ),
+                          _buildSwitchTile(
+                            icon: Icons.language_rounded,
+                            iconColor: Colors.green.shade700,
+                            bgColor: Colors.green.shade50,
+                            title: AppLanguage.t('show_chinese_chars'),
+                            subtitle: AppLanguage.t('show_chars_in_cards'),
+                            value: _showChineseCharacters,
+                            onChanged: (val) {
+                              setState(() => _showChineseCharacters = val);
+                              _saveSettingBool('show_chinese_characters', val);
+                            },
+                          ),
+                          _buildSwitchTile(
+                            icon: Icons.abc_rounded,
+                            iconColor: Colors.deepPurple.shade700,
+                            bgColor: Colors.deepPurple.shade50,
+                            title: AppLanguage.t('show_pinyin'),
+                            subtitle: AppLanguage.t('show_pronunciation_guides'),
+                            value: _showPinyin,
+                            onChanged: (val) {
+                              setState(() => _showPinyin = val);
+                              _saveSettingBool('show_pinyin', val);
+                            },
+                          ),
+                          _buildNavigationTile(
+                            icon: Icons.phone_android_rounded,
+                            iconColor: Colors.orange.shade700,
+                            bgColor: Colors.orange.shade50,
+                            title: AppLanguage.t('daily_goal'),
+                            subtitle: AppLanguage.t('daily_goal_sub'),
+                            valueText: '$_dailyGoalXp XP',
+                            onTap: _showDailyGoalDialog,
+                          ),
+                          _buildNavigationTile(
+                            icon: Icons.alarm_on_rounded,
+                            iconColor: Colors.pink.shade700,
+                            bgColor: Colors.pink.shade50,
+                            title: AppLanguage.t('reminder_time'),
+                            subtitle: AppLanguage.t('reminder_time_sub'),
+                            valueText: _formatTimeOfDay(_reminderTime),
+                            onTap: _selectReminderTime,
+                          ),
+                        ]
+                      : [
+                          _buildSwitchTile(
+                            icon: Icons.volume_up_rounded,
+                            iconColor: Colors.blue.shade700,
+                            bgColor: Colors.blue.shade50,
+                            title: AppLanguage.t('sound_effects'),
+                            subtitle: AppLanguage.t('audio_cues_exercises'),
+                            value: _soundEffects,
+                            onChanged: (val) {
+                              setState(() => _soundEffects = val);
+                              _saveSettingBool('sound_effects', val);
+                            },
+                          ),
+                          _buildSwitchTile(
+                            icon: Icons.save_rounded,
+                            iconColor: Colors.teal.shade700,
+                            bgColor: Colors.teal.shade50,
+                            title: AppLanguage.t('tutor_auto_save'),
+                            subtitle: AppLanguage.t('tutor_auto_save_sub'),
+                            value: _autoSaveDrafts,
+                            onChanged: (val) {
+                              setState(() => _autoSaveDrafts = val);
+                              _saveSettingBool('auto_save_drafts', val);
+                            },
+                          ),
+                          _buildSwitchTile(
+                            icon: Icons.spellcheck_rounded,
+                            iconColor: Colors.purple.shade700,
+                            bgColor: Colors.purple.shade50,
+                            title: AppLanguage.t('tutor_pinyin_creator'),
+                            subtitle: AppLanguage.t('tutor_pinyin_creator_sub'),
+                            value: _pinyinInCreator,
+                            onChanged: (val) {
+                              setState(() => _pinyinInCreator = val);
+                              _saveSettingBool('pinyin_in_creator', val);
+                            },
+                          ),
+                          _buildSwitchTile(
+                            icon: Icons.bar_chart_rounded,
+                            iconColor: Colors.indigo.shade700,
+                            bgColor: Colors.indigo.shade50,
+                            title: AppLanguage.t('tutor_weekly_report'),
+                            subtitle: AppLanguage.t('tutor_weekly_report_sub'),
+                            value: _weeklyClassReport,
+                            onChanged: (val) {
+                              setState(() => _weeklyClassReport = val);
+                              _saveSettingBool('weekly_class_report', val);
+                            },
+                          ),
+                        ]),
+                ],
                 const SizedBox(height: 20),
 
                 // APPEARANCE Section

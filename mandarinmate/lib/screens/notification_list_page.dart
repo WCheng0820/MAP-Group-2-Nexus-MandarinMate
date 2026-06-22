@@ -10,6 +10,7 @@ import 'package:mandarinmate/screens/student_announcement_page.dart';
 import 'package:mandarinmate/tutor/presentation/pages/tutor_announcement_page.dart';
 import 'package:mandarinmate/dashboard/admin_users_page.dart';
 import 'package:mandarinmate/screens/main_screen.dart';
+import 'package:mandarinmate/utils/app_theme.dart';
 
 class NotificationListPage extends StatefulWidget {
   final String role; // 'student', 'tutor', or 'admin'
@@ -244,19 +245,46 @@ class _NotificationListPageState extends State<NotificationListPage> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Notifications',
-          style: TextStyle(fontWeight: FontWeight.w900),
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            color: context.textDeep,
+          ),
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1C2433),
+        backgroundColor: context.cardBg,
+        foregroundColor: context.textDeep,
         elevation: 0,
         centerTitle: true,
-        shape: const Border(
-          bottom: BorderSide(color: Color(0xFFECEFF1), width: 1),
+        shape: Border(
+          bottom: BorderSide(color: context.borderTheme, width: 1),
         ),
+        actions: [
+          if (widget.role != 'admin')
+            IconButton(
+              icon: const Icon(Icons.campaign_rounded),
+              tooltip: 'Announcements',
+              onPressed: () {
+                if (widget.role == 'student') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const StudentAnnouncementPage(),
+                    ),
+                  );
+                } else if (widget.role == 'tutor') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const TutorAnnouncementPage(),
+                    ),
+                  );
+                }
+              },
+            ),
+        ],
       ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
         stream: notifStream,
@@ -281,7 +309,7 @@ class _NotificationListPageState extends State<NotificationListPage> {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: Colors.grey.shade600,
+                          color: context.textMuted,
                         ),
                       ),
                       TextButton.icon(
@@ -318,12 +346,12 @@ class _NotificationListPageState extends State<NotificationListPage> {
                               ),
                             ),
                             const SizedBox(height: 16),
-                            const Text(
+                            Text(
                               'No Notifications Yet',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF1C2433),
+                                color: context.textDeep,
                               ),
                             ),
                             const SizedBox(height: 6),
@@ -331,7 +359,7 @@ class _NotificationListPageState extends State<NotificationListPage> {
                               'We\'ll notify you when something updates!',
                               style: TextStyle(
                                 fontSize: 13,
-                                color: Colors.grey.shade500,
+                                color: context.textMuted,
                               ),
                             ),
                           ],
@@ -368,8 +396,15 @@ class _NotificationListPageState extends State<NotificationListPage> {
                               return await showDialog<bool>(
                                 context: context,
                                 builder: (dialogContext) => AlertDialog(
-                                  title: const Text('Delete Notification'),
-                                  content: const Text('Are you sure you want to delete this notification?'),
+                                  backgroundColor: dialogContext.cardBg,
+                                  title: Text(
+                                    'Delete Notification',
+                                    style: TextStyle(color: dialogContext.textDeep),
+                                  ),
+                                  content: Text(
+                                    'Are you sure you want to delete this notification?',
+                                    style: TextStyle(color: dialogContext.textMuted),
+                                  ),
                                   actions: [
                                     TextButton(
                                       onPressed: () => Navigator.pop(dialogContext, false),
@@ -396,10 +431,12 @@ class _NotificationListPageState extends State<NotificationListPage> {
                               child: Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: context.cardBg,
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                    color: isRead ? Colors.grey.shade200 : widget.themeColor.withValues(alpha: 0.3),
+                                    color: isRead
+                                        ? (context.isDarkMode ? Colors.grey.shade800 : Colors.grey.shade200)
+                                        : widget.themeColor.withValues(alpha: 0.3),
                                     width: isRead ? 1 : 1.5,
                                   ),
                                   boxShadow: isRead
@@ -440,7 +477,7 @@ class _NotificationListPageState extends State<NotificationListPage> {
                                                   style: TextStyle(
                                                     fontSize: 14,
                                                     fontWeight: isRead ? FontWeight.bold : FontWeight.w900,
-                                                    color: const Color(0xFF1C2433),
+                                                    color: context.textDeep,
                                                   ),
                                                 ),
                                               ),
@@ -460,7 +497,7 @@ class _NotificationListPageState extends State<NotificationListPage> {
                                             body,
                                             style: TextStyle(
                                               fontSize: 13,
-                                              color: Colors.grey.shade600,
+                                              color: context.textMuted,
                                               height: 1.35,
                                             ),
                                           ),
@@ -469,7 +506,7 @@ class _NotificationListPageState extends State<NotificationListPage> {
                                             DateFormat('MMM dd, hh:mm a').format(createdAt),
                                             style: TextStyle(
                                               fontSize: 11,
-                                              color: Colors.grey.shade400,
+                                              color: context.isDarkMode ? Colors.white30 : Colors.grey.shade400,
                                               fontWeight: FontWeight.w500,
                                             ),
                                           ),

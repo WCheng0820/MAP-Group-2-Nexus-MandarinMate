@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mandarinmate/services/notification_service.dart';
+import 'package:mandarinmate/utils/app_theme.dart';
 
 
 class AnnouncementCreateEditPage extends StatefulWidget {
@@ -148,13 +149,24 @@ class _AnnouncementCreateEditPageState extends State<AnnouncementCreateEditPage>
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.docId != null;
+    final activeThemeColor = context.isDarkMode
+        ? (widget.role == 'tutor' ? const Color(0xFF34D399) : const Color(0xFF8B5CF6))
+        : widget.themeColor;
+    final activeIndicatorColor = context.isDarkMode
+        ? (widget.role == 'tutor' ? const Color(0xFF34D399) : const Color(0xFF8B5CF6))
+        : widget.themeColor;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F9FB),
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
-        backgroundColor: widget.themeColor,
-        foregroundColor: Colors.white,
-        title: Text(isEditing ? 'Edit Announcement' : 'New Announcement'),
+        backgroundColor: context.isDarkMode ? context.cardBg : widget.themeColor,
+        foregroundColor: context.isDarkMode ? context.textDeep : Colors.white,
+        title: Text(
+          isEditing ? 'Edit Announcement' : 'New Announcement',
+          style: TextStyle(
+            color: context.isDarkMode ? context.textDeep : Colors.white,
+          ),
+        ),
         elevation: 0,
         actions: [
           if (!_isSaving)
@@ -167,7 +179,7 @@ class _AnnouncementCreateEditPageState extends State<AnnouncementCreateEditPage>
       ),
       body: _isSaving
           ? Center(
-              child: CircularProgressIndicator(color: widget.themeColor),
+              child: CircularProgressIndicator(color: activeIndicatorColor),
             )
           : SingleChildScrollView(
               padding: const EdgeInsets.all(20),
@@ -180,18 +192,19 @@ class _AnnouncementCreateEditPageState extends State<AnnouncementCreateEditPage>
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
-                        side: BorderSide(color: Colors.grey.shade200),
+                        side: BorderSide(color: context.borderTheme),
                       ),
-                      color: Colors.white,
+                      color: context.cardBg,
                       child: Padding(
                         padding: const EdgeInsets.all(16),
                         child: Column(
                           children: [
                             TextFormField(
                               controller: _titleController,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
+                                color: context.textDeep,
                               ),
                               validator: (value) {
                                 if ((value ?? '').trim().isEmpty) {
@@ -201,12 +214,15 @@ class _AnnouncementCreateEditPageState extends State<AnnouncementCreateEditPage>
                               },
                               decoration: InputDecoration(
                                 labelText: 'Title',
-                                labelStyle: TextStyle(color: Colors.grey.shade600),
+                                labelStyle: TextStyle(color: context.textMuted),
                                 border: UnderlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.grey.shade300),
+                                  borderSide: BorderSide(color: context.borderTheme),
+                                ),
+                                enabledBorder: UnderlineInputBorder(
+                                  borderSide: BorderSide(color: context.borderTheme),
                                 ),
                                 focusedBorder: UnderlineInputBorder(
-                                  borderSide: BorderSide(color: widget.themeColor),
+                                  borderSide: BorderSide(color: activeThemeColor),
                                 ),
                               ),
                             ),
@@ -215,7 +231,10 @@ class _AnnouncementCreateEditPageState extends State<AnnouncementCreateEditPage>
                               controller: _bodyController,
                               maxLines: 15,
                               minLines: 8,
-                              style: const TextStyle(fontSize: 15),
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: context.textDeep,
+                              ),
                               validator: (value) {
                                 if ((value ?? '').trim().isEmpty) {
                                   return 'Body cannot be empty';
@@ -224,15 +243,19 @@ class _AnnouncementCreateEditPageState extends State<AnnouncementCreateEditPage>
                               },
                               decoration: InputDecoration(
                                 labelText: 'Announcement Message',
-                                labelStyle: TextStyle(color: Colors.grey.shade600),
+                                labelStyle: TextStyle(color: context.textMuted),
                                 alignLabelWithHint: true,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: Colors.grey.shade300),
+                                  borderSide: BorderSide(color: context.borderTheme),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: context.borderTheme),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: widget.themeColor),
+                                  borderSide: BorderSide(color: activeThemeColor),
                                 ),
                               ),
                             ),
@@ -240,16 +263,25 @@ class _AnnouncementCreateEditPageState extends State<AnnouncementCreateEditPage>
                               const SizedBox(height: 20),
                               DropdownButtonFormField<String>(
                                 initialValue: _targetRole,
+                                dropdownColor: context.cardBg,
+                                style: TextStyle(
+                                  color: context.textDeep,
+                                  fontSize: 15,
+                                ),
                                 decoration: InputDecoration(
                                   labelText: 'Target Audience',
-                                  labelStyle: TextStyle(color: Colors.grey.shade600),
+                                  labelStyle: TextStyle(color: context.textMuted),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(color: Colors.grey.shade300),
+                                    borderSide: BorderSide(color: context.borderTheme),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(color: context.borderTheme),
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(color: widget.themeColor),
+                                    borderSide: BorderSide(color: activeThemeColor),
                                   ),
                                 ),
                                 items: const [
@@ -271,8 +303,10 @@ class _AnnouncementCreateEditPageState extends State<AnnouncementCreateEditPage>
                     const SizedBox(height: 24),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: widget.themeColor,
-                        foregroundColor: Colors.white,
+                        backgroundColor: activeThemeColor,
+                        foregroundColor: widget.role == 'tutor'
+                            ? (context.isDarkMode ? Colors.black : Colors.white)
+                            : Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),

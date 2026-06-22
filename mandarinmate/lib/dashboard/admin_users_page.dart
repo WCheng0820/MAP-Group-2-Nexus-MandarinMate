@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mandarinmate/models/user_model.dart';
+import 'package:mandarinmate/utils/app_theme.dart';
 
 class AdminUsersPage extends StatefulWidget {
   const AdminUsersPage({super.key});
@@ -17,7 +18,6 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
   final Set<String> _busyUserIds = <String>{};
 
   static const Color _primary = Color(0xFF6C3BFF);
-  static const Color _surface = Color(0xFFF6F3FF);
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +27,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
         .snapshots();
 
     return Scaffold(
-      backgroundColor: _surface,
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
         title: const Text(
           'Admin Users',
@@ -37,8 +37,8 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
             fontWeight: FontWeight.w900,
           ),
         ),
-        backgroundColor: _primary,
-        foregroundColor: Colors.white,
+        backgroundColor: context.isDarkMode ? context.cardBg : _primary,
+        foregroundColor: context.isDarkMode ? context.textDeep : Colors.white,
         automaticallyImplyLeading: false,
       ),
       body: Column(
@@ -50,14 +50,24 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                 TextField(
                   onChanged: (value) =>
                       setState(() => _query = value.trim().toLowerCase()),
+                  style: TextStyle(color: context.textDeep),
                   decoration: InputDecoration(
                     hintText: 'Search name or email',
-                    prefixIcon: const Icon(Icons.search_rounded),
+                    hintStyle: TextStyle(color: context.textMuted),
+                    prefixIcon: Icon(Icons.search_rounded, color: context.textMuted),
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: context.cardBg,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none,
+                      borderSide: BorderSide(color: context.borderTheme),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(color: context.borderTheme),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(color: context.isDarkMode ? Colors.purple.shade300 : _primary, width: 2),
                     ),
                   ),
                 ),
@@ -68,13 +78,16 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: context.cardBg,
                           borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: context.borderTheme),
                         ),
                         child: DropdownButton<String>(
                           value: _roleFilter,
                           isExpanded: true,
                           underline: const SizedBox.shrink(),
+                          dropdownColor: context.cardBg,
+                          style: TextStyle(color: context.textDeep, fontSize: 14, fontWeight: FontWeight.w600),
                           items: const [
                             DropdownMenuItem(value: 'all', child: Text('All')),
                             DropdownMenuItem(
@@ -103,13 +116,16 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: context.cardBg,
                           borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: context.borderTheme),
                         ),
                         child: DropdownButton<String>(
                           value: _statusFilter,
                           isExpanded: true,
                           underline: const SizedBox.shrink(),
+                          dropdownColor: context.cardBg,
+                          style: TextStyle(color: context.textDeep, fontSize: 14, fontWeight: FontWeight.w600),
                           items: const [
                             DropdownMenuItem(
                               value: 'all',
@@ -208,8 +224,9 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
 
                     return Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: context.cardBg,
                         borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: context.borderTheme),
                       ),
                       child: ListTile(
                         contentPadding: const EdgeInsets.symmetric(
@@ -228,6 +245,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                         ),
                         title: Text(
                           name,
+                          style: TextStyle(color: context.textDeep, fontWeight: FontWeight.bold),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -236,6 +254,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                           children: [
                             Text(
                               email,
+                              style: TextStyle(color: context.textMuted),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -311,6 +330,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
   ) async {
     final selected = await showModalBottomSheet<String>(
       context: context,
+      backgroundColor: context.cardBg,
       showDragHandle: true,
       builder: (sheetContext) {
         return SafeArea(
@@ -319,16 +339,16 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
+                Text(
                   'Change Role',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: context.textDeep),
                 ),
                 const SizedBox(height: 12),
                 for (final role in const ['student', 'tutor', 'admin'])
                   ListTile(
-                    title: Text(role.toUpperCase()),
+                    title: Text(role.toUpperCase(), style: TextStyle(color: context.textDeep, fontWeight: FontWeight.bold)),
                     trailing: role == currentRole
-                        ? const Icon(Icons.check_rounded)
+                        ? const Icon(Icons.check_rounded, color: _primary)
                         : null,
                     onTap: () => Navigator.pop(sheetContext, role),
                   ),
@@ -437,9 +457,11 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
         await showDialog<bool>(
           context: context,
           builder: (dialogContext) => AlertDialog(
-            title: const Text('Remove From List'),
+            backgroundColor: context.cardBg,
+            title: Text('Remove From List', style: TextStyle(color: context.textDeep)),
             content: Text(
               'Hide $userName from Manage Users? This will not delete the login account.',
+              style: TextStyle(color: context.textMuted),
             ),
             actions: [
               TextButton(

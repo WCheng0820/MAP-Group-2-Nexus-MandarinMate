@@ -1,27 +1,26 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:mandarinmate/utils/app_theme.dart';
 
 class AdminAnalyticsPage extends StatelessWidget {
   const AdminAnalyticsPage({super.key});
 
   static const Color _primary = Color(0xFF6C3BFF);
-  static const Color _surface = Color(0xFFF6F3FF);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _surface,
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
         title: const Text(
           'Admin Analytics',
           style: TextStyle(
-            color: Colors.white,
             fontSize: 24,
             fontWeight: FontWeight.w900,
           ),
         ),
-        backgroundColor: _primary,
-        foregroundColor: Colors.white,
+        backgroundColor: context.isDarkMode ? context.cardBg : _primary,
+        foregroundColor: context.isDarkMode ? context.textDeep : Colors.white,
         automaticallyImplyLeading: false,
       ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -119,24 +118,26 @@ class AdminAnalyticsPage extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: context.cardBg,
                           borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: context.borderTheme),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Top Student',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
+                                color: context.textDeep,
                               ),
                             ),
                             const SizedBox(height: 10),
                             if (topStudent == null)
-                              const Text('No student data.')
+                              Text('No student data.', style: TextStyle(color: context.textMuted))
                             else
-                              _topStudentTile(topStudent.data()),
+                              _topStudentTile(context, topStudent.data()),
                           ],
                         ),
                       ),
@@ -144,22 +145,24 @@ class AdminAnalyticsPage extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: context.cardBg,
                           borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: context.borderTheme),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Top 5 Student Leaderboard',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
+                                color: context.textDeep,
                               ),
                             ),
                             const SizedBox(height: 10),
                             if (top5.isEmpty)
-                              const Text('No leaderboard data.')
+                              Text('No leaderboard data.', style: TextStyle(color: context.textMuted))
                             else
                               ...top5.asMap().entries.map((entry) {
                                 final rank = entry.key + 1;
@@ -187,10 +190,11 @@ class AdminAnalyticsPage extends StatelessWidget {
                                       ),
                                     ),
                                   ),
-                                  title: Text(name),
+                                  title: Text(name, style: TextStyle(color: context.textDeep, fontWeight: FontWeight.w600)),
                                   trailing: Text(
                                     '$xp XP',
-                                    style: const TextStyle(
+                                    style: TextStyle(
+                                      color: context.textDeep,
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
@@ -210,7 +214,7 @@ class AdminAnalyticsPage extends StatelessWidget {
     );
   }
 
-  Widget _topStudentTile(Map<String, dynamic> data) {
+  Widget _topStudentTile(BuildContext context, Map<String, dynamic> data) {
     final name = (data['name'] ?? data['firstName'] ?? 'Student').toString();
     final email = (data['email'] ?? '').toString();
     final xp = _extractXp(data);
@@ -219,7 +223,7 @@ class AdminAnalyticsPage extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1ECFF),
+        color: context.isDarkMode ? const Color(0xFF2E1C4F) : const Color(0xFFF1ECFF),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -236,17 +240,20 @@ class AdminAnalyticsPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: const TextStyle(fontWeight: FontWeight.w700)),
+                Text(name, style: TextStyle(fontWeight: FontWeight.w700, color: context.textDeep)),
                 Text(
                   email,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: Colors.grey.shade700),
+                  style: TextStyle(color: context.textMuted),
                 ),
               ],
             ),
           ),
-          Text('Lv.$level  $xp XP'),
+          Text(
+            'Lv.$level  $xp XP',
+            style: TextStyle(color: context.textDeep, fontWeight: FontWeight.bold),
+          ),
         ],
       ),
     );
@@ -309,8 +316,9 @@ class _StatGrid extends StatelessWidget {
             return Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.cardBg,
                 borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: context.borderTheme),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -318,16 +326,16 @@ class _StatGrid extends StatelessWidget {
                 children: [
                   Text(
                     item.value,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF6C3BFF),
+                      color: context.isDarkMode ? Colors.purple.shade300 : AdminAnalyticsPage._primary,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     item.title,
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                    style: TextStyle(fontSize: 12, color: context.textMuted),
                   ),
                 ],
               ),

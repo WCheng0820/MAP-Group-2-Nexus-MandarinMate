@@ -450,7 +450,6 @@ class _HomeTabState extends State<_HomeTab> {
                           const SizedBox(height: 20),
                           _SectionHeader(
                             title: 'Starred Vocab & Phrases',
-                            onViewAll: () {},
                           ),
                           const SizedBox(height: 10),
                           _StarredItemsRow(starredItems: starredItems),
@@ -1409,10 +1408,10 @@ class _StudentActionTile extends StatelessWidget {
 }
 
 class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.title, required this.onViewAll});
+  const _SectionHeader({required this.title, this.onViewAll});
 
   final String title;
-  final VoidCallback onViewAll;
+  final VoidCallback? onViewAll;
 
   @override
   Widget build(BuildContext context) {
@@ -1428,7 +1427,8 @@ class _SectionHeader extends StatelessWidget {
             ),
           ),
         ),
-        TextButton(onPressed: onViewAll, child: const Text('View all')),
+        if (onViewAll != null)
+          TextButton(onPressed: onViewAll!, child: const Text('View all')),
       ],
     );
   }

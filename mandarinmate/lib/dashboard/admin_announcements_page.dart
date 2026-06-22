@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:mandarinmate/screens/announcement_create_edit_page.dart';
 import 'package:mandarinmate/utils/linkify_util.dart';
+import 'package:mandarinmate/utils/app_theme.dart';
 
 class AdminAnnouncementsPage extends StatefulWidget {
   const AdminAnnouncementsPage({super.key});
@@ -17,18 +18,18 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _surface,
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Admin Announcements',
           style: TextStyle(
-            color: Colors.white,
+            color: context.isDarkMode ? context.textDeep : Colors.white,
             fontSize: 24,
             fontWeight: FontWeight.w900,
           ),
         ),
-        backgroundColor: _primary,
-        foregroundColor: Colors.white,
+        backgroundColor: context.isDarkMode ? context.cardBg : _primary,
+        foregroundColor: context.isDarkMode ? context.textDeep : Colors.white,
         automaticallyImplyLeading: false,
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -43,8 +44,8 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
             ),
           );
         },
-        backgroundColor: _primary,
-        foregroundColor: Colors.white,
+        backgroundColor: context.isDarkMode ? const Color(0xFF8B5CF6) : _primary,
+        foregroundColor: context.isDarkMode ? Colors.black : Colors.white,
         icon: const Icon(Icons.add_rounded),
         label: const Text('New Announcement'),
       ),
@@ -87,8 +88,9 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
 
               return Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: context.cardBg,
                   borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: context.borderTheme),
                 ),
                 child: ListTile(
                   contentPadding: const EdgeInsets.symmetric(
@@ -97,7 +99,10 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
                   ),
                   title: Text(
                     title,
-                    style: const TextStyle(fontWeight: FontWeight.w700),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: context.textDeep,
+                    ),
                   ),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -106,11 +111,11 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
                       buildLinkifiableText(
                         body,
                         TextStyle(
-                          color: Colors.grey.shade700,
+                          color: context.textMuted,
                           fontSize: 14,
                         ),
-                        const TextStyle(
-                          color: _primary,
+                        TextStyle(
+                          color: context.isDarkMode ? Colors.blue.shade300 : _primary,
                           fontWeight: FontWeight.w600,
                           decoration: TextDecoration.underline,
                         ),
@@ -134,7 +139,7 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.edit_outlined),
-                        color: Colors.blue.shade600,
+                        color: context.isDarkMode ? Colors.blue.shade300 : Colors.blue.shade600,
                         onPressed: () {
                           Navigator.push(
                             context,
@@ -153,7 +158,7 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete_outline_rounded),
-                        color: Colors.red.shade400,
+                        color: context.isDarkMode ? Colors.red.shade300 : Colors.red.shade400,
                         onPressed: () => _confirmDeleteAnnouncement(context, doc.id, title),
                       ),
                     ],
@@ -171,8 +176,15 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Announcement'),
-        content: Text('Are you sure you want to delete "$title"?'),
+        backgroundColor: dialogContext.cardBg,
+        title: Text(
+          'Delete Announcement',
+          style: TextStyle(color: dialogContext.textDeep),
+        ),
+        content: Text(
+          'Are you sure you want to delete "$title"?',
+          style: TextStyle(color: dialogContext.textMuted),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
@@ -228,16 +240,18 @@ class _Badge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final badgeColor = context.isDarkMode ? const Color(0xFF9D7CFF) : const Color(0xFF6C3BFF);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFF6C3BFF).withValues(alpha: 0.12),
+        color: badgeColor.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         text,
-        style: const TextStyle(
-          color: Color(0xFF6C3BFF),
+        style: TextStyle(
+          color: badgeColor,
           fontSize: 11,
           fontWeight: FontWeight.w700,
         ),

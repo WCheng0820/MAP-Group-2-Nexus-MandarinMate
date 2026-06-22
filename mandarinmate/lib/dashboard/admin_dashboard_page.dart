@@ -257,9 +257,11 @@ class _AdminPageFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFFFCF9FF), Color(0xFFF3EDFF)],
+          colors: context.isDarkMode
+              ? [const Color(0xFF190B22), const Color(0xFF100416)]
+              : [const Color(0xFFFCF9FF), const Color(0xFFF3EDFF)],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
@@ -668,7 +670,7 @@ class _ManagementCard extends StatelessWidget {
         highlightColor: action.color.withValues(alpha: 0.04),
         child: Container(
           padding: const EdgeInsets.all(18),
-          decoration: _AdminDashboardDecorations.cardDecoration,
+          decoration: _AdminDashboardDecorations.cardDecoration(context),
           child: ScrollConfiguration(
             behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
             child: SingleChildScrollView(
@@ -765,7 +767,7 @@ class _RecentUsersSection extends StatelessWidget {
         }
 
         return Container(
-          decoration: _AdminDashboardDecorations.cardDecoration,
+          decoration: _AdminDashboardDecorations.cardDecoration(context),
           child: Column(
             children: [
               for (int index = 0; index < docs.length; index++) ...[
@@ -951,7 +953,7 @@ class _StatusPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: height,
-      decoration: _AdminDashboardDecorations.cardDecoration,
+      decoration: _AdminDashboardDecorations.cardDecoration(context),
       alignment: Alignment.center,
       child: child,
     );
@@ -969,7 +971,7 @@ class _MessageCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
-      decoration: _AdminDashboardDecorations.cardDecoration,
+      decoration: _AdminDashboardDecorations.cardDecoration(context),
       child: Text(
         message,
         style: TextStyle(
@@ -1019,12 +1021,12 @@ String _initialsFrom(String name) {
 }
 
 class _AdminDashboardDecorations {
-  static final cardDecoration = BoxDecoration(
-    color: Colors.white,
+  static BoxDecoration cardDecoration(BuildContext context) => BoxDecoration(
+    color: context.cardBg,
     borderRadius: BorderRadius.circular(20),
     boxShadow: [
       BoxShadow(
-        color: Colors.black.withValues(alpha: 0.03),
+        color: context.isDarkMode ? Colors.black26 : Colors.black.withValues(alpha: 0.03),
         blurRadius: 15,
         offset: const Offset(0, 4),
       ),
@@ -1033,13 +1035,8 @@ class _AdminDashboardDecorations {
 }
 
 class _AdminDashboardColors {
-  static const background = Color(0xFFF8F9FA);
   static const headerStart = Color(0xFF7B1FA2);
   static const headerEnd = Color(0xFF4A148C);
-  static const heading = Color(0xFF2D3748);
-  static const bodyText = Color(0xFF718096);
-  static const muted = Color(0xFF94A3B8);
-  static const divider = Color(0xFFE2E8F0);
   static const students = Color(0xFF3182CE);
   static const tutors = Color(0xFF2F855A);
   static const admins = Color(0xFFDD6B20);
@@ -1245,7 +1242,7 @@ class _AdminRoleBreakdownSection extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.cardBg,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: context.borderTheme),
             boxShadow: const [

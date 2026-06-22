@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:mandarinmate/utils/app_theme.dart';
 
 class AdminBadgeConfigPage extends StatefulWidget {
   const AdminBadgeConfigPage({super.key});
@@ -184,28 +185,36 @@ class _AdminBadgeConfigPageState extends State<AdminBadgeConfigPage> {
 
   @override
   Widget build(BuildContext context) {
+    final themeColor = const Color(0xFF7B1FA2);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF7B1FA2),
+        backgroundColor: context.isDarkMode ? context.cardBg : themeColor,
         elevation: 0,
         title: const Text('Badge Configuration'),
         centerTitle: true,
+        foregroundColor: context.isDarkMode ? context.textDeep : Colors.white,
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(
+              child: CircularProgressIndicator(
+                color: themeColor,
+              ),
+            )
           : SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
-                  // Header Info
+                  // Header Info Card
                   Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: context.cardBg,
                       borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: context.borderTheme),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
+                          color: context.isDarkMode ? Colors.black26 : Colors.black.withOpacity(0.02),
                           blurRadius: 10,
                           offset: const Offset(0, 2),
                         ),
@@ -215,20 +224,20 @@ class _AdminBadgeConfigPageState extends State<AdminBadgeConfigPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Badge Unlock Thresholds',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF2D3748),
+                            color: context.textDeep,
                           ),
                         ),
                         const SizedBox(height: 8),
-                        const Text(
+                        Text(
                           'Edit the values below to adjust when badges unlock for students. Changes apply immediately.',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Color(0xFF718096),
+                            color: context.textMuted,
                           ),
                         ),
                         if (saveMessage != null) ...[
@@ -256,6 +265,7 @@ class _AdminBadgeConfigPageState extends State<AdminBadgeConfigPage> {
                       child: _BadgeConfigCard(
                         badge: badge,
                         controllers: controllers,
+                        themeColor: themeColor,
                       ),
                     );
                   }),
@@ -267,7 +277,8 @@ class _AdminBadgeConfigPageState extends State<AdminBadgeConfigPage> {
                     child: ElevatedButton(
                       onPressed: isSaving ? null : _saveBadgeConfigs,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF7B1FA2),
+                        backgroundColor: context.isDarkMode ? Colors.purple.shade300 : themeColor,
+                        foregroundColor: context.isDarkMode ? Colors.black : Colors.white,
                         disabledBackgroundColor: Colors.grey[400],
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -289,7 +300,6 @@ class _AdminBadgeConfigPageState extends State<AdminBadgeConfigPage> {
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
                               ),
                             ),
                     ),
@@ -336,18 +346,24 @@ class BadgeInfo {
 class _BadgeConfigCard extends StatelessWidget {
   final BadgeInfo badge;
   final Map<String, TextEditingController> controllers;
+  final Color themeColor;
 
-  const _BadgeConfigCard({required this.badge, required this.controllers});
+  const _BadgeConfigCard({
+    required this.badge,
+    required this.controllers,
+    required this.themeColor,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: context.borderTheme),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: context.isDarkMode ? Colors.black26 : Colors.black.withOpacity(0.02),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -368,18 +384,18 @@ class _BadgeConfigCard extends StatelessWidget {
                   children: [
                     Text(
                       badge.name,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF2D3748),
+                        color: context.textDeep,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       badge.description,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: Color(0xFF718096),
+                        color: context.textMuted,
                       ),
                     ),
                   ],
@@ -401,30 +417,32 @@ class _BadgeConfigCard extends StatelessWidget {
                 children: [
                   Text(
                     badge.getFieldLabel(field),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF718096),
+                      color: context.textMuted,
                     ),
                   ),
                   const SizedBox(height: 6),
                   TextField(
                     controller: controller,
                     keyboardType: TextInputType.number,
+                    style: TextStyle(color: context.textDeep),
                     decoration: InputDecoration(
                       hintText: '0',
+                      hintStyle: TextStyle(color: context.textMuted),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        borderSide: BorderSide(color: context.borderTheme),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        borderSide: BorderSide(color: context.borderTheme),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(
-                          color: Color(0xFF7B1FA2),
+                        borderSide: BorderSide(
+                          color: context.isDarkMode ? Colors.purple.shade300 : themeColor,
                           width: 2,
                         ),
                       ),

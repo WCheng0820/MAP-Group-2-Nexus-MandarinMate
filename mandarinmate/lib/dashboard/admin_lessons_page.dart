@@ -1,34 +1,33 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:mandarinmate/utils/app_theme.dart';
 
 class AdminLessonsPage extends StatelessWidget {
   const AdminLessonsPage({super.key});
 
   static const Color _primary = Color(0xFF6C3BFF);
-  static const Color _surface = Color(0xFFF6F3FF);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _surface,
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
         title: const Text(
           'Admin Lessons',
           style: TextStyle(
-            color: Colors.white,
             fontSize: 24,
             fontWeight: FontWeight.w900,
           ),
         ),
-        backgroundColor: _primary,
-        foregroundColor: Colors.white,
+        backgroundColor: context.isDarkMode ? context.cardBg : _primary,
+        foregroundColor: context.isDarkMode ? context.textDeep : Colors.white,
         automaticallyImplyLeading: false,
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _openLessonForm(context),
-        backgroundColor: _primary,
-        foregroundColor: Colors.white,
+        backgroundColor: context.isDarkMode ? Colors.purple.shade300 : _primary,
+        foregroundColor: context.isDarkMode ? Colors.black : Colors.white,
         child: const Icon(Icons.add_rounded),
       ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -82,8 +81,9 @@ class AdminLessonsPage extends StatelessWidget {
 
               return Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: context.cardBg,
                   borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: context.borderTheme),
                 ),
                 child: ListTile(
                   contentPadding: const EdgeInsets.symmetric(
@@ -92,19 +92,20 @@ class AdminLessonsPage extends StatelessWidget {
                   ),
                   title: Text(
                     title.isEmpty ? 'Untitled lesson' : title,
-                    style: const TextStyle(fontWeight: FontWeight.w700),
+                    style: TextStyle(color: context.textDeep, fontWeight: FontWeight.w700),
                   ),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (titleChinese.isNotEmpty) ...[
                         const SizedBox(height: 4),
-                        Text(titleChinese),
+                        Text(titleChinese, style: TextStyle(color: context.textMuted)),
                       ],
                       if (description.isNotEmpty) ...[
                         const SizedBox(height: 4),
                         Text(
                           description,
+                          style: TextStyle(color: context.textMuted),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -174,12 +175,16 @@ class AdminLessonsPage extends StatelessWidget {
     );
 
     final save =
-        await showDialog<bool>(
-          context: context,
-          builder: (_) {
-            return AlertDialog(
-              title: Text(docId == null ? 'Add Lesson' : 'Edit Lesson'),
-              content: SizedBox(
+          await showDialog<bool>(
+            context: context,
+            builder: (_) {
+              return AlertDialog(
+                backgroundColor: context.cardBg,
+                title: Text(
+                  docId == null ? 'Add Lesson' : 'Edit Lesson',
+                  style: TextStyle(color: context.textDeep),
+                ),
+                content: SizedBox(
                 width: 560,
                 child: Form(
                   key: formKey,
@@ -188,18 +193,21 @@ class AdminLessonsPage extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         _input(
+                          context: context,
                           controller: titleCtrl,
                           label: 'Title',
                           validator: _required,
                         ),
                         const SizedBox(height: 10),
                         _input(
+                          context: context,
                           controller: titleChineseCtrl,
                           label: 'Title Chinese',
                           validator: _required,
                         ),
                         const SizedBox(height: 10),
                         _input(
+                          context: context,
                           controller: descriptionCtrl,
                           label: 'Description',
                           maxLines: 3,
@@ -207,6 +215,7 @@ class AdminLessonsPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 10),
                         _input(
+                          context: context,
                           controller: unitCtrl,
                           label: 'Unit Number',
                           isNumber: true,
@@ -214,6 +223,7 @@ class AdminLessonsPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 10),
                         _input(
+                          context: context,
                           controller: totalLessonsCtrl,
                           label: 'Total Lessons',
                           isNumber: true,
@@ -221,6 +231,7 @@ class AdminLessonsPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 10),
                         _input(
+                          context: context,
                           controller: xpCtrl,
                           label: 'XP Reward',
                           isNumber: true,
@@ -228,6 +239,7 @@ class AdminLessonsPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 10),
                         _input(
+                          context: context,
                           controller: orderCtrl,
                           label: 'Order',
                           isNumber: true,
@@ -309,25 +321,26 @@ class AdminLessonsPage extends StatelessWidget {
     String title,
   ) async {
     final confirm =
-        await showDialog<bool>(
-          context: context,
-          builder: (_) => AlertDialog(
-            title: const Text('Delete Lesson'),
-            content: Text('Delete "$title"?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context, true),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                child: const Text('Delete'),
-              ),
-            ],
-          ),
-        ) ??
-        false;
+          await showDialog<bool>(
+            context: context,
+            builder: (_) => AlertDialog(
+              backgroundColor: context.cardBg,
+              title: Text('Delete Lesson', style: TextStyle(color: context.textDeep)),
+              content: Text('Delete "$title"?', style: TextStyle(color: context.textMuted)),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                  child: const Text('Delete'),
+                ),
+              ],
+            ),
+          ) ??
+          false;
 
     if (!confirm) {
       return;
@@ -351,6 +364,7 @@ class AdminLessonsPage extends StatelessWidget {
   }
 
   Widget _input({
+    required BuildContext context,
     required TextEditingController controller,
     required String label,
     required String? Function(String?) validator,
@@ -361,10 +375,26 @@ class AdminLessonsPage extends StatelessWidget {
       controller: controller,
       validator: validator,
       maxLines: maxLines,
+      style: TextStyle(color: context.textDeep),
       keyboardType: isNumber ? TextInputType.number : TextInputType.text,
       decoration: InputDecoration(
         labelText: label,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        labelStyle: TextStyle(color: context.textMuted),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: context.borderTheme),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: context.borderTheme),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: context.isDarkMode ? Colors.purple.shade300 : _primary,
+            width: 2,
+          ),
+        ),
       ),
     );
   }
@@ -377,16 +407,17 @@ class _Badge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final badgeColor = context.isDarkMode ? Colors.purple.shade300 : const Color(0xFF6C3BFF);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFF6C3BFF).withValues(alpha: 0.12),
+        color: badgeColor.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         text,
-        style: const TextStyle(
-          color: Color(0xFF6C3BFF),
+        style: TextStyle(
+          color: badgeColor,
           fontSize: 11,
           fontWeight: FontWeight.w700,
         ),
