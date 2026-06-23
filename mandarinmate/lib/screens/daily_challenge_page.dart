@@ -6,6 +6,7 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:mandarinmate/lessons/domain/active_lesson_model.dart';
 import 'package:mandarinmate/services/notification_service.dart';
+import 'package:mandarinmate/utils/app_theme.dart';
 
 // Helper class for curated vocab pool
 class ChallengeVocab {
@@ -535,7 +536,7 @@ class _DailyChallengePageState extends State<DailyChallengePage>
           child: Dialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
             elevation: 16,
-            backgroundColor: Colors.white,
+            backgroundColor: context.cardBg,
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: Column(
@@ -547,11 +548,11 @@ class _DailyChallengePageState extends State<DailyChallengePage>
                     width: 90,
                     height: 90,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFF1E6),
+                      color: context.isDarkMode ? const Color(0xFF2E2218) : const Color(0xFFFFF1E6),
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFFFB703).withValues(alpha: 0.2),
+                          color: const Color(0xFFFFB703).withValues(alpha: context.isDarkMode ? 0.05 : 0.2),
                           blurRadius: 15,
                           spreadRadius: 2,
                         ),
@@ -567,10 +568,10 @@ class _DailyChallengePageState extends State<DailyChallengePage>
                   // Congratulations Banner
                   Text(
                     percentage >= 80 ? 'Amazing! 🎉' : 'Great! 🌟',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFFE65100),
+                      color: context.isDarkMode ? Colors.orange.shade300 : const Color(0xFFE65100),
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -579,7 +580,7 @@ class _DailyChallengePageState extends State<DailyChallengePage>
                     'Daily Challenge Completed',
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.grey.shade600,
+                      color: context.textMuted,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -588,9 +589,9 @@ class _DailyChallengePageState extends State<DailyChallengePage>
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade50,
+                      color: context.isDarkMode ? const Color(0xFF1E1E1E) : Colors.grey.shade50,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.grey.shade100),
+                      border: Border.all(color: context.borderTheme),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -601,7 +602,7 @@ class _DailyChallengePageState extends State<DailyChallengePage>
                           Icons.insights_rounded,
                           Colors.blue,
                         ),
-                        Container(width: 1, height: 35, color: Colors.grey.shade300),
+                        Container(width: 1, height: 35, color: context.borderTheme),
                         _buildSummaryStat(
                           'Reward',
                           _alreadyCompletedToday ? '+0 XP (Retake)' : '+50 XP',
@@ -618,28 +619,30 @@ class _DailyChallengePageState extends State<DailyChallengePage>
                     padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [const Color(0xFFFFF8F2), Colors.orange.shade50.withValues(alpha: 0.3)],
+                        colors: context.isDarkMode
+                            ? [const Color(0xFF22160C), const Color(0xFF1E1610)]
+                            : [const Color(0xFFFFF8F2), Colors.orange.shade50.withValues(alpha: 0.3)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFFFE0B2)),
+                      border: Border.all(color: context.isDarkMode ? const Color(0xFF5C3818) : const Color(0xFFFFE0B2)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        const Wrap(
+                        Wrap(
                           alignment: WrapAlignment.center,
                           crossAxisAlignment: WrapCrossAlignment.center,
                           spacing: 6,
                           children: [
-                            Icon(Icons.format_quote_rounded, color: Color(0xFFFFB703), size: 20),
+                            const Icon(Icons.format_quote_rounded, color: Color(0xFFFFB703), size: 20),
                             Text(
                               'DAILY MOTIVATIONAL QUOTE',
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w800,
-                                color: Color(0xFFE65100),
+                                color: context.isDarkMode ? Colors.orange.shade300 : const Color(0xFFE65100),
                                 letterSpacing: 1.2,
                               ),
                             ),
@@ -648,10 +651,10 @@ class _DailyChallengePageState extends State<DailyChallengePage>
                         const SizedBox(height: 12),
                         Text(
                           _quoteCh,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFFD32F2F),
+                            color: context.isDarkMode ? Colors.red.shade300 : const Color(0xFFD32F2F),
                             letterSpacing: 2,
                           ),
                           textAlign: TextAlign.center,
@@ -661,19 +664,19 @@ class _DailyChallengePageState extends State<DailyChallengePage>
                           _quotePy,
                           style: TextStyle(
                             fontSize: 13,
-                            color: Colors.grey.shade600,
+                            color: context.textMuted,
                             fontStyle: FontStyle.italic,
                           ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 10),
-                        Divider(color: Colors.orange.shade200.withValues(alpha: 0.5), height: 1),
+                        Divider(color: context.isDarkMode ? const Color(0xFF4A3423) : Colors.orange.shade200.withValues(alpha: 0.5), height: 1),
                         const SizedBox(height: 10),
                         Text(
                           _quoteMs,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
-                            color: Colors.black87,
+                            color: context.textDeep,
                             fontWeight: FontWeight.w600,
                             height: 1.35,
                           ),
@@ -684,7 +687,7 @@ class _DailyChallengePageState extends State<DailyChallengePage>
                           _quoteEn,
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey.shade600,
+                            color: context.textMuted,
                             fontStyle: FontStyle.italic,
                             height: 1.35,
                           ),
@@ -733,14 +736,14 @@ class _DailyChallengePageState extends State<DailyChallengePage>
             const SizedBox(width: 4),
             Text(
               label,
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontWeight: FontWeight.w600),
+              style: TextStyle(fontSize: 12, color: context.textMuted, fontWeight: FontWeight.w600),
             ),
           ],
         ),
         const SizedBox(height: 4),
         Text(
           value,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: context.textDeep),
         ),
       ],
     );
@@ -806,7 +809,7 @@ class _DailyChallengePageState extends State<DailyChallengePage>
       children: List.generate(_questions.length, (index) {
         final isCurrent = index == _currentQ;
         final isPassed = index < _currentQ;
-        Color color = Colors.grey.shade300;
+        Color color = context.isDarkMode ? const Color(0xFF2C2C2C) : Colors.grey.shade300;
         Widget child = const SizedBox.shrink();
 
         if (isCurrent) {
@@ -857,16 +860,17 @@ class _DailyChallengePageState extends State<DailyChallengePage>
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
+      return Scaffold(
+        backgroundColor: context.scaffoldBg,
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(color: Color(0xFFF57C00)),
-              SizedBox(height: 16),
+              const CircularProgressIndicator(color: Color(0xFFF57C00)),
+              const SizedBox(height: 16),
               Text(
                 'Assembling your Daily Challenge...',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: context.textMuted),
               ),
             ],
           ),
@@ -877,15 +881,15 @@ class _DailyChallengePageState extends State<DailyChallengePage>
     final question = _questions[_currentQ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFBF8),
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
         title: const Text(
           'Daily Challenge',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: const Color(0xFFFFFBF8),
+        backgroundColor: context.isDarkMode ? context.cardBg : const Color(0xFFFFFBF8),
         elevation: 0,
-        foregroundColor: Colors.black87,
+        foregroundColor: context.textDeep,
         centerTitle: true,
         actions: [
           Container(
@@ -903,9 +907,9 @@ class _DailyChallengePageState extends State<DailyChallengePage>
                 return Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.orange.shade50,
+                    color: context.isDarkMode ? const Color(0xFF2E1C0C) : Colors.orange.shade50,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.orange.shade200),
+                    border: Border.all(color: context.isDarkMode ? const Color(0xFF5C3818) : Colors.orange.shade200),
                   ),
                   child: Row(
                     children: [
@@ -941,9 +945,9 @@ class _DailyChallengePageState extends State<DailyChallengePage>
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.orange.shade50.withValues(alpha: 0.6),
+                  color: context.isDarkMode ? const Color(0xFF2E1C0C) : Colors.orange.shade50.withValues(alpha: 0.6),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.orange.shade200),
+                  border: Border.all(color: context.isDarkMode ? const Color(0xFF5C3818) : Colors.orange.shade200),
                 ),
                 child: Row(
                   children: [
@@ -975,9 +979,9 @@ class _DailyChallengePageState extends State<DailyChallengePage>
                     // Main Challenge Card
                     Card(
                       elevation: 4,
-                      shadowColor: Colors.orange.shade50.withValues(alpha: 0.5),
+                      shadowColor: context.isDarkMode ? Colors.black26 : Colors.orange.shade50.withValues(alpha: 0.5),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                      color: Colors.white,
+                      color: context.cardBg,
                       child: Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(24),
@@ -997,7 +1001,7 @@ class _DailyChallengePageState extends State<DailyChallengePage>
                                           : 'What is the correct translation for:',
                               style: TextStyle(
                                   fontSize: 15,
-                                  color: Colors.grey.shade600,
+                                  color: context.textMuted,
                                   fontWeight: FontWeight.w600,
                               ),
                               textAlign: TextAlign.center,
@@ -1013,10 +1017,10 @@ class _DailyChallengePageState extends State<DailyChallengePage>
                                 children: [
                                   Text(
                                     question.vocab.chinese,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 48,
                                       fontWeight: FontWeight.bold,
-                                      color: Color(0xFFD32F2F),
+                                      color: context.isDarkMode ? Colors.red.shade300 : const Color(0xFFD32F2F),
                                       letterSpacing: 2,
                                     ),
                                     textAlign: TextAlign.center,
@@ -1024,13 +1028,13 @@ class _DailyChallengePageState extends State<DailyChallengePage>
                                   const SizedBox(width: 12),
                                   IconButton(
                                     onPressed: () => _playTts(question.vocab.chinese),
-                                    icon: const Icon(
+                                    icon: Icon(
                                       Icons.volume_up_rounded,
-                                      color: Color(0xFFD32F2F),
+                                      color: context.isDarkMode ? Colors.red.shade300 : const Color(0xFFD32F2F),
                                       size: 24,
                                     ),
                                     style: IconButton.styleFrom(
-                                      backgroundColor: const Color(0xFFFFEBEE),
+                                      backgroundColor: context.isDarkMode ? const Color(0xFF2D1719) : const Color(0xFFFFEBEE),
                                       padding: const EdgeInsets.all(8),
                                     ),
                                     tooltip: 'Dengar sebutan',
@@ -1046,7 +1050,7 @@ class _DailyChallengePageState extends State<DailyChallengePage>
                                 question.vocab.pinyin,
                                 style: TextStyle(
                                   fontSize: 20,
-                                  color: Colors.purple.shade700,
+                                  color: context.isDarkMode ? Colors.purple.shade200 : Colors.purple.shade700,
                                   fontWeight: FontWeight.w600,
                                 ),
                                 textAlign: TextAlign.center,
@@ -1056,7 +1060,7 @@ class _DailyChallengePageState extends State<DailyChallengePage>
                                 '(${question.vocab.english})',
                                 style: TextStyle(
                                   fontSize: 15,
-                                  color: Colors.grey.shade500,
+                                  color: context.textMuted,
                                 ),
                                 textAlign: TextAlign.center,
                               ),
@@ -1071,7 +1075,7 @@ class _DailyChallengePageState extends State<DailyChallengePage>
                                     return Container(
                                       padding: const EdgeInsets.all(32),
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFFE8F5E9),
+                                        color: context.isDarkMode ? const Color(0xFF0F3218) : const Color(0xFFE8F5E9),
                                         shape: BoxShape.circle,
                                         boxShadow: _isPlayingAudio
                                             ? [
@@ -1083,10 +1087,10 @@ class _DailyChallengePageState extends State<DailyChallengePage>
                                               ]
                                             : null,
                                       ),
-                                      child: const Icon(
+                                      child: Icon(
                                         Icons.volume_up_rounded,
                                         size: 64,
-                                        color: Color(0xFF2E7D32),
+                                        color: context.isDarkMode ? Colors.green.shade300 : const Color(0xFF2E7D32),
                                       ),
                                     );
                                   },
@@ -1098,8 +1102,8 @@ class _DailyChallengePageState extends State<DailyChallengePage>
                                 icon: const Icon(Icons.replay_rounded, size: 16),
                                 label: const Text('Play Again'),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFE8F5E9),
-                                  foregroundColor: const Color(0xFF2E7D32),
+                                  backgroundColor: context.isDarkMode ? const Color(0xFF0F3218) : const Color(0xFFE8F5E9),
+                                  foregroundColor: context.isDarkMode ? Colors.green.shade300 : const Color(0xFF2E7D32),
                                   elevation: 0,
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                                 ),
@@ -1120,30 +1124,30 @@ class _DailyChallengePageState extends State<DailyChallengePage>
                           final isSelected = _selectedAnswer == optionIdx;
                           final isCorrect = optionIdx == question.correctIndex;
 
-                          Color cardBg = Colors.white;
-                          Color borderCol = Colors.grey.shade200;
-                          Color textCol = Colors.black87;
+                          Color cardBg = context.cardBg;
+                          Color borderCol = context.borderTheme;
+                          Color textCol = context.textDeep;
                           Widget? trailing;
 
                           if (_answered) {
                             if (isCorrect) {
-                              cardBg = const Color(0xFFE8F5E9);
-                              borderCol = const Color(0xFF81C784);
-                              textCol = const Color(0xFF1B5E20);
+                              cardBg = context.isDarkMode ? const Color(0xFF0F3218) : const Color(0xFFE8F5E9);
+                              borderCol = context.isDarkMode ? const Color(0xFF1B5E20) : const Color(0xFF81C784);
+                              textCol = context.isDarkMode ? Colors.green.shade200 : const Color(0xFF1B5E20);
                               trailing = const Icon(Icons.check_circle_rounded, color: Color(0xFF388E3C));
                             } else if (isSelected) {
-                              cardBg = const Color(0xFFFFEBEE);
-                              borderCol = const Color(0xFFE57373);
-                              textCol = const Color(0xFFB71C1C);
+                              cardBg = context.isDarkMode ? const Color(0xFF2D1719) : const Color(0xFFFFEBEE);
+                              borderCol = context.isDarkMode ? const Color(0xFFB71C1C) : const Color(0xFFE57373);
+                              textCol = context.isDarkMode ? Colors.red.shade200 : const Color(0xFFB71C1C);
                               trailing = const Icon(Icons.cancel_rounded, color: Color(0xFFD32F2F));
                             } else {
-                              cardBg = Colors.grey.shade50;
-                              borderCol = Colors.grey.shade100;
-                              textCol = Colors.grey.shade400;
+                              cardBg = context.isDarkMode ? const Color(0xFF1E1E1E).withValues(alpha: 0.5) : Colors.grey.shade50;
+                              borderCol = context.isDarkMode ? const Color(0xFF2C2C2C) : Colors.grey.shade100;
+                              textCol = context.textMuted.withValues(alpha: 0.6);
                             }
                           } else if (isSelected) {
-                            cardBg = const Color(0xFFFFF3E0);
-                            borderCol = const Color(0xFFFFB74D);
+                            cardBg = context.isDarkMode ? const Color(0xFF2E1C0C) : const Color(0xFFFFF3E0);
+                            borderCol = context.isDarkMode ? const Color(0xFFE65100) : const Color(0xFFFFB74D);
                           }
 
                           final letter = String.fromCharCode(65 + optionIdx); // A, B, C, D
@@ -1179,8 +1183,8 @@ class _DailyChallengePageState extends State<DailyChallengePage>
                                                 ? const Color(0xFF2E7D32).withValues(alpha: 0.2)
                                                 : isSelected
                                                     ? const Color(0xFFC62828).withValues(alpha: 0.2)
-                                                    : Colors.grey.shade200)
-                                            : Colors.orange.shade50,
+                                                    : context.isDarkMode ? const Color(0xFF2C2C2C) : Colors.grey.shade200)
+                                            : context.isDarkMode ? const Color(0xFF2E1C0C) : Colors.orange.shade50,
                                         shape: BoxShape.circle,
                                       ),
                                       child: Center(
@@ -1194,7 +1198,7 @@ class _DailyChallengePageState extends State<DailyChallengePage>
                                                     ? const Color(0xFF2E7D32)
                                                     : isSelected
                                                         ? const Color(0xFFC62828)
-                                                        : Colors.grey.shade600)
+                                                        : context.textMuted)
                                                 : const Color(0xFFE65100),
                                           ),
                                         ),
@@ -1223,7 +1227,7 @@ class _DailyChallengePageState extends State<DailyChallengePage>
                       // Speaking Challenge Panel
                       Card(
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                        color: Colors.white,
+                        color: context.cardBg,
                         borderOnForeground: true,
                         elevation: 1,
                         child: Padding(
@@ -1251,14 +1255,14 @@ class _DailyChallengePageState extends State<DailyChallengePage>
                                   Container(
                                     padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
-                                      color: Colors.grey.shade50,
+                                      color: context.isDarkMode ? const Color(0xFF1A1A1A) : Colors.grey.shade50,
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Text(
                                       'Heard: "$_recognizedWords"',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 15,
-                                        color: Colors.black87,
+                                        color: context.textDeep,
                                         fontWeight: FontWeight.w500,
                                       ),
                                       textAlign: TextAlign.center,
@@ -1274,10 +1278,10 @@ class _DailyChallengePageState extends State<DailyChallengePage>
                                   padding: const EdgeInsets.all(28),
                                   decoration: BoxDecoration(
                                     color: _isListening
-                                        ? Colors.red.shade100
+                                        ? (context.isDarkMode ? const Color(0xFF2D1719) : Colors.red.shade100)
                                         : _answered
-                                            ? Colors.grey.shade100
-                                            : Colors.purple.shade50,
+                                            ? (context.isDarkMode ? const Color(0xFF2C2C2C) : Colors.grey.shade100)
+                                            : (context.isDarkMode ? const Color(0xFF21132B) : Colors.purple.shade50),
                                     shape: BoxShape.circle,
                                     boxShadow: _isListening
                                         ? [
@@ -1296,7 +1300,7 @@ class _DailyChallengePageState extends State<DailyChallengePage>
                                         ? Colors.red.shade700
                                         : _answered
                                             ? Colors.grey
-                                            : Colors.purple.shade700,
+                                            : (context.isDarkMode ? Colors.purple.shade300 : Colors.purple.shade700),
                                   ),
                                 ),
                               ),
@@ -1310,18 +1314,18 @@ class _DailyChallengePageState extends State<DailyChallengePage>
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.grey.shade600,
+                                  color: context.textMuted,
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              Divider(color: Colors.grey.shade200),
+                              Divider(color: context.borderTheme),
                               const SizedBox(height: 10),
 
                               // Self Verification Row (Fallback for simulator / no mic permission)
                               if (!_answered) ...[
                                 Text(
                                   'Microphone not working? Please self-verify your pronunciation:',
-                                  style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                                  style: TextStyle(fontSize: 12, color: context.textMuted),
                                   textAlign: TextAlign.center,
                                 ),
                                 const SizedBox(height: 12),
@@ -1335,7 +1339,7 @@ class _DailyChallengePageState extends State<DailyChallengePage>
                                         label: const Text('Fail'),
                                         style: OutlinedButton.styleFrom(
                                           foregroundColor: Colors.red.shade700,
-                                          side: BorderSide(color: Colors.red.shade200),
+                                          side: BorderSide(color: context.isDarkMode ? Colors.red.shade900 : Colors.red.shade200),
                                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                         ),
                                       ),
@@ -1347,8 +1351,9 @@ class _DailyChallengePageState extends State<DailyChallengePage>
                                         icon: const Icon(Icons.check_rounded, size: 16),
                                         label: const Text('Correct Pronunciation'),
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(0xFF7B1FA2),
-                                          foregroundColor: Colors.white,
+                                          backgroundColor: context.isDarkMode ? context.cardBg : const Color(0xFF7B1FA2),
+                                          foregroundColor: context.isDarkMode ? context.textDeep : Colors.white,
+                                          side: context.isDarkMode ? BorderSide(color: context.borderTheme) : null,
                                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                         ),
                                       ),
@@ -1359,7 +1364,9 @@ class _DailyChallengePageState extends State<DailyChallengePage>
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                                   decoration: BoxDecoration(
-                                    color: _speakingCorrect ? const Color(0xFFE8F5E9) : const Color(0xFFFFEBEE),
+                                    color: _speakingCorrect
+                                        ? (context.isDarkMode ? const Color(0xFF0F3218) : const Color(0xFFE8F5E9))
+                                        : (context.isDarkMode ? const Color(0xFF2D1719) : const Color(0xFFFFEBEE)),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Row(
@@ -1367,14 +1374,18 @@ class _DailyChallengePageState extends State<DailyChallengePage>
                                     children: [
                                       Icon(
                                         _speakingCorrect ? Icons.check_circle : Icons.cancel,
-                                        color: _speakingCorrect ? Colors.green.shade700 : Colors.red.shade700,
+                                        color: _speakingCorrect
+                                            ? (context.isDarkMode ? Colors.green.shade300 : Colors.green.shade700)
+                                            : (context.isDarkMode ? Colors.red.shade300 : Colors.red.shade700),
                                       ),
                                       const SizedBox(width: 8),
                                       Text(
                                         _speakingCorrect ? 'Correct Pronunciation!' : 'Try again next time',
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
-                                          color: _speakingCorrect ? Colors.green.shade800 : Colors.red.shade800,
+                                          color: _speakingCorrect
+                                              ? (context.isDarkMode ? Colors.green.shade200 : Colors.green.shade800)
+                                              : (context.isDarkMode ? Colors.red.shade200 : Colors.red.shade800),
                                         ),
                                       ),
                                     ],

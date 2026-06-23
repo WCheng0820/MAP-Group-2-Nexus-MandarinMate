@@ -187,6 +187,7 @@ class _AuthScreenState extends State<AuthScreen> {
             const SnackBar(
               content: Text('Login successful'),
               backgroundColor: AppColors.successColor,
+              duration: Duration(milliseconds: 1200),
             ),
           );
         }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mandarinmate/lessons/domain/lesson_model.dart';
+import 'package:mandarinmate/utils/app_theme.dart';
 
 class FlashcardGamePage extends StatefulWidget {
   final int levelNumber;
@@ -153,11 +154,11 @@ class _FlashcardGamePageState extends State<FlashcardGamePage>
     final progress = (_index + 1) / _items.length;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F3FF),
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
         title: Text('Level ${widget.levelNumber}: ${widget.levelTitle}'),
-        backgroundColor: const Color(0xFF6C3BFF),
-        foregroundColor: Colors.white,
+        backgroundColor: context.isDarkMode ? context.cardBg : const Color(0xFF6C3BFF),
+        foregroundColor: context.isDarkMode ? context.textDeep : Colors.white,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -168,14 +169,14 @@ class _FlashcardGamePageState extends State<FlashcardGamePage>
               value: progress,
               minHeight: 8,
               borderRadius: BorderRadius.circular(999),
-              backgroundColor: Colors.white,
+              backgroundColor: context.isDarkMode ? const Color(0xFF2C2C2C) : Colors.white,
               color: const Color(0xFF6C3BFF),
             ),
             const SizedBox(height: 8),
             Text(
               '${_index + 1}/${_items.length}',
               textAlign: TextAlign.right,
-              style: TextStyle(color: Colors.grey.shade700),
+              style: TextStyle(color: context.textMuted),
             ),
             const SizedBox(height: 12),
             Expanded(
@@ -194,11 +195,11 @@ class _FlashcardGamePageState extends State<FlashcardGamePage>
                         ..rotateY(isFlipped ? angle + 3.14159 : angle),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: context.cardBg,
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.06),
+                              color: Colors.black.withValues(alpha: context.isDarkMode ? 0.2 : 0.06),
                               blurRadius: 12,
                               offset: const Offset(0, 6),
                             ),
@@ -211,9 +212,10 @@ class _FlashcardGamePageState extends State<FlashcardGamePage>
                                 children: [
                                   Text(
                                     item.malay,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 30,
                                       fontWeight: FontWeight.w800,
+                                      color: context.textDeep,
                                     ),
                                     textAlign: TextAlign.center,
                                   ),
@@ -222,7 +224,7 @@ class _FlashcardGamePageState extends State<FlashcardGamePage>
                                     item.english,
                                     style: TextStyle(
                                       fontSize: 22,
-                                      color: Colors.grey.shade700,
+                                      color: context.textMuted,
                                     ),
                                     textAlign: TextAlign.center,
                                   ),
@@ -230,7 +232,7 @@ class _FlashcardGamePageState extends State<FlashcardGamePage>
                                   Text(
                                     'Tap to flip back',
                                     style: TextStyle(
-                                      color: Colors.grey.shade500,
+                                      color: context.textMuted.withValues(alpha: 0.7),
                                     ),
                                   ),
                                 ],
@@ -241,9 +243,10 @@ class _FlashcardGamePageState extends State<FlashcardGamePage>
                                   if (_showChinese)
                                     Text(
                                       item.chinese,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 52,
                                         fontWeight: FontWeight.w800,
+                                        color: context.textDeep,
                                       ),
                                       textAlign: TextAlign.center,
                                     ),
@@ -253,7 +256,7 @@ class _FlashcardGamePageState extends State<FlashcardGamePage>
                                       item.pinyin,
                                       style: TextStyle(
                                         fontSize: 26,
-                                        color: Colors.grey.shade700,
+                                        color: context.isDarkMode ? Colors.purple.shade200 : const Color(0xFF6C3BFF),
                                         fontWeight: FontWeight.w600,
                                       ),
                                       textAlign: TextAlign.center,
@@ -262,7 +265,7 @@ class _FlashcardGamePageState extends State<FlashcardGamePage>
                                   Text(
                                     'Tap to reveal meaning',
                                     style: TextStyle(
-                                      color: Colors.grey.shade500,
+                                      color: context.textMuted.withValues(alpha: 0.7),
                                     ),
                                   ),
                                 ],
@@ -277,8 +280,9 @@ class _FlashcardGamePageState extends State<FlashcardGamePage>
             ElevatedButton.icon(
               onPressed: _speakCurrent,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6C3BFF),
-                foregroundColor: Colors.white,
+                backgroundColor: context.isDarkMode ? context.cardBg : const Color(0xFF6C3BFF),
+                foregroundColor: context.isDarkMode ? context.textDeep : Colors.white,
+                side: context.isDarkMode ? BorderSide(color: context.borderTheme) : null,
                 minimumSize: const Size.fromHeight(46),
               ),
               icon: Icon(
@@ -294,6 +298,12 @@ class _FlashcardGamePageState extends State<FlashcardGamePage>
                 Expanded(
                   child: OutlinedButton(
                     onPressed: _index > 0 ? _previous : null,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: context.isDarkMode ? context.textDeep : const Color(0xFF6C3BFF),
+                      side: BorderSide(
+                        color: context.isDarkMode ? context.borderTheme : const Color(0xFF6C3BFF),
+                      ),
+                    ),
                     child: const Text('Previous'),
                   ),
                 ),
@@ -303,8 +313,9 @@ class _FlashcardGamePageState extends State<FlashcardGamePage>
                       ? ElevatedButton(
                           onPressed: _next,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF6C3BFF),
-                            foregroundColor: Colors.white,
+                            backgroundColor: context.isDarkMode ? context.cardBg : const Color(0xFF6C3BFF),
+                            foregroundColor: context.isDarkMode ? context.textDeep : Colors.white,
+                            side: context.isDarkMode ? BorderSide(color: context.borderTheme) : null,
                           ),
                           child: const Text('Next'),
                         )

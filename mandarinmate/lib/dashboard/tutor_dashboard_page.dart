@@ -1567,10 +1567,10 @@ class _ChatBadgeIcon extends StatelessWidget {
           for (var doc in snapshot.data!.docs) {
             final data = doc.data() as Map<String, dynamic>;
 
-            // If the message is NOT from us, is unread, and we are part of this chat
+            final participants = List<dynamic>.from(data['participants'] ?? const []);
             if (data['lastMessageSenderId'] != currentUser.uid &&
                 data['isLastMessageRead'] == false &&
-                doc.id.contains(currentUser.uid)) {
+                participants.contains(currentUser.uid)) {
               unreadCount++;
             }
           }
@@ -1579,6 +1579,7 @@ class _ChatBadgeIcon extends StatelessWidget {
         return Badge(
           isLabelVisible: unreadCount > 0,
           backgroundColor: Colors.red,
+          label: Text('$unreadCount', style: const TextStyle(color: Colors.white, fontSize: 10)),
           child: Icon(iconData, color: color),
         );
       },

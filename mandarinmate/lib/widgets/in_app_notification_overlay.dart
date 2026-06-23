@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mandarinmate/services/notification_service.dart';
 import 'package:mandarinmate/utils/app_theme.dart';
 
@@ -60,12 +61,9 @@ class InAppNotificationOverlay extends StatefulWidget {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return null;
 
-    final listenerStartTime = DateTime.now();
-
     final isAdmin = role == 'admin';
     Query<Map<String, dynamic>> query = FirebaseFirestore.instance
-        .collection('notifications')
-        .orderBy('createdAt', descending: true);
+        .collection('notifications');
 
     if (isAdmin) {
       query = query.where('recipientId', whereIn: [uid, 'admin']);
@@ -73,36 +71,122 @@ class InAppNotificationOverlay extends StatefulWidget {
       query = query.where('recipientId', isEqualTo: uid);
     }
 
-    return query.snapshots().listen((snapshot) {
-      for (var change in snapshot.docChanges) {
-        if (change.type == DocumentChangeType.added) {
-          final doc = change.doc;
-          final data = doc.data();
-          if (data == null) continue;
+    final List<Map<String, dynamic>> queue = [];
+    bool isProcessing = false;
+    final Set<String> processedDocIds = {};
+    bool prefsLoaded = false;
+    final List<DocumentSnapshot<Map<String, dynamic>>> pendingDocs = [];
 
-          final createdAt = data['createdAt'];
-          if (createdAt == null) continue;
+    void processDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+      final data = doc.data();
+      if (data == null) return;
 
-          DateTime createdDateTime;
-          if (createdAt is Timestamp) {
-            createdDateTime = createdAt.toDate();
-          } else {
-            createdDateTime = DateTime.now();
-          }
+      if (processedDocIds.contains(doc.id)) return;
 
-          // Only pop out if the notification was created after the listener was started
-          if (createdDateTime.isAfter(listenerStartTime.subtract(const Duration(seconds: 2)))) {
-            final title = data['title'] ?? 'Notification';
-            final body = data['body'] ?? '';
+      // Exclude self-notifications
+      final senderId = data['senderId'];
+      if (senderId != null && senderId == uid) {
+        return;
+      }
 
-            // Trigger system-level push notification banner!
-            NotificationService.showLocalNotification(
-              title: title,
-              body: body,
-              payload: jsonEncode(data),
-            );
-          }
+      final isRead = data['isRead'] as bool? ?? false;
+      if (isRead) return;
+
+      processedDocIds.add(doc.id);
+      
+      // Save to SharedPreferences asynchronously
+      SharedPreferences.getInstance().then((prefs) {
+        final currentPopped = prefs.getStringList('popped_notifications') ?? [];
+        if (!currentPopped.contains(doc.id)) {
+          currentPopped.add(doc.id);
+          prefs.setStringList('popped_notifications', currentPopped);
         }
+      });
+
+      final title = data['title'] ?? 'Notification';
+      final body = data['body'] ?? '';
+      final type = data['type'] ?? '';
+
+      queue.add({
+        'docId': doc.id,
+        'title': title,
+        'body': body,
+        'type': type,
+        ...data,
+      });
+    }
+
+    void runQueue() async {
+      if (isProcessing) return;
+      isProcessing = true;
+
+      while (queue.isNotEmpty) {
+        final data = queue.removeAt(0);
+        final title = data['title'] ?? 'Notification';
+        final body = data['body'] ?? '';
+
+        NotificationService.showLocalNotification(
+          title: title,
+          body: body,
+          payload: jsonEncode(data),
+        );
+
+        await Future.delayed(const Duration(milliseconds: 800));
+      }
+
+      isProcessing = false;
+    }
+
+    // Load SharedPreferences first
+    SharedPreferences.getInstance().then((prefs) {
+      final poppedList = prefs.getStringList('popped_notifications') ?? [];
+      processedDocIds.addAll(poppedList);
+      prefsLoaded = true;
+
+      if (pendingDocs.isNotEmpty) {
+        for (var doc in pendingDocs) {
+          processDoc(doc);
+        }
+        pendingDocs.clear();
+        if (queue.isNotEmpty) {
+          runQueue();
+        }
+      }
+    });
+
+    return query.snapshots().listen((snapshot) {
+      final addedChanges = snapshot.docChanges
+          .where((change) => change.type == DocumentChangeType.added)
+          .toList();
+
+      if (addedChanges.isEmpty) return;
+
+      // Sort changes in chronological order (oldest first)
+      addedChanges.sort((a, b) {
+        final aTime = a.doc.data()?['createdAt'];
+        final bTime = b.doc.data()?['createdAt'];
+        if (aTime == null && bTime == null) return 0;
+        if (aTime == null) return 1;
+        if (bTime == null) return -1;
+        
+        DateTime aDate = (aTime is Timestamp) ? aTime.toDate() : DateTime.now();
+        DateTime bDate = (bTime is Timestamp) ? bTime.toDate() : DateTime.now();
+        return aDate.compareTo(bDate);
+      });
+
+      bool hasNew = false;
+      for (var change in addedChanges) {
+        final doc = change.doc;
+        if (!prefsLoaded) {
+          pendingDocs.add(doc);
+        } else {
+          processDoc(doc);
+          hasNew = true;
+        }
+      }
+
+      if (hasNew && queue.isNotEmpty) {
+        runQueue();
       }
     }, onError: (e) {
       debugPrint('Error in notification subscription listener: $e');

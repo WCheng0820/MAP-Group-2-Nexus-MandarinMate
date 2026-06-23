@@ -142,6 +142,7 @@ class NotificationService {
     Map<String, dynamic>? extra,
   }) async {
     try {
+      final currentUid = FirebaseAuth.instance.currentUser?.uid;
       final payload = <String, dynamic>{
         'recipientId': recipientId,
         'title': title,
@@ -149,6 +150,7 @@ class NotificationService {
         'type': type,
         'isRead': false,
         'createdAt': FieldValue.serverTimestamp(),
+        if (currentUid != null) 'senderId': currentUid,
       };
       if (extra != null) {
         payload.addAll(extra);
@@ -166,6 +168,7 @@ class NotificationService {
     required String type,
   }) async {
     try {
+      final currentUid = FirebaseAuth.instance.currentUser?.uid;
       final snapshot = await FirebaseFirestore.instance
           .collection('users')
           .where('role', isEqualTo: 'student')
@@ -180,6 +183,7 @@ class NotificationService {
           'type': type,
           'isRead': false,
           'createdAt': FieldValue.serverTimestamp(),
+          if (currentUid != null) 'senderId': currentUid,
         });
       }
       await batch.commit();
@@ -196,6 +200,7 @@ class NotificationService {
     required String type,
   }) async {
     try {
+      final currentUid = FirebaseAuth.instance.currentUser?.uid;
       Query query = FirebaseFirestore.instance.collection('users');
       if (targetRole != 'all') {
         query = query.where('role', isEqualTo: targetRole);
@@ -211,6 +216,7 @@ class NotificationService {
           'type': type,
           'isRead': false,
           'createdAt': FieldValue.serverTimestamp(),
+          if (currentUid != null) 'senderId': currentUid,
         });
       }
       // If targetRole is admin, also send to recipientId: 'admin' just in case
@@ -223,6 +229,7 @@ class NotificationService {
           'type': type,
           'isRead': false,
           'createdAt': FieldValue.serverTimestamp(),
+          if (currentUid != null) 'senderId': currentUid,
         });
       }
       await batch.commit();

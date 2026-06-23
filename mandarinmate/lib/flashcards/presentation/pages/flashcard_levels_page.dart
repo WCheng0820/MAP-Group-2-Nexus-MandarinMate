@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:mandarinmate/flashcards/presentation/pages/flashcard_game_page.dart';
 import 'package:mandarinmate/lessons/domain/lesson_model.dart';
+import 'package:mandarinmate/utils/app_theme.dart';
 
 class FlashcardLevelsPage extends StatelessWidget {
   const FlashcardLevelsPage({super.key});
@@ -53,12 +54,15 @@ class FlashcardLevelsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final activeAppBarBg = context.isDarkMode ? context.cardBg : const Color(0xFF6C3BFF);
+    final activeAppBarFg = context.isDarkMode ? context.textDeep : Colors.white;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F3FF),
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
         title: const Text('Flashcard Levels'),
-        backgroundColor: const Color(0xFF6C3BFF),
-        foregroundColor: Colors.white,
+        backgroundColor: activeAppBarBg,
+        foregroundColor: activeAppBarFg,
       ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
         stream: FirebaseFirestore.instance
@@ -76,7 +80,7 @@ class FlashcardLevelsPage extends StatelessWidget {
               snapshot.data?.docs ??
               const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
           if (docs.isEmpty) {
-            return const Center(child: Text('No flashcard levels found.'));
+            return Center(child: Text('No flashcard levels found.', style: TextStyle(color: context.textDeep)));
           }
 
           final units = docs
@@ -98,7 +102,7 @@ class FlashcardLevelsPage extends StatelessWidget {
               .toList();
 
           if (units.isEmpty) {
-            return const Center(child: Text('No flashcard levels found.'));
+            return Center(child: Text('No flashcard levels found.', style: TextStyle(color: context.textDeep)));
           }
 
           return ListView.separated(
@@ -108,7 +112,7 @@ class FlashcardLevelsPage extends StatelessWidget {
             itemBuilder: (context, index) {
               final unit = units[index];
               return Material(
-                color: Colors.white,
+                color: context.cardBg,
                 borderRadius: BorderRadius.circular(16),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(16),
@@ -142,17 +146,19 @@ class FlashcardLevelsPage extends StatelessWidget {
                             children: [
                               Text(
                                 'Level ${unit.levelNumber}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.w900,
                                   fontSize: 14,
+                                  color: context.textDeep,
                                 ),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 unit.title,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w800,
+                                  color: context.textDeep,
                                 ),
                               ),
                               if (unit.description.trim().isNotEmpty) ...[
@@ -161,21 +167,21 @@ class FlashcardLevelsPage extends StatelessWidget {
                                   unit.description,
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(color: Colors.grey.shade700),
+                                  style: TextStyle(color: context.textMuted),
                                 ),
                               ],
                               const SizedBox(height: 6),
                               Text(
                                 '$cardsPerLevel flashcards',
                                 style: TextStyle(
-                                  color: Colors.grey.shade600,
+                                  color: context.textMuted,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        const Icon(Icons.chevron_right_rounded),
+                        Icon(Icons.chevron_right_rounded, color: context.textMuted),
                       ],
                     ),
                   ),
