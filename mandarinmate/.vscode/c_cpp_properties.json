@@ -1,0 +1,38 @@
+{
+  "version": 4,
+  "configurations": [
+    {
+      "name": "Flutter Linux",
+      "includePath": [
+        "${workspaceFolder}/linux",
+        "${workspaceFolder}/linux/**",
+        "${workspaceFolder}/linux/flutter/ephemeral",
+        "${workspaceFolder}/linux/flutter/ephemeral/**",
+        "${env:FLUTTER_ROOT}/engine/src/flutter/shell/platform/linux/public",
+        "${env:FLUTTER_ROOT}/engine/src/flutter/shell/platform/linux/public/**",
+        "C:/flutter/engine/src/flutter/shell/platform/linux/public",
+        "C:/flutter/engine/src/flutter/shell/platform/linux/public/**",
+        "C:/flutter/flutter/engine/src/flutter/shell/platform/linux/public",
+        "C:/flutter/flutter/engine/src/flutter/shell/platform/linux/public/**"
+      ],
+      "browse": {
+        "path": [
+          "${workspaceFolder}/linux",
+          "${workspaceFolder}/linux/**",
+          "${workspaceFolder}/linux/flutter/ephemeral",
+          "${workspaceFolder}/linux/flutter/ephemeral/**",
+          "${env:FLUTTER_ROOT}/engine/src/flutter/shell/platform/linux/public",
+          "${env:FLUTTER_ROOT}/engine/src/flutter/shell/platform/linux/public/**",
+          "C:/flutter/engine/src/flutter/shell/platform/linux/public",
+          "C:/flutter/engine/src/flutter/shell/platform/linux/public/**",
+          "C:/flutter/flutter/engine/src/flutter/shell/platform/linux/public",
+          "C:/flutter/flutter/engine/src/flutter/shell/platform/linux/public/**"
+        ],
+        "limitSymbolsToIncludedHeaders": true
+      },
+      "cppStandard": "c++14",
+      "cStandard": "c17",
+      "intelliSenseMode": "linux-gcc-x64"
+    }
+  ]
+}
